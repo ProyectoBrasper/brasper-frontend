@@ -1,0 +1,141 @@
+@startuml
+' Brasper Platform Frontend - Shared Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  ' ==========================================
+  ' SHARED BOUNDED CONTEXT
+  ' ==========================================
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity {
+        +id: number
+      }
+
+      class Money <<ValueObject>> {
+        - #amount: number
+        - #currency: string
+        +amount: number
+        +currency: string
+        +format(locale: string): string
+      }
+
+      class Period <<ValueObject>> {
+        - #year: number
+        - #month: number
+        +year: number
+        +month: number
+        +label(locale: string): string
+        +next(): Period
+        +previous(): Period
+      }
+    }
+
+    package "infrastructure" {
+      interface BaseResource {
+        +id: number
+      }
+
+      interface BaseResponse {
+      }
+
+      interface BaseAssembler<TEntity, TResource, TResponse> {
+        +toEntitiesFromResponse(response: TResponse): TEntity[]
+        +toEntityFromResource(resource: TResource): TEntity
+        +toResourceFromEntity(entity: TEntity): TResource
+      }
+
+      abstract class ErrorHandlingEnabledBaseType {
+        #handleError(operation: string): (error: HttpErrorResponse) => Observable<never>
+      }
+
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler> {
+        #http: HttpClient
+        #endpointUrl: string
+        #assembler: TAssembler
+        +getAll(): Observable<TEntity[]>
+        +getById(id: number): Observable<TEntity>
+        +create(entity: TEntity): Observable<TEntity>
+        +update(entity: TEntity, id: number): Observable<TEntity>
+        +delete(id: number): Observable<void>
+      }
+
+      abstract class BaseApi {
+      }
+
+      BaseApiEndpoint --|> ErrorHandlingEnabledBaseType : extends
+      BaseApiEndpoint --> BaseAssembler : uses
+      BaseAssembler ..> BaseEntity : converts
+      BaseAssembler ..> BaseResource : converts
+      BaseAssembler ..> BaseResponse : converts
+    }
+
+    package "presentation" {
+      abstract class BaseForm {
+        #isInvalidControl(form: FormGroup, controlName: string): boolean
+        #errorMessageForControl(form: FormGroup, controlName: string): string
+      }
+
+      package "components" {
+        class Layout <<Component>> {
+          -iamStore: IamStore
+          +options: Signal<Array<{link: string, label: string, icon: string, roles: string[]}>>
+          +sidenavOpened: WritableSignal<boolean>
+          +toggleSidenav(): void
+        }
+        class FooterContent <<Component>> {
+        }
+        class LanguageSwitcher <<Component>> {
+          +currentLang: string
+          +languages: string[]
+          +useLanguage(language: string): void
+        }
+        class PeriodSelector <<Component>> {
+          +period: ModelSignal<Period>
+          +onPrevious(): void
+          +onNext(): void
+        }
+        class ConfirmDialog <<Component>> {
+          -dialogRef: MatDialogRef<ConfirmDialog>
+          +data: {title: string, message: string}
+          +onConfirm(): void
+          +onCancel(): void
+        }
+        class StatusChip <<Component>> {
+          +status: InputSignal<string>
+          +color: Signal<string>
+        }
+      }
+
+      package "views" {
+        class PageNotFound <<Component>> {
+          +invalidPath: string
+          +ngOnInit(): void
+          +navigateToHome(): void
+        }
+      }
+
+      Layout --> FooterContent : contains
+      Layout --> LanguageSwitcher : contains
+      Layout --> PageNotFound : renders
+      PeriodSelector ..> Period : edits
+    }
+  }
+}
+
+note bottom
+  Convenciones del frontend:
+  - Cada bounded context replica al backend: domain.model / infrastructure /
+    application / presentation (views = páginas enrutadas, components = piezas reutilizables).
+  - Entidades con campos privados ES (#campo) y getters/setters públicos.
+  - Resources = forma JSON exacta de la API (igual a los *Resource del backend Spring).
+  - Assemblers convierten Resource/Response <-> Entity; los componentes nunca ven JSON.
+  - Stores con Angular signals (WritableSignal privado + Signal público + computed()).
+  - Formularios reactivos que extienden BaseForm; tablas MatTable + MatPaginator + MatSort;
+    acciones puntuales en MatDialog; textos con @ngx-translate (es / en).
+  - Montos como number en el JSON; Money / Period solo para mostrar y calcular en la vista.
+end note
+@enduml

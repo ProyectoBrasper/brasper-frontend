@@ -1,0 +1,202 @@
+@startuml
+' Brasper Platform Frontend - Application Overview (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  class App <<Component>> {
+  }
+
+  class appConfig <<ApplicationConfig>> {
+    +provideRouter(routes, withComponentInputBinding())
+    +provideHttpClient(withInterceptors([authenticationInterceptor]))
+    +provideAnimationsAsync()
+    +provideTranslateService({defaultLanguage: 'es'})
+    +provideNativeDateAdapter()
+  }
+
+  class routes <<Routes>> {
+    +'' -> redirect 'dashboard'
+    +'sign-in' -> SignInForm
+    +'sign-up' -> SignUpForm
+    +'dashboard' -> DashboardView [authenticationGuard]
+    +'users' -> UserList [roleGuard: ROLE_ADMIN]
+    +'projects/**' -> loadChildren(projectsRoutes) [authenticationGuard]
+    +'billing/**' -> loadChildren(billingRoutes) [authenticationGuard]
+    +'expenses/**' -> loadChildren(expensesRoutes) [authenticationGuard]
+    +'staff/**' -> loadChildren(staffRoutes) [authenticationGuard]
+    +'treasury/**' -> loadChildren(treasuryRoutes) [authenticationGuard]
+    +'accounting/**' -> loadChildren(accountingRoutes) [roleGuard: ROLE_ACCOUNTING, ROLE_ADMIN]
+    +'reports/**' -> loadChildren(reportingRoutes) [roleGuard: ROLE_MANAGEMENT, ROLE_ADMIN]
+    +'**' -> PageNotFound
+  }
+
+  class environment <<Configuration>> {
+    +production: boolean
+    +platformProviderApiBaseUrl: string
+  }
+
+  package "shared" {
+    package "presentation" {
+      package "components" {
+        class Layout <<Component>>
+      }
+      package "views" {
+        class PageNotFound <<Component>>
+      }
+    }
+  }
+
+  package "iam" {
+    package "infrastructure" {
+      class authenticationInterceptor <<Interceptor>>
+    }
+    package "application" {
+      class authenticationGuard <<Guard>>
+      class roleGuard <<Guard>>
+    }
+    package "presentation" {
+      package "components" {
+        class AuthenticationSection <<Component>>
+      }
+      package "views" {
+        class SignInForm <<Component>>
+        class SignUpForm <<Component>>
+        class UserList <<Component>>
+      }
+    }
+  }
+
+  package "projects" {
+    class projectsRoutes <<Routes>> {
+      +'clients' -> ClientList
+      +'clients/new' | 'clients/:id/edit' -> ClientForm
+      +'' -> ProjectList
+      +'new' | ':id/edit' -> ProjectForm
+      +':id' -> ProjectDetail
+    }
+  }
+
+  package "billing" {
+    class billingRoutes <<Routes>> {
+      +'invoices' -> InvoiceList
+      +'invoices/new' -> InvoiceForm
+      +'invoices/:id' -> InvoiceDetail
+      +'scheduled-collections' -> ScheduledCollectionList
+    }
+  }
+
+  package "expenses" {
+    class expensesRoutes <<Routes>> {
+      +'' -> ExpenseList
+      +'new' | ':id/edit' -> ExpenseForm
+      +'suppliers' -> SupplierList
+      +'suppliers/new' | 'suppliers/:id/edit' -> SupplierForm
+    }
+  }
+
+  package "staff" {
+    class staffRoutes <<Routes>> {
+      +'employees' -> EmployeeList
+      +'employees/new' | 'employees/:id/edit' -> EmployeeForm
+      +'fixed-costs' -> FixedCostList
+      +'fixed-costs/new' | 'fixed-costs/:id/edit' -> FixedCostForm
+    }
+  }
+
+  package "treasury" {
+    class treasuryRoutes <<Routes>> {
+      +'bank-accounts' -> BankAccountList
+      +'bank-accounts/new' -> BankAccountForm
+      +'bank-accounts/:id' -> BankAccountDetail
+      +'payables' -> PayableList
+      +'payables/new' -> PayableForm
+      +'loans' -> LoanList
+      +'loans/new' -> LoanForm
+      +'loans/:id' -> LoanDetail
+      +'partners' -> PartnerList
+    }
+  }
+
+  package "accounting" {
+    class accountingRoutes <<Routes>> {
+      +'ledger-accounts' -> LedgerAccountList
+      +'journal-entries' -> JournalEntryList
+      +'journal-entries/new' -> JournalEntryForm
+      +'trial-balance' -> TrialBalanceView
+      +'tax-returns' -> TaxReturnList
+      +'tax-parameters' -> TaxParametersForm
+      +'fixed-assets' -> FixedAssetList
+      +'fixed-assets/new' -> FixedAssetForm
+    }
+  }
+
+  package "reporting" {
+    class reportingRoutes <<Routes>> {
+      +'cash-flow' -> CashFlowView
+      +'income-statement' -> IncomeStatementView
+      +'balance-sheet' -> BalanceSheetView
+      +'project-profitability' -> ProjectProfitabilityView
+    }
+    package "presentation" {
+      package "views" {
+        class DashboardView <<Component>>
+      }
+    }
+  }
+
+  App --> appConfig : bootstraps with
+  App --> app.shared.presentation.components.Layout : renders
+  appConfig --> routes : registers
+  appConfig --> app.iam.infrastructure.authenticationInterceptor : registers
+  app.shared.presentation.components.Layout --> app.iam.presentation.components.AuthenticationSection : includes
+  routes --> app.iam.application.authenticationGuard : protects with
+  routes --> app.iam.application.roleGuard : protects with
+  routes --> app.iam.presentation.views.SignInForm : routes to
+  routes --> app.iam.presentation.views.SignUpForm : routes to
+  routes --> app.iam.presentation.views.UserList : routes to
+  routes --> app.reporting.presentation.views.DashboardView : routes to
+  routes --> app.shared.presentation.views.PageNotFound : routes to
+  routes --> app.projects.projectsRoutes : lazy loads
+  routes --> app.billing.billingRoutes : lazy loads
+  routes --> app.expenses.expensesRoutes : lazy loads
+  routes --> app.staff.staffRoutes : lazy loads
+  routes --> app.treasury.treasuryRoutes : lazy loads
+  routes --> app.accounting.accountingRoutes : lazy loads
+  routes --> app.reporting.reportingRoutes : lazy loads
+  app.iam.infrastructure.authenticationInterceptor ..> environment : reads base url
+}
+
+note right of environment
+  Desarrollo (json-server 0.17.4):
+    platformProviderApiBaseUrl = 'http://localhost:3000/api/v1'
+    db.json con colecciones planas (FK camelCase: projectId, invoiceId...)
+    routes.json traduce las rutas del backend a esas colecciones:
+      "/api/v1/projects/:id/progress-records": "/progress-records?projectId=:id"
+      "/api/v1/invoices/:id/payments": "/invoice-payments?invoiceId=:id"
+      "/api/v1/*": "/$1"
+  Producción (Spring Boot del backend):
+    platformProviderApiBaseUrl = 'https://<host>/api/v1'
+  Cambiar de fake API a backend real = cambiar SOLO esta URL.
+  Rutas de recursos (iguales en json-server y en Spring):
+    /authentication/sign-in, /authentication/sign-up, /users,
+    /clients, /projects, /projects/{id}/progress-records,
+    /projects/{id}/cost-estimates, /invoices, /invoices/{id}/payments,
+    /scheduled-collections, /suppliers, /expenses, /employees,
+    /fixed-costs, /fixed-costs/{id}/payments, /bank-accounts,
+    /bank-accounts/{id}/movements, /payables, /loans,
+    /loans/{id}/installments, /partners, /partners/{id}/contributions,
+    /ledger-accounts, /journal-entries, /trial-balances, /tax-returns,
+    /tax-parameters, /fixed-assets, /reports/cash-flow,
+    /reports/income-statement, /reports/balance-sheet,
+    /reports/project-profitability, /reports/dashboard
+end note
+
+note bottom
+  Layout = MatToolbar + MatSidenav; el menú lateral se filtra por el rol del
+  usuario autenticado (IamStore.currentRole). Todas las rutas de negocio se
+  cargan de forma diferida (loadChildren) por bounded context.
+end note
+@enduml

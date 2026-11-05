@@ -1,0 +1,326 @@
+@startuml
+' Brasper Platform Frontend - Expenses Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class StatusChip <<Component>>
+        class ConfirmDialog <<Component>>
+      }
+    }
+  }
+
+  package "projects" {
+    package "application" {
+      class ProjectsStore <<Store>>
+    }
+  }
+
+  package "treasury" {
+    package "application" {
+      class TreasuryStore <<Store>>
+    }
+  }
+
+  ' ==========================================
+  ' EXPENSES BOUNDED CONTEXT
+  ' ==========================================
+  package "expenses" {
+    package "domain.model" {
+      class Supplier <<Entity>> {
+        - #id: number
+        - #businessName: string
+        - #ruc: string | null
+        - #type: SupplierType
+        - #phone: string
+        +id: number
+        +businessName: string
+        +ruc: string | null
+        +type: SupplierType
+        +phone: string
+      }
+      Supplier ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum SupplierType {
+        COMPANY
+        NATURAL_PERSON
+      }
+      Supplier --> SupplierType : has
+
+      class Expense <<Entity>> {
+        - #id: number
+        - #spentOn: string
+        - #projectId: number | null
+        - #supplierId: number | null
+        - #category: CostCategory
+        - #description: string
+        - #voucherType: VoucherType
+        - #voucherNumber: string
+        - #taxableBase: number
+        - #igv: number
+        - #total: number
+        - #paymentMethod: PaymentMethod
+        - #bankAccountId: number | null
+        - #partnerId: number | null
+        - #paymentStatus: PaymentStatus
+        - #annulled: boolean
+        +id: number
+        +spentOn: string
+        +projectId: number | null
+        +supplierId: number | null
+        +category: CostCategory
+        +description: string
+        +voucherType: VoucherType
+        +voucherNumber: string
+        +taxableBase: number
+        +igv: number
+        +total: number
+        +paymentMethod: PaymentMethod
+        +bankAccountId: number | null
+        +partnerId: number | null
+        +paymentStatus: PaymentStatus
+        +annulled: boolean
+        +isDirectCost(): boolean
+      }
+      Expense ..|> app.shared.domain.model.BaseEntity : implements
+      Supplier "0..1" <-- "*" Expense : references supplierId
+
+      enum CostCategory {
+        MATERIALS
+        LABOR
+        TRAVEL_EXPENSES
+        OTHER
+      }
+      enum VoucherType {
+        INVOICE
+        SALES_RECEIPT
+        FEE_RECEIPT
+        NO_VOUCHER
+      }
+      enum PaymentMethod {
+        BANK_ACCOUNT
+        PETTY_CASH
+        PARTNER_CONTRIBUTION
+      }
+      enum PaymentStatus {
+        PENDING
+        PARTIALLY_PAID
+        PAID
+      }
+      Expense --> CostCategory : has
+      Expense --> VoucherType : has
+      Expense --> PaymentMethod : has
+      Expense --> PaymentStatus : has
+    }
+
+    package "infrastructure" {
+      class SupplierResource <<Resource>> {
+        +id: number
+        +businessName: string
+        +ruc: string | null
+        +type: string
+        +phone: string
+      }
+      class ExpenseResource <<Resource>> {
+        +id: number
+        +spentOn: string
+        +projectId: number | null
+        +supplierId: number | null
+        +category: string
+        +description: string
+        +voucherType: string
+        +voucherNumber: string
+        +taxableBase: number
+        +igv: number
+        +total: number
+        +paymentMethod: string
+        +bankAccountId: number | null
+        +partnerId: number | null
+        +paymentStatus: string
+        +annulled: boolean
+      }
+      class SuppliersResponse <<Response>> {
+      }
+      class ExpensesResponse <<Response>> {
+      }
+
+      class SupplierAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: SuppliersResponse): Supplier[]
+        +toEntityFromResource(resource: SupplierResource): Supplier
+        +toResourceFromEntity(entity: Supplier): SupplierResource
+      }
+      class ExpenseAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: ExpensesResponse): Expense[]
+        +toEntityFromResource(resource: ExpenseResource): Expense
+        +toResourceFromEntity(entity: Expense): ExpenseResource
+      }
+
+      class SuppliersApiEndpoint {
+      }
+      class ExpensesApiEndpoint {
+        +annul(id: number): Observable<Expense>
+        +getByProjectId(projectId: number): Observable<Expense[]>
+        +getByPeriod(year: number, month: number): Observable<Expense[]>
+      }
+
+      class ExpensesApi {
+        -suppliersEndpoint: SuppliersApiEndpoint
+        -expensesEndpoint: ExpensesApiEndpoint
+        +getSuppliers(): Observable<Supplier[]>
+        +getSupplierById(id: number): Observable<Supplier>
+        +createSupplier(supplier: Supplier): Observable<Supplier>
+        +updateSupplier(supplier: Supplier): Observable<Supplier>
+        +getExpenses(): Observable<Expense[]>
+        +getExpenseById(id: number): Observable<Expense>
+        +registerExpense(expense: Expense): Observable<Expense>
+        +updateExpense(expense: Expense): Observable<Expense>
+        +annulExpense(id: number): Observable<Expense>
+        +getExpensesByProject(projectId: number): Observable<Expense[]>
+      }
+
+      SupplierResource ..|> app.shared.infrastructure.BaseResource : implements
+      ExpenseResource ..|> app.shared.infrastructure.BaseResource : implements
+      SuppliersResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      ExpensesResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      SupplierAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      ExpenseAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      SuppliersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ExpensesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ExpensesApi --|> app.shared.infrastructure.BaseApi : extends
+      ExpensesApi --> SuppliersApiEndpoint : delegates to
+      ExpensesApi --> ExpensesApiEndpoint : delegates to
+      SuppliersApiEndpoint --> SupplierAssembler : uses
+      ExpensesApiEndpoint --> ExpenseAssembler : uses
+    }
+
+    package "application" {
+      class ExpensesStore <<Store>> {
+        -expensesApi: ExpensesApi
+        -suppliersSignal: WritableSignal<Supplier[]>
+        -expensesSignal: WritableSignal<Expense[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +suppliers: Signal<Supplier[]>
+        +expenses: Signal<Expense[]>
+        +activeExpenses: Signal<Expense[]>
+        +totalByCategory: Signal<Record<CostCategory, number>>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +loadSuppliers(): void
+        +loadExpenses(): void
+        +createSupplier(supplier: Supplier): void
+        +updateSupplier(supplier: Supplier): void
+        +registerExpense(expense: Expense): void
+        +updateExpense(expense: Expense): void
+        +annulExpense(id: number): void
+        +getSupplierById(id: number): Supplier | undefined
+        +getExpenseById(id: number): Expense | undefined
+      }
+      ExpensesStore --> ExpensesApi : uses
+      ExpensesStore --> Supplier : manages
+      ExpensesStore --> Expense : manages
+    }
+
+    package "presentation" {
+      package "views" {
+        class SupplierList <<Component>> {
+          -expensesStore: ExpensesStore
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Supplier>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +onEdit(id: number): void
+          +onAdd(): void
+        }
+        class SupplierForm <<Component>> {
+          -formBuilder: FormBuilder
+          -expensesStore: ExpensesStore
+          -router: Router
+          -route: ActivatedRoute
+          +supplierForm: FormGroup
+          +supplierTypes: SupplierType[]
+          +isEdit: boolean
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class ExpenseList <<Component>> {
+          -expensesStore: ExpensesStore
+          -projectsStore: ProjectsStore
+          -dialog: MatDialog
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Expense>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +projectFilter: WritableSignal<number | null>
+          +categoryFilter: WritableSignal<CostCategory | null>
+          +getProjectCode(projectId: number | null): string
+          +getSupplierName(supplierId: number | null): string
+          +onEdit(id: number): void
+          +onAnnul(id: number): void
+          +onAdd(): void
+        }
+        class ExpenseForm <<Component>> {
+          -formBuilder: FormBuilder
+          -expensesStore: ExpensesStore
+          -projectsStore: ProjectsStore
+          -treasuryStore: TreasuryStore
+          -router: Router
+          -route: ActivatedRoute
+          +expenseForm: FormGroup
+          +projects: Signal<Project[]>
+          +suppliers: Signal<Supplier[]>
+          +bankAccounts: Signal<BankAccount[]>
+          +partners: Signal<Partner[]>
+          +categories: CostCategory[]
+          +voucherTypes: VoucherType[]
+          +paymentMethods: PaymentMethod[]
+          +isEdit: boolean
+          +onPaymentMethodChange(method: PaymentMethod): void
+          +onSubmit(): void
+          +onCancel(): void
+        }
+      }
+
+      SupplierList --> ExpensesStore : uses
+      SupplierForm --> ExpensesStore : uses
+      ExpenseList --> ExpensesStore : uses
+      ExpenseForm --> ExpensesStore : uses
+      SupplierForm --|> app.shared.presentation.BaseForm : extends
+      ExpenseForm --|> app.shared.presentation.BaseForm : extends
+      ExpenseList --> app.projects.application.ProjectsStore : reads projects
+      ExpenseForm --> app.projects.application.ProjectsStore : reads projects
+      ExpenseForm --> app.treasury.application.TreasuryStore : reads bank accounts / partners
+      ExpenseList --> app.shared.presentation.components.ConfirmDialog : opens
+      ExpenseList --> app.shared.presentation.components.StatusChip : contains
+    }
+  }
+}
+
+note bottom
+  ExpenseForm: validadores condicionales según paymentMethod
+  (BANK_ACCOUNT -> bankAccountId requerido; PARTNER_CONTRIBUTION -> partnerId requerido).
+  Si voucherType = INVOICE se separa IGV 18% (base + IGV); si no, igv = 0.
+  projectId vacío = gasto general (no es costo directo de proyecto).
+  Un gasto no se elimina: se anula (onAnnul).
+  json-server: /suppliers, /expenses?projectId=&spentOn_gte=&spentOn_lte=;
+  annul = PATCH /expenses/{id} {annulled: true}.
+end note
+@enduml

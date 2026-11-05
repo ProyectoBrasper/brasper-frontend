@@ -1,0 +1,545 @@
+@startuml
+' Brasper Platform Frontend - Accounting Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class ErrorHandlingEnabledBaseType
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class StatusChip <<Component>>
+        class PeriodSelector <<Component>>
+        class ConfirmDialog <<Component>>
+      }
+    }
+  }
+
+  package "treasury" {
+    package "application" {
+      class TreasuryStore <<Store>>
+    }
+  }
+
+  ' ==========================================
+  ' ACCOUNTING BOUNDED CONTEXT
+  ' ==========================================
+  package "accounting" {
+    package "domain.model" {
+      class LedgerAccount <<Entity>> {
+        - #id: number
+        - #code: string
+        - #name: string
+        - #type: LedgerAccountType
+        - #active: boolean
+        +id: number
+        +code: string
+        +name: string
+        +type: LedgerAccountType
+        +active: boolean
+      }
+      LedgerAccount ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum LedgerAccountType {
+        ASSET
+        LIABILITY
+        EQUITY
+        REVENUE
+        EXPENSE
+      }
+      LedgerAccount --> LedgerAccountType : has
+
+      class JournalEntry <<Entity>> {
+        - #id: number
+        - #entryDate: string
+        - #description: string
+        - #source: string
+        - #sourceId: number | null
+        - #reversed: boolean
+        - #lines: JournalLine[]
+        +id: number
+        +entryDate: string
+        +description: string
+        +source: string
+        +sourceId: number | null
+        +reversed: boolean
+        +lines: JournalLine[]
+        +totalDebit(): number
+        +totalCredit(): number
+        +isBalanced(): boolean
+      }
+      JournalEntry ..|> app.shared.domain.model.BaseEntity : implements
+
+      class JournalLine <<ValueObject>> {
+        - #accountCode: string
+        - #debit: number
+        - #credit: number
+        - #projectId: number | null
+        +accountCode: string
+        +debit: number
+        +credit: number
+        +projectId: number | null
+      }
+      JournalEntry *-- "2..*" JournalLine : contains
+      JournalLine ..> LedgerAccount : references accountCode
+
+      class TrialBalance <<ReadModel>> {
+        - #year: number
+        - #month: number
+        - #lines: TrialBalanceLine[]
+        +year: number
+        +month: number
+        +lines: TrialBalanceLine[]
+        +totalDebit(): number
+        +totalCredit(): number
+        +isBalanced(): boolean
+      }
+      class TrialBalanceLine <<ValueObject>> {
+        +accountCode: string
+        +accountName: string
+        +debit: number
+        +credit: number
+        +balance: number
+      }
+      TrialBalance *-- "*" TrialBalanceLine : contains
+
+      class TaxReturn <<Entity>> {
+        - #id: number
+        - #year: number
+        - #month: number
+        - #outputIgv: number
+        - #inputIgv: number
+        - #carriedCredit: number
+        - #igvPayable: number
+        - #incomeTaxPrepayment: number
+        - #totalPayable: number
+        - #status: TaxReturnStatus
+        - #paidOn: string | null
+        +id: number
+        +year: number
+        +month: number
+        +outputIgv: number
+        +inputIgv: number
+        +carriedCredit: number
+        +igvPayable: number
+        +incomeTaxPrepayment: number
+        +totalPayable: number
+        +status: TaxReturnStatus
+        +paidOn: string | null
+      }
+      TaxReturn ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum TaxReturnStatus {
+        DRAFT
+        FILED
+        PAID
+      }
+      TaxReturn --> TaxReturnStatus : has
+
+      class TaxParameters <<Entity>> {
+        - #id: number
+        - #igv: number
+        - #detraction: number
+        - #retention: number
+        - #incomeTaxPrepayment: number
+        - #effectiveFrom: string
+        +id: number
+        +igv: number
+        +detraction: number
+        +retention: number
+        +incomeTaxPrepayment: number
+        +effectiveFrom: string
+      }
+      TaxParameters ..|> app.shared.domain.model.BaseEntity : implements
+
+      class FixedAsset <<Entity>> {
+        - #id: number
+        - #description: string
+        - #acquiredOn: string
+        - #taxableBase: number
+        - #igv: number
+        - #total: number
+        - #usefulLifeMonths: number
+        - #bookValue: number
+        - #disposed: boolean
+        +id: number
+        +description: string
+        +acquiredOn: string
+        +taxableBase: number
+        +igv: number
+        +total: number
+        +usefulLifeMonths: number
+        +bookValue: number
+        +disposed: boolean
+      }
+      FixedAsset ..|> app.shared.domain.model.BaseEntity : implements
+    }
+
+    package "infrastructure" {
+      class LedgerAccountResource <<Resource>> {
+        +id: number
+        +code: string
+        +name: string
+        +type: string
+        +active: boolean
+      }
+      class JournalEntryResource <<Resource>> {
+        +id: number
+        +entryDate: string
+        +description: string
+        +source: string
+        +sourceId: number | null
+        +reversed: boolean
+        +lines: Array<{accountCode: string, debit: number, credit: number, projectId: number | null}>
+      }
+      class TrialBalanceResource <<Resource>> {
+        +year: number
+        +month: number
+        +lines: TrialBalanceLine[]
+        +totalDebit: number
+        +totalCredit: number
+      }
+      class TaxReturnResource <<Resource>> {
+        +id: number
+        +year: number
+        +month: number
+        +outputIgv: number
+        +inputIgv: number
+        +carriedCredit: number
+        +igvPayable: number
+        +incomeTaxPrepayment: number
+        +totalPayable: number
+        +status: string
+        +paidOn: string | null
+      }
+      class TaxParametersResource <<Resource>> {
+        +id: number
+        +igv: number
+        +detraction: number
+        +retention: number
+        +incomeTaxPrepayment: number
+        +effectiveFrom: string
+      }
+      class FixedAssetResource <<Resource>> {
+        +id: number
+        +description: string
+        +acquiredOn: string
+        +taxableBase: number
+        +igv: number
+        +total: number
+        +usefulLifeMonths: number
+        +bookValue: number
+        +disposed: boolean
+      }
+      class LedgerAccountsResponse <<Response>> {
+      }
+      class JournalEntriesResponse <<Response>> {
+      }
+      class TaxReturnsResponse <<Response>> {
+      }
+      class TaxParametersResponse <<Response>> {
+      }
+      class FixedAssetsResponse <<Response>> {
+      }
+
+      class LedgerAccountAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: LedgerAccountsResponse): LedgerAccount[]
+        +toEntityFromResource(resource: LedgerAccountResource): LedgerAccount
+        +toResourceFromEntity(entity: LedgerAccount): LedgerAccountResource
+      }
+      class JournalEntryAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: JournalEntriesResponse): JournalEntry[]
+        +toEntityFromResource(resource: JournalEntryResource): JournalEntry
+        +toResourceFromEntity(entity: JournalEntry): JournalEntryResource
+      }
+      class TrialBalanceAssembler <<Assembler>> {
+        +toEntityFromResource(resource: TrialBalanceResource): TrialBalance
+      }
+      class TaxReturnAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: TaxReturnsResponse): TaxReturn[]
+        +toEntityFromResource(resource: TaxReturnResource): TaxReturn
+        +toResourceFromEntity(entity: TaxReturn): TaxReturnResource
+      }
+      class TaxParametersAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: TaxParametersResponse): TaxParameters[]
+        +toEntityFromResource(resource: TaxParametersResource): TaxParameters
+        +toResourceFromEntity(entity: TaxParameters): TaxParametersResource
+      }
+      class FixedAssetAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: FixedAssetsResponse): FixedAsset[]
+        +toEntityFromResource(resource: FixedAssetResource): FixedAsset
+        +toResourceFromEntity(entity: FixedAsset): FixedAssetResource
+      }
+
+      class LedgerAccountsApiEndpoint {
+      }
+      class JournalEntriesApiEndpoint {
+        +getByPeriod(year: number, month: number): Observable<JournalEntry[]>
+        +reverse(id: number): Observable<JournalEntry>
+      }
+      class TrialBalanceApiEndpoint {
+        -endpointUrl: string
+        -assembler: TrialBalanceAssembler
+        +getByPeriod(year: number, month: number): Observable<TrialBalance>
+      }
+      class TaxReturnsApiEndpoint {
+        +getByPeriod(year: number, month: number): Observable<TaxReturn | null>
+        +prepare(year: number, month: number): Observable<TaxReturn>
+        +pay(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
+      }
+      class TaxParametersApiEndpoint {
+        +getCurrent(): Observable<TaxParameters>
+      }
+      class FixedAssetsApiEndpoint {
+        +dispose(id: number): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+      }
+
+      class AccountingApi {
+        -ledgerAccountsEndpoint: LedgerAccountsApiEndpoint
+        -journalEntriesEndpoint: JournalEntriesApiEndpoint
+        -trialBalanceEndpoint: TrialBalanceApiEndpoint
+        -taxReturnsEndpoint: TaxReturnsApiEndpoint
+        -taxParametersEndpoint: TaxParametersApiEndpoint
+        -fixedAssetsEndpoint: FixedAssetsApiEndpoint
+        +getLedgerAccounts(): Observable<LedgerAccount[]>
+        +createLedgerAccount(account: LedgerAccount): Observable<LedgerAccount>
+        +getJournalEntries(year: number, month: number): Observable<JournalEntry[]>
+        +registerJournalEntry(entry: JournalEntry): Observable<JournalEntry>
+        +reverseJournalEntry(id: number): Observable<JournalEntry>
+        +getTrialBalance(year: number, month: number): Observable<TrialBalance>
+        +getTaxReturn(year: number, month: number): Observable<TaxReturn | null>
+        +prepareTaxReturn(year: number, month: number): Observable<TaxReturn>
+        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
+        +getCurrentTaxParameters(): Observable<TaxParameters>
+        +setTaxParameters(parameters: TaxParameters): Observable<TaxParameters>
+        +getFixedAssets(): Observable<FixedAsset[]>
+        +registerFixedAsset(asset: FixedAsset): Observable<FixedAsset>
+        +disposeFixedAsset(id: number): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+      }
+
+      LedgerAccountResource ..|> app.shared.infrastructure.BaseResource : implements
+      JournalEntryResource ..|> app.shared.infrastructure.BaseResource : implements
+      TaxReturnResource ..|> app.shared.infrastructure.BaseResource : implements
+      TaxParametersResource ..|> app.shared.infrastructure.BaseResource : implements
+      FixedAssetResource ..|> app.shared.infrastructure.BaseResource : implements
+      LedgerAccountsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      JournalEntriesResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      TaxReturnsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      TaxParametersResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      FixedAssetsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      LedgerAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      JournalEntryAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      TaxReturnAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      TaxParametersAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      FixedAssetAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      LedgerAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      JournalEntriesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      TrialBalanceApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      TaxReturnsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      TaxParametersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      FixedAssetsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      AccountingApi --|> app.shared.infrastructure.BaseApi : extends
+      AccountingApi --> LedgerAccountsApiEndpoint : delegates to
+      AccountingApi --> JournalEntriesApiEndpoint : delegates to
+      AccountingApi --> TrialBalanceApiEndpoint : delegates to
+      AccountingApi --> TaxReturnsApiEndpoint : delegates to
+      AccountingApi --> TaxParametersApiEndpoint : delegates to
+      AccountingApi --> FixedAssetsApiEndpoint : delegates to
+      LedgerAccountsApiEndpoint --> LedgerAccountAssembler : uses
+      JournalEntriesApiEndpoint --> JournalEntryAssembler : uses
+      TrialBalanceApiEndpoint --> TrialBalanceAssembler : uses
+      TaxReturnsApiEndpoint --> TaxReturnAssembler : uses
+      TaxParametersApiEndpoint --> TaxParametersAssembler : uses
+      FixedAssetsApiEndpoint --> FixedAssetAssembler : uses
+      TrialBalanceAssembler --> TrialBalance : builds
+    }
+
+    package "application" {
+      class AccountingStore <<Store>> {
+        -accountingApi: AccountingApi
+        -ledgerAccountsSignal: WritableSignal<LedgerAccount[]>
+        -journalEntriesSignal: WritableSignal<JournalEntry[]>
+        -trialBalanceSignal: WritableSignal<TrialBalance | null>
+        -taxReturnSignal: WritableSignal<TaxReturn | null>
+        -taxParametersSignal: WritableSignal<TaxParameters | null>
+        -fixedAssetsSignal: WritableSignal<FixedAsset[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +ledgerAccounts: Signal<LedgerAccount[]>
+        +journalEntries: Signal<JournalEntry[]>
+        +trialBalance: Signal<TrialBalance | null>
+        +taxReturn: Signal<TaxReturn | null>
+        +taxParameters: Signal<TaxParameters | null>
+        +fixedAssets: Signal<FixedAsset[]>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +loadLedgerAccounts(): void
+        +createLedgerAccount(account: LedgerAccount): void
+        +loadJournalEntries(year: number, month: number): void
+        +registerJournalEntry(entry: JournalEntry): void
+        +reverseJournalEntry(id: number): void
+        +loadTrialBalance(year: number, month: number): void
+        +loadTaxReturn(year: number, month: number): void
+        +prepareTaxReturn(year: number, month: number): void
+        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): void
+        +loadTaxParameters(): void
+        +setTaxParameters(parameters: TaxParameters): void
+        +loadFixedAssets(): void
+        +registerFixedAsset(asset: FixedAsset): void
+        +disposeFixedAsset(id: number): void
+        +runMonthlyDepreciation(year: number, month: number): void
+      }
+      AccountingStore --> AccountingApi : uses
+      AccountingStore --> LedgerAccount : manages
+      AccountingStore --> JournalEntry : manages
+      AccountingStore --> TrialBalance : manages
+      AccountingStore --> TaxReturn : manages
+      AccountingStore --> TaxParameters : manages
+      AccountingStore --> FixedAsset : manages
+    }
+
+    package "presentation" {
+      package "components" {
+        class JournalLinesEditor <<Component>> {
+          +linesArray: InputSignal<FormArray>
+          +ledgerAccounts: InputSignal<LedgerAccount[]>
+          +totalDebit: Signal<number>
+          +totalCredit: Signal<number>
+          +difference: Signal<number>
+          +onAddLine(): void
+          +onRemoveLine(index: number): void
+        }
+        class PayTaxReturnDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<PayTaxReturnDialog>
+          -treasuryStore: TreasuryStore
+          +data: {taxReturn: TaxReturn}
+          +paymentForm: FormGroup
+          +bankAccounts: Signal<BankAccount[]>
+          +onSave(): void
+          +onCancel(): void
+        }
+      }
+
+      package "views" {
+        class LedgerAccountList <<Component>> {
+          -accountingStore: AccountingStore
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<LedgerAccount>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +typeFilter: WritableSignal<LedgerAccountType | null>
+          +onAdd(): void
+        }
+        class JournalEntryList <<Component>> {
+          -accountingStore: AccountingStore
+          -dialog: MatDialog
+          -router: Router
+          +period: WritableSignal<Period>
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<JournalEntry>>
+          +paginator: Signal<MatPaginator>
+          +expandedEntry: WritableSignal<JournalEntry | null>
+          +onReverse(id: number): void
+          +onAdd(): void
+        }
+        class JournalEntryForm <<Component>> {
+          -formBuilder: FormBuilder
+          -accountingStore: AccountingStore
+          -router: Router
+          +entryForm: FormGroup
+          +ledgerAccounts: Signal<LedgerAccount[]>
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class TrialBalanceView <<Component>> {
+          -accountingStore: AccountingStore
+          +period: WritableSignal<Period>
+          +trialBalance: Signal<TrialBalance | null>
+          +displayedColumns: string[]
+        }
+        class TaxReturnList <<Component>> {
+          -accountingStore: AccountingStore
+          -dialog: MatDialog
+          +period: WritableSignal<Period>
+          +taxReturn: Signal<TaxReturn | null>
+          +onPrepare(): void
+          +onPay(): void
+        }
+        class TaxParametersForm <<Component>> {
+          -formBuilder: FormBuilder
+          -accountingStore: AccountingStore
+          +parametersForm: FormGroup
+          +current: Signal<TaxParameters | null>
+          +onSubmit(): void
+        }
+        class FixedAssetList <<Component>> {
+          -accountingStore: AccountingStore
+          -dialog: MatDialog
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<FixedAsset>>
+          +onDispose(id: number): void
+          +onRunDepreciation(): void
+          +onAdd(): void
+        }
+        class FixedAssetForm <<Component>> {
+          -formBuilder: FormBuilder
+          -accountingStore: AccountingStore
+          -router: Router
+          +assetForm: FormGroup
+          +onSubmit(): void
+          +onCancel(): void
+        }
+      }
+
+      LedgerAccountList --> AccountingStore : uses
+      JournalEntryList --> AccountingStore : uses
+      JournalEntryForm --> AccountingStore : uses
+      TrialBalanceView --> AccountingStore : uses
+      TaxReturnList --> AccountingStore : uses
+      TaxParametersForm --> AccountingStore : uses
+      FixedAssetList --> AccountingStore : uses
+      FixedAssetForm --> AccountingStore : uses
+      JournalEntryForm --|> app.shared.presentation.BaseForm : extends
+      TaxParametersForm --|> app.shared.presentation.BaseForm : extends
+      FixedAssetForm --|> app.shared.presentation.BaseForm : extends
+      JournalEntryForm --> JournalLinesEditor : contains
+      TaxReturnList --> PayTaxReturnDialog : opens
+      PayTaxReturnDialog --> app.treasury.application.TreasuryStore : reads bank accounts
+      JournalEntryList --> app.shared.presentation.components.PeriodSelector : contains
+      TrialBalanceView --> app.shared.presentation.components.PeriodSelector : contains
+      TaxReturnList --> app.shared.presentation.components.PeriodSelector : contains
+      JournalEntryList --> app.shared.presentation.components.ConfirmDialog : opens
+      FixedAssetList --> app.shared.presentation.components.ConfirmDialog : opens
+      TaxReturnList --> app.shared.presentation.components.StatusChip : contains
+    }
+  }
+}
+
+note bottom
+  JournalEntryForm: validador de grupo "partida doble" -> suma(debe) == suma(haber), mínimo 2 líneas,
+  cada línea con debe XOR haber; JournalLinesEditor muestra la diferencia en tiempo real.
+  Los asientos automáticos (facturas, gastos, pagos) los genera el backend; aquí solo se ven y se
+  pueden revertir. AccountingStore.taxParameters lo leen billing y expenses para la vista previa
+  de IGV / detracción / retención. Solo ROLE_ACCOUNTING y ROLE_ADMIN acceden a este módulo.
+  json-server: /ledger-accounts, /journal-entries?entryDate_gte=&entryDate_lte=,
+  /trial-balances?year=&month=, /tax-returns?year=&month=, /tax-parameters, /fixed-assets
+  (con fake API trial-balances y tax-returns se guardan ya calculados).
+end note
+@enduml

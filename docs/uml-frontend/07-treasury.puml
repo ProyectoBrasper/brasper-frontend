@@ -1,0 +1,716 @@
+@startuml
+' Brasper Platform Frontend - Treasury Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class StatusChip <<Component>>
+        class PeriodSelector <<Component>>
+      }
+    }
+  }
+
+  ' ==========================================
+  ' TREASURY BOUNDED CONTEXT
+  ' ==========================================
+  package "treasury" {
+    package "domain.model" {
+      class BankAccount <<Entity>> {
+        - #id: number
+        - #bank: Bank
+        - #accountNumber: string
+        - #type: AccountType
+        - #currency: string
+        - #openingBalance: number
+        - #currentBalance: number
+        +id: number
+        +bank: Bank
+        +accountNumber: string
+        +type: AccountType
+        +currency: string
+        +openingBalance: number
+        +currentBalance: number
+        +displayName(): string
+      }
+      BankAccount ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum Bank {
+        BCP
+        BBVA
+        BANCO_DE_LA_NACION
+        CASH
+      }
+      enum AccountType {
+        CHECKING
+        DETRACTIONS
+        PETTY_CASH
+      }
+      BankAccount --> Bank : has
+      BankAccount --> AccountType : has
+
+      class CashMovement <<Entity>> {
+        - #id: number
+        - #bankAccountId: number
+        - #occurredOn: string
+        - #direction: MovementDirection
+        - #amount: number
+        - #concept: string
+        - #source: string
+        - #sourceId: number | null
+        +id: number
+        +bankAccountId: number
+        +occurredOn: string
+        +direction: MovementDirection
+        +amount: number
+        +concept: string
+        +source: string
+        +sourceId: number | null
+        +signedAmount(): number
+      }
+      CashMovement ..|> app.shared.domain.model.BaseEntity : implements
+      BankAccount "1" <-- "*" CashMovement : references bankAccountId
+
+      enum MovementDirection {
+        INFLOW
+        OUTFLOW
+      }
+      CashMovement --> MovementDirection : has
+
+      class Payable <<Entity>> {
+        - #id: number
+        - #concept: string
+        - #type: PayableType
+        - #totalAmount: number
+        - #paidAmount: number
+        - #balance: number
+        - #supplierId: number | null
+        - #projectId: number | null
+        - #expenseId: number | null
+        - #year: number | null
+        - #month: number | null
+        - #week: number | null
+        - #status: PaymentStatus
+        +id: number
+        +concept: string
+        +type: PayableType
+        +totalAmount: number
+        +paidAmount: number
+        +balance: number
+        +supplierId: number | null
+        +projectId: number | null
+        +expenseId: number | null
+        +year: number | null
+        +month: number | null
+        +week: number | null
+        +status: PaymentStatus
+      }
+      Payable ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum PayableType {
+        SUPPLIER
+        TECHNICIAN
+        ACCOUNTING
+        SELF_DETRACTION
+        TAX
+        OTHER
+      }
+      enum PaymentStatus {
+        PENDING
+        PARTIALLY_PAID
+        PAID
+      }
+      Payable --> PayableType : has
+      Payable --> PaymentStatus : has
+
+      class PayablePayment <<Entity>> {
+        - #id: number
+        - #payableId: number
+        - #paidOn: string
+        - #amount: number
+        - #bankAccountId: number
+        +id: number
+        +payableId: number
+        +paidOn: string
+        +amount: number
+        +bankAccountId: number
+      }
+      PayablePayment ..|> app.shared.domain.model.BaseEntity : implements
+      Payable "1" <-- "*" PayablePayment : references payableId
+
+      class Loan <<Entity>> {
+        - #id: number
+        - #type: LoanType
+        - #counterparty: string
+        - #principal: number
+        - #interestRate: number
+        - #disbursedOn: string
+        - #bankAccountId: number
+        - #totalInterest: number
+        - #outstandingBalance: number
+        - #status: PaymentStatus
+        +id: number
+        +type: LoanType
+        +counterparty: string
+        +principal: number
+        +interestRate: number
+        +disbursedOn: string
+        +bankAccountId: number
+        +totalInterest: number
+        +outstandingBalance: number
+        +status: PaymentStatus
+      }
+      Loan ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum LoanType {
+        RECEIVED
+        GRANTED
+      }
+      Loan --> LoanType : has
+
+      class LoanInstallment <<Entity>> {
+        - #id: number
+        - #loanId: number
+        - #dueOn: string
+        - #principal: number
+        - #interest: number
+        - #paid: boolean
+        - #paidOn: string | null
+        +id: number
+        +loanId: number
+        +dueOn: string
+        +principal: number
+        +interest: number
+        +paid: boolean
+        +paidOn: string | null
+        +total(): number
+      }
+      LoanInstallment ..|> app.shared.domain.model.BaseEntity : implements
+      Loan "1" <-- "*" LoanInstallment : references loanId
+
+      class Partner <<Entity>> {
+        - #id: number
+        - #fullName: string
+        - #role: string
+        - #totalContributed: number
+        +id: number
+        +fullName: string
+        +role: string
+        +totalContributed: number
+      }
+      Partner ..|> app.shared.domain.model.BaseEntity : implements
+
+      class PartnerContribution <<Entity>> {
+        - #id: number
+        - #partnerId: number
+        - #contributedOn: string
+        - #amount: number
+        - #reimbursable: boolean
+        - #bankAccountId: number | null
+        - #expenseId: number | null
+        - #concept: string
+        +id: number
+        +partnerId: number
+        +contributedOn: string
+        +amount: number
+        +reimbursable: boolean
+        +bankAccountId: number | null
+        +expenseId: number | null
+        +concept: string
+      }
+      PartnerContribution ..|> app.shared.domain.model.BaseEntity : implements
+      Partner "1" <-- "*" PartnerContribution : references partnerId
+
+      class FundsTransfer {
+        - #fromAccountId: number
+        - #toAccountId: number
+        - #transferredOn: string
+        - #amount: number
+        - #concept: string
+        +fromAccountId: number
+        +toAccountId: number
+        +transferredOn: string
+        +amount: number
+        +concept: string
+      }
+    }
+
+    package "infrastructure" {
+      class BankAccountResource <<Resource>> {
+        +id: number
+        +bank: string
+        +accountNumber: string
+        +type: string
+        +currency: string
+        +openingBalance: number
+        +currentBalance: number
+      }
+      class CashMovementResource <<Resource>> {
+        +id: number
+        +bankAccountId: number
+        +occurredOn: string
+        +direction: string
+        +amount: number
+        +concept: string
+        +source: string
+        +sourceId: number | null
+      }
+      class PayableResource <<Resource>> {
+        +id: number
+        +concept: string
+        +type: string
+        +totalAmount: number
+        +paidAmount: number
+        +balance: number
+        +supplierId: number | null
+        +projectId: number | null
+        +expenseId: number | null
+        +year: number | null
+        +month: number | null
+        +week: number | null
+        +status: string
+      }
+      class PayablePaymentResource <<Resource>> {
+        +id: number
+        +payableId: number
+        +paidOn: string
+        +amount: number
+        +bankAccountId: number
+      }
+      class LoanResource <<Resource>> {
+        +id: number
+        +type: string
+        +counterparty: string
+        +principal: number
+        +interestRate: number
+        +disbursedOn: string
+        +bankAccountId: number
+        +totalInterest: number
+        +outstandingBalance: number
+        +status: string
+      }
+      class LoanInstallmentResource <<Resource>> {
+        +id: number
+        +loanId: number
+        +dueOn: string
+        +principal: number
+        +interest: number
+        +paid: boolean
+        +paidOn: string | null
+      }
+      class PartnerResource <<Resource>> {
+        +id: number
+        +fullName: string
+        +role: string
+        +totalContributed: number
+      }
+      class PartnerContributionResource <<Resource>> {
+        +id: number
+        +partnerId: number
+        +contributedOn: string
+        +amount: number
+        +reimbursable: boolean
+        +bankAccountId: number | null
+        +expenseId: number | null
+        +concept: string
+      }
+      class BankAccountsResponse <<Response>> {
+      }
+      class CashMovementsResponse <<Response>> {
+      }
+      class PayablesResponse <<Response>> {
+      }
+      class PayablePaymentsResponse <<Response>> {
+      }
+      class LoansResponse <<Response>> {
+      }
+      class LoanInstallmentsResponse <<Response>> {
+      }
+      class PartnersResponse <<Response>> {
+      }
+      class PartnerContributionsResponse <<Response>> {
+      }
+
+      class BankAccountAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: BankAccountsResponse): BankAccount[]
+        +toEntityFromResource(resource: BankAccountResource): BankAccount
+        +toResourceFromEntity(entity: BankAccount): BankAccountResource
+      }
+      class CashMovementAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: CashMovementsResponse): CashMovement[]
+        +toEntityFromResource(resource: CashMovementResource): CashMovement
+        +toResourceFromEntity(entity: CashMovement): CashMovementResource
+      }
+      class PayableAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: PayablesResponse): Payable[]
+        +toEntityFromResource(resource: PayableResource): Payable
+        +toResourceFromEntity(entity: Payable): PayableResource
+      }
+      class PayablePaymentAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: PayablePaymentsResponse): PayablePayment[]
+        +toEntityFromResource(resource: PayablePaymentResource): PayablePayment
+        +toResourceFromEntity(entity: PayablePayment): PayablePaymentResource
+      }
+      class LoanAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: LoansResponse): Loan[]
+        +toEntityFromResource(resource: LoanResource): Loan
+        +toResourceFromEntity(entity: Loan): LoanResource
+      }
+      class LoanInstallmentAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: LoanInstallmentsResponse): LoanInstallment[]
+        +toEntityFromResource(resource: LoanInstallmentResource): LoanInstallment
+        +toResourceFromEntity(entity: LoanInstallment): LoanInstallmentResource
+      }
+      class PartnerAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: PartnersResponse): Partner[]
+        +toEntityFromResource(resource: PartnerResource): Partner
+        +toResourceFromEntity(entity: Partner): PartnerResource
+      }
+      class PartnerContributionAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: PartnerContributionsResponse): PartnerContribution[]
+        +toEntityFromResource(resource: PartnerContributionResource): PartnerContribution
+        +toResourceFromEntity(entity: PartnerContribution): PartnerContributionResource
+      }
+
+      class BankAccountsApiEndpoint {
+        +transferFunds(transfer: FundsTransfer): Observable<void>
+      }
+      class CashMovementsApiEndpoint {
+        +getByAccountAndPeriod(bankAccountId: number, year: number, month: number): Observable<CashMovement[]>
+      }
+      class PayablesApiEndpoint {
+        +getPending(): Observable<Payable[]>
+      }
+      class PayablePaymentsApiEndpoint {
+        +register(payableId: number, payment: PayablePayment): Observable<PayablePayment>
+      }
+      class LoansApiEndpoint {
+      }
+      class LoanInstallmentsApiEndpoint {
+        +getByLoanId(loanId: number): Observable<LoanInstallment[]>
+        +schedule(loanId: number, installment: LoanInstallment): Observable<LoanInstallment>
+        +pay(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<LoanInstallment>
+      }
+      class PartnersApiEndpoint {
+      }
+      class PartnerContributionsApiEndpoint {
+        +getByPeriod(year: number, month: number): Observable<PartnerContribution[]>
+        +register(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
+      }
+
+      class TreasuryApi {
+        -bankAccountsEndpoint: BankAccountsApiEndpoint
+        -cashMovementsEndpoint: CashMovementsApiEndpoint
+        -payablesEndpoint: PayablesApiEndpoint
+        -payablePaymentsEndpoint: PayablePaymentsApiEndpoint
+        -loansEndpoint: LoansApiEndpoint
+        -loanInstallmentsEndpoint: LoanInstallmentsApiEndpoint
+        -partnersEndpoint: PartnersApiEndpoint
+        -partnerContributionsEndpoint: PartnerContributionsApiEndpoint
+        +getBankAccounts(): Observable<BankAccount[]>
+        +openBankAccount(account: BankAccount): Observable<BankAccount>
+        +getMovements(bankAccountId: number, year: number, month: number): Observable<CashMovement[]>
+        +transferFunds(transfer: FundsTransfer): Observable<void>
+        +getPayables(): Observable<Payable[]>
+        +createPayable(payable: Payable): Observable<Payable>
+        +updatePayable(payable: Payable): Observable<Payable>
+        +registerPayablePayment(payableId: number, payment: PayablePayment): Observable<PayablePayment>
+        +getLoans(): Observable<Loan[]>
+        +getLoanById(id: number): Observable<Loan>
+        +registerLoan(loan: Loan): Observable<Loan>
+        +getInstallments(loanId: number): Observable<LoanInstallment[]>
+        +scheduleInstallment(loanId: number, installment: LoanInstallment): Observable<LoanInstallment>
+        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<LoanInstallment>
+        +getPartners(): Observable<Partner[]>
+        +registerPartner(partner: Partner): Observable<Partner>
+        +registerContribution(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
+        +getContributionsByPeriod(year: number, month: number): Observable<PartnerContribution[]>
+      }
+
+      BankAccountResource ..|> app.shared.infrastructure.BaseResource : implements
+      CashMovementResource ..|> app.shared.infrastructure.BaseResource : implements
+      PayableResource ..|> app.shared.infrastructure.BaseResource : implements
+      PayablePaymentResource ..|> app.shared.infrastructure.BaseResource : implements
+      LoanResource ..|> app.shared.infrastructure.BaseResource : implements
+      LoanInstallmentResource ..|> app.shared.infrastructure.BaseResource : implements
+      PartnerResource ..|> app.shared.infrastructure.BaseResource : implements
+      PartnerContributionResource ..|> app.shared.infrastructure.BaseResource : implements
+      BankAccountsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      CashMovementsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      PayablesResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      PayablePaymentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      LoansResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      LoanInstallmentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      PartnersResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      PartnerContributionsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      BankAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      CashMovementAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      PayableAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      PayablePaymentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      LoanAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      LoanInstallmentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      PartnerAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      PartnerContributionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      BankAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      CashMovementsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      PayablesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      PayablePaymentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      LoansApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      LoanInstallmentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      PartnersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      PartnerContributionsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      TreasuryApi --|> app.shared.infrastructure.BaseApi : extends
+      TreasuryApi --> BankAccountsApiEndpoint : delegates to
+      TreasuryApi --> CashMovementsApiEndpoint : delegates to
+      TreasuryApi --> PayablesApiEndpoint : delegates to
+      TreasuryApi --> PayablePaymentsApiEndpoint : delegates to
+      TreasuryApi --> LoansApiEndpoint : delegates to
+      TreasuryApi --> LoanInstallmentsApiEndpoint : delegates to
+      TreasuryApi --> PartnersApiEndpoint : delegates to
+      TreasuryApi --> PartnerContributionsApiEndpoint : delegates to
+      BankAccountsApiEndpoint --> BankAccountAssembler : uses
+      CashMovementsApiEndpoint --> CashMovementAssembler : uses
+      PayablesApiEndpoint --> PayableAssembler : uses
+      PayablePaymentsApiEndpoint --> PayablePaymentAssembler : uses
+      LoansApiEndpoint --> LoanAssembler : uses
+      LoanInstallmentsApiEndpoint --> LoanInstallmentAssembler : uses
+      PartnersApiEndpoint --> PartnerAssembler : uses
+      PartnerContributionsApiEndpoint --> PartnerContributionAssembler : uses
+      BankAccountsApiEndpoint ..> FundsTransfer : sends
+    }
+
+    package "application" {
+      class TreasuryStore <<Store>> {
+        -treasuryApi: TreasuryApi
+        -bankAccountsSignal: WritableSignal<BankAccount[]>
+        -movementsSignal: WritableSignal<CashMovement[]>
+        -payablesSignal: WritableSignal<Payable[]>
+        -loansSignal: WritableSignal<Loan[]>
+        -installmentsSignal: WritableSignal<LoanInstallment[]>
+        -partnersSignal: WritableSignal<Partner[]>
+        -contributionsSignal: WritableSignal<PartnerContribution[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +bankAccounts: Signal<BankAccount[]>
+        +totalCashBalance: Signal<number>
+        +movements: Signal<CashMovement[]>
+        +payables: Signal<Payable[]>
+        +pendingPayables: Signal<Payable[]>
+        +loans: Signal<Loan[]>
+        +installments: Signal<LoanInstallment[]>
+        +partners: Signal<Partner[]>
+        +contributions: Signal<PartnerContribution[]>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +loadBankAccounts(): void
+        +openBankAccount(account: BankAccount): void
+        +loadMovements(bankAccountId: number, year: number, month: number): void
+        +transferFunds(transfer: FundsTransfer): void
+        +loadPayables(): void
+        +createPayable(payable: Payable): void
+        +registerPayablePayment(payableId: number, payment: PayablePayment): void
+        +loadLoans(): void
+        +loadLoanDetail(loanId: number): void
+        +registerLoan(loan: Loan): void
+        +scheduleInstallment(loanId: number, installment: LoanInstallment): void
+        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): void
+        +loadPartners(): void
+        +registerPartner(partner: Partner): void
+        +registerContribution(partnerId: number, contribution: PartnerContribution): void
+        +getBankAccountById(id: number): BankAccount | undefined
+      }
+      TreasuryStore --> TreasuryApi : uses
+      TreasuryStore --> BankAccount : manages
+      TreasuryStore --> CashMovement : manages
+      TreasuryStore --> Payable : manages
+      TreasuryStore --> Loan : manages
+      TreasuryStore --> LoanInstallment : manages
+      TreasuryStore --> Partner : manages
+      TreasuryStore --> PartnerContribution : manages
+    }
+
+    package "presentation" {
+      package "components" {
+        class TransferFundsDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<TransferFundsDialog>
+          +data: {accounts: BankAccount[]}
+          +transferForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class RegisterPayablePaymentDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterPayablePaymentDialog>
+          +data: {payable: Payable, accounts: BankAccount[]}
+          +paymentForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class ScheduleInstallmentDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<ScheduleInstallmentDialog>
+          +data: {loan: Loan}
+          +installmentForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class PayInstallmentDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<PayInstallmentDialog>
+          +data: {installment: LoanInstallment, accounts: BankAccount[]}
+          +paymentForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class RegisterContributionDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterContributionDialog>
+          +data: {partner: Partner, accounts: BankAccount[]}
+          +contributionForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+      }
+
+      package "views" {
+        class BankAccountList <<Component>> {
+          -treasuryStore: TreasuryStore
+          -dialog: MatDialog
+          -router: Router
+          +accounts: Signal<BankAccount[]>
+          +totalCashBalance: Signal<number>
+          +onView(id: number): void
+          +onTransfer(): void
+          +onAdd(): void
+        }
+        class BankAccountForm <<Component>> {
+          -formBuilder: FormBuilder
+          -treasuryStore: TreasuryStore
+          -router: Router
+          +accountForm: FormGroup
+          +banks: Bank[]
+          +accountTypes: AccountType[]
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class BankAccountDetail <<Component>> {
+          -treasuryStore: TreasuryStore
+          -route: ActivatedRoute
+          +account: Signal<BankAccount | undefined>
+          +period: WritableSignal<Period>
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<CashMovement>>
+          +paginator: Signal<MatPaginator>
+          +onPeriodChange(period: Period): void
+        }
+        class PayableList <<Component>> {
+          -treasuryStore: TreasuryStore
+          -dialog: MatDialog
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Payable>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +statusFilter: WritableSignal<PaymentStatus | null>
+          +onRegisterPayment(payable: Payable): void
+          +onAdd(): void
+        }
+        class PayableForm <<Component>> {
+          -formBuilder: FormBuilder
+          -treasuryStore: TreasuryStore
+          -router: Router
+          +payableForm: FormGroup
+          +payableTypes: PayableType[]
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class LoanList <<Component>> {
+          -treasuryStore: TreasuryStore
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Loan>>
+          +typeFilter: WritableSignal<LoanType | null>
+          +onView(id: number): void
+          +onAdd(): void
+        }
+        class LoanForm <<Component>> {
+          -formBuilder: FormBuilder
+          -treasuryStore: TreasuryStore
+          -router: Router
+          +loanForm: FormGroup
+          +loanTypes: LoanType[]
+          +bankAccounts: Signal<BankAccount[]>
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class LoanDetail <<Component>> {
+          -treasuryStore: TreasuryStore
+          -dialog: MatDialog
+          -route: ActivatedRoute
+          +loan: Signal<Loan | undefined>
+          +installments: Signal<LoanInstallment[]>
+          +onScheduleInstallment(): void
+          +onPayInstallment(installment: LoanInstallment): void
+        }
+        class PartnerList <<Component>> {
+          -treasuryStore: TreasuryStore
+          -dialog: MatDialog
+          +partners: Signal<Partner[]>
+          +period: WritableSignal<Period>
+          +contributions: Signal<PartnerContribution[]>
+          +onRegisterContribution(partner: Partner): void
+          +onAdd(): void
+        }
+      }
+
+      BankAccountList --> TreasuryStore : uses
+      BankAccountForm --> TreasuryStore : uses
+      BankAccountDetail --> TreasuryStore : uses
+      PayableList --> TreasuryStore : uses
+      PayableForm --> TreasuryStore : uses
+      LoanList --> TreasuryStore : uses
+      LoanForm --> TreasuryStore : uses
+      LoanDetail --> TreasuryStore : uses
+      PartnerList --> TreasuryStore : uses
+      BankAccountForm --|> app.shared.presentation.BaseForm : extends
+      PayableForm --|> app.shared.presentation.BaseForm : extends
+      LoanForm --|> app.shared.presentation.BaseForm : extends
+      BankAccountList --> TransferFundsDialog : opens
+      PayableList --> RegisterPayablePaymentDialog : opens
+      LoanDetail --> ScheduleInstallmentDialog : opens
+      LoanDetail --> PayInstallmentDialog : opens
+      PartnerList --> RegisterContributionDialog : opens
+      BankAccountDetail --> app.shared.presentation.components.PeriodSelector : contains
+      PartnerList --> app.shared.presentation.components.PeriodSelector : contains
+      PayableList --> app.shared.presentation.components.StatusChip : contains
+      LoanList --> app.shared.presentation.components.StatusChip : contains
+    }
+  }
+}
+
+note bottom
+  El saldo de cada cuenta (currentBalance) lo calcula el backend a partir de los movimientos;
+  la UI nunca lo edita a mano (en el Excel se tipeaba). TreasuryStore expone bankAccounts
+  y partners como lectura para billing, expenses y staff (selección de cuenta / socio).
+  TransferFundsDialog valida cuentas distintas y misma moneda.
+  json-server (colecciones planas + routes.json): /bank-accounts, /cash-movements?bankAccountId=,
+  /payables, /payable-payments?payableId=, /loans, /loan-installments?loanId=, /partners,
+  /partner-contributions?partnerId=; con fake API la transferencia = 2 POST a /cash-movements.
+end note
+@enduml

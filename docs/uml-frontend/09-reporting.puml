@@ -1,0 +1,438 @@
+@startuml
+' Brasper Platform Frontend - Reporting Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "infrastructure" {
+      abstract class ErrorHandlingEnabledBaseType
+      abstract class BaseApi
+    }
+    package "presentation" {
+      package "components" {
+        class PeriodSelector <<Component>>
+        class StatusChip <<Component>>
+      }
+    }
+  }
+
+  package "projects" {
+    package "application" {
+      class ProjectsStore <<Store>>
+    }
+  }
+
+  ' ==========================================
+  ' REPORTING BOUNDED CONTEXT (read-only)
+  ' ==========================================
+  package "reporting" {
+    package "domain.model" {
+      class CashFlowReport <<ReadModel>> {
+        - #from: string
+        - #to: string
+        - #lines: CashFlowLine[]
+        +from: string
+        +to: string
+        +lines: CashFlowLine[]
+        +finalBalance(): number
+        +hasNegativeBalance(): boolean
+      }
+      class CashFlowLine <<ValueObject>> {
+        +label: string
+        +startDate: string
+        +endDate: string
+        +projected: boolean
+        +openingBalance: number
+        +inflows: Record<string, number>
+        +outflows: Record<string, number>
+        +totalInflows: number
+        +totalOutflows: number
+        +netFlow: number
+        +closingBalance: number
+      }
+      CashFlowReport *-- "1..*" CashFlowLine : contains
+
+      class IncomeStatement <<ReadModel>> {
+        - #fromYear: number
+        - #fromMonth: number
+        - #toYear: number
+        - #toMonth: number
+        - #revenue: number
+        - #directCosts: number
+        - #grossProfit: number
+        - #operatingExpenses: number
+        - #operatingProfit: number
+        - #financialExpenses: number
+        - #profitBeforeTax: number
+        - #incomeTax: number
+        - #netProfit: number
+        +fromYear: number
+        +fromMonth: number
+        +toYear: number
+        +toMonth: number
+        +revenue: number
+        +directCosts: number
+        +grossProfit: number
+        +operatingExpenses: number
+        +operatingProfit: number
+        +financialExpenses: number
+        +profitBeforeTax: number
+        +incomeTax: number
+        +netProfit: number
+      }
+
+      class BalanceSheet <<ReadModel>> {
+        - #asOf: string
+        - #assets: Record<string, number>
+        - #liabilities: Record<string, number>
+        - #equity: Record<string, number>
+        - #totalAssets: number
+        - #totalLiabilities: number
+        - #totalEquity: number
+        - #difference: number
+        +asOf: string
+        +assets: Record<string, number>
+        +liabilities: Record<string, number>
+        +equity: Record<string, number>
+        +totalAssets: number
+        +totalLiabilities: number
+        +totalEquity: number
+        +difference: number
+        +isBalanced(): boolean
+      }
+
+      class ProjectProfitability <<ReadModel>> {
+        - #projectId: number
+        - #code: string
+        - #name: string
+        - #clientName: string
+        - #status: string
+        - #budget: number
+        - #estimatedCost: number
+        - #actualCost: number
+        - #actualCostByCategory: Record<string, number>
+        - #costDeviation: number
+        - #salesCommission: number
+        - #grossProfit: number
+        - #margin: number
+        - #accumulatedProgress: number
+        - #recognizedProfitInPeriod: number
+        - #invoiced: number
+        - #collected: number
+        +projectId: number
+        +code: string
+        +name: string
+        +clientName: string
+        +status: string
+        +budget: number
+        +estimatedCost: number
+        +actualCost: number
+        +actualCostByCategory: Record<string, number>
+        +costDeviation: number
+        +salesCommission: number
+        +grossProfit: number
+        +margin: number
+        +accumulatedProgress: number
+        +recognizedProfitInPeriod: number
+        +invoiced: number
+        +collected: number
+        +isOverBudget(): boolean
+      }
+
+      class Dashboard <<ReadModel>> {
+        - #cashBalance: number
+        - #receivablesOutstanding: number
+        - #payablesOutstanding: number
+        - #netProfitYtd: number
+        - #projectedClosingBalance: number
+        - #projectsInProgress: number
+        - #alerts: string[]
+        +cashBalance: number
+        +receivablesOutstanding: number
+        +payablesOutstanding: number
+        +netProfitYtd: number
+        +projectedClosingBalance: number
+        +projectsInProgress: number
+        +alerts: string[]
+      }
+    }
+
+    package "infrastructure" {
+      class CashFlowReportResource <<Resource>> {
+        +from: string
+        +to: string
+        +lines: CashFlowLine[]
+      }
+      class IncomeStatementResource <<Resource>> {
+        +fromYear: number
+        +fromMonth: number
+        +toYear: number
+        +toMonth: number
+        +revenue: number
+        +directCosts: number
+        +grossProfit: number
+        +operatingExpenses: number
+        +operatingProfit: number
+        +financialExpenses: number
+        +profitBeforeTax: number
+        +incomeTax: number
+        +netProfit: number
+      }
+      class BalanceSheetResource <<Resource>> {
+        +asOf: string
+        +assets: Record<string, number>
+        +liabilities: Record<string, number>
+        +equity: Record<string, number>
+        +totalAssets: number
+        +totalLiabilities: number
+        +totalEquity: number
+        +difference: number
+        +balanced: boolean
+      }
+      class ProjectProfitabilityResource <<Resource>> {
+        +projectId: number
+        +code: string
+        +name: string
+        +clientName: string
+        +status: string
+        +budget: number
+        +estimatedCost: number
+        +actualCost: number
+        +actualCostByCategory: Record<string, number>
+        +costDeviation: number
+        +salesCommission: number
+        +grossProfit: number
+        +margin: number
+        +accumulatedProgress: number
+        +recognizedProfitInPeriod: number
+        +invoiced: number
+        +collected: number
+      }
+      class DashboardResource <<Resource>> {
+        +cashBalance: number
+        +receivablesOutstanding: number
+        +payablesOutstanding: number
+        +netProfitYtd: number
+        +projectedClosingBalance: number
+        +projectsInProgress: number
+        +alerts: string[]
+      }
+
+      class CashFlowReportAssembler <<Assembler>> {
+        +toEntityFromResource(resource: CashFlowReportResource): CashFlowReport
+      }
+      class IncomeStatementAssembler <<Assembler>> {
+        +toEntityFromResource(resource: IncomeStatementResource): IncomeStatement
+      }
+      class BalanceSheetAssembler <<Assembler>> {
+        +toEntityFromResource(resource: BalanceSheetResource): BalanceSheet
+      }
+      class ProjectProfitabilityAssembler <<Assembler>> {
+        +toEntitiesFromResources(resources: ProjectProfitabilityResource[]): ProjectProfitability[]
+        +toEntityFromResource(resource: ProjectProfitabilityResource): ProjectProfitability
+      }
+      class DashboardAssembler <<Assembler>> {
+        +toEntityFromResource(resource: DashboardResource): Dashboard
+      }
+
+      class CashFlowApiEndpoint {
+        -endpointUrl: string
+        -assembler: CashFlowReportAssembler
+        +getWeekly(year: number, month: number): Observable<CashFlowReport>
+        +getMonthly(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<CashFlowReport>
+        +getProjection(from: string, weeks: number): Observable<CashFlowReport>
+      }
+      class FinancialStatementsApiEndpoint {
+        -endpointUrl: string
+        -incomeStatementAssembler: IncomeStatementAssembler
+        -balanceSheetAssembler: BalanceSheetAssembler
+        +getIncomeStatement(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<IncomeStatement>
+        +getBalanceSheet(year: number, month: number): Observable<BalanceSheet>
+      }
+      class ProjectProfitabilityApiEndpoint {
+        -endpointUrl: string
+        -assembler: ProjectProfitabilityAssembler
+        +getByProjectId(projectId: number): Observable<ProjectProfitability>
+        +getPortfolio(year: number, month: number): Observable<ProjectProfitability[]>
+      }
+      class DashboardApiEndpoint {
+        -endpointUrl: string
+        -assembler: DashboardAssembler
+        +getDashboard(year: number, month: number): Observable<Dashboard>
+      }
+
+      class ReportingApi {
+        -cashFlowEndpoint: CashFlowApiEndpoint
+        -financialStatementsEndpoint: FinancialStatementsApiEndpoint
+        -projectProfitabilityEndpoint: ProjectProfitabilityApiEndpoint
+        -dashboardEndpoint: DashboardApiEndpoint
+        +getWeeklyCashFlow(year: number, month: number): Observable<CashFlowReport>
+        +getMonthlyCashFlow(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<CashFlowReport>
+        +getCashFlowProjection(from: string, weeks: number): Observable<CashFlowReport>
+        +getIncomeStatement(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<IncomeStatement>
+        +getBalanceSheet(year: number, month: number): Observable<BalanceSheet>
+        +getProjectProfitability(projectId: number): Observable<ProjectProfitability>
+        +getPortfolioProfitability(year: number, month: number): Observable<ProjectProfitability[]>
+        +getDashboard(year: number, month: number): Observable<Dashboard>
+      }
+
+      CashFlowApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      FinancialStatementsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      ProjectProfitabilityApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      DashboardApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      ReportingApi --|> app.shared.infrastructure.BaseApi : extends
+      ReportingApi --> CashFlowApiEndpoint : delegates to
+      ReportingApi --> FinancialStatementsApiEndpoint : delegates to
+      ReportingApi --> ProjectProfitabilityApiEndpoint : delegates to
+      ReportingApi --> DashboardApiEndpoint : delegates to
+      CashFlowApiEndpoint --> CashFlowReportAssembler : uses
+      FinancialStatementsApiEndpoint --> IncomeStatementAssembler : uses
+      FinancialStatementsApiEndpoint --> BalanceSheetAssembler : uses
+      ProjectProfitabilityApiEndpoint --> ProjectProfitabilityAssembler : uses
+      DashboardApiEndpoint --> DashboardAssembler : uses
+      CashFlowReportAssembler --> CashFlowReport : builds
+      IncomeStatementAssembler --> IncomeStatement : builds
+      BalanceSheetAssembler --> BalanceSheet : builds
+      ProjectProfitabilityAssembler --> ProjectProfitability : builds
+      DashboardAssembler --> Dashboard : builds
+    }
+
+    package "application" {
+      class ReportingStore <<Store>> {
+        -reportingApi: ReportingApi
+        -periodSignal: WritableSignal<Period>
+        -cashFlowSignal: WritableSignal<CashFlowReport | null>
+        -incomeStatementSignal: WritableSignal<IncomeStatement | null>
+        -balanceSheetSignal: WritableSignal<BalanceSheet | null>
+        -profitabilitySignal: WritableSignal<ProjectProfitability[]>
+        -dashboardSignal: WritableSignal<Dashboard | null>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +period: Signal<Period>
+        +cashFlow: Signal<CashFlowReport | null>
+        +incomeStatement: Signal<IncomeStatement | null>
+        +balanceSheet: Signal<BalanceSheet | null>
+        +profitability: Signal<ProjectProfitability[]>
+        +overBudgetProjects: Signal<ProjectProfitability[]>
+        +dashboard: Signal<Dashboard | null>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +setPeriod(period: Period): void
+        +loadDashboard(): void
+        +loadWeeklyCashFlow(): void
+        +loadMonthlyCashFlow(from: Period, to: Period): void
+        +loadCashFlowProjection(from: string, weeks: number): void
+        +loadIncomeStatement(from: Period, to: Period): void
+        +loadBalanceSheet(): void
+        +loadPortfolioProfitability(): void
+        +loadProjectProfitability(projectId: number): void
+      }
+      ReportingStore --> ReportingApi : uses
+      ReportingStore --> CashFlowReport : manages
+      ReportingStore --> IncomeStatement : manages
+      ReportingStore --> BalanceSheet : manages
+      ReportingStore --> ProjectProfitability : manages
+      ReportingStore --> Dashboard : manages
+    }
+
+    package "presentation" {
+      package "components" {
+        class KpiCard <<Component>> {
+          +label: InputSignal<string>
+          +value: InputSignal<number>
+          +currency: InputSignal<string>
+          +trend: InputSignal<'up' | 'down' | 'flat'>
+        }
+        class CashFlowChart <<Component>> {
+          +lines: InputSignal<CashFlowLine[]>
+          +chartData: Signal<ChartData>
+          +chartOptions: ChartOptions
+        }
+        class CashFlowTable <<Component>> {
+          +lines: InputSignal<CashFlowLine[]>
+          +concepts: Signal<string[]>
+        }
+        class StatementSection <<Component>> {
+          +title: InputSignal<string>
+          +items: InputSignal<Record<string, number>>
+          +total: InputSignal<number>
+        }
+        class AlertsPanel <<Component>> {
+          +alerts: InputSignal<string[]>
+        }
+      }
+
+      package "views" {
+        class DashboardView <<Component>> {
+          -reportingStore: ReportingStore
+          +dashboard: Signal<Dashboard | null>
+          +cashFlow: Signal<CashFlowReport | null>
+          +ngOnInit(): void
+        }
+        class CashFlowView <<Component>> {
+          -reportingStore: ReportingStore
+          +mode: WritableSignal<'weekly' | 'monthly' | 'projection'>
+          +cashFlow: Signal<CashFlowReport | null>
+          +onModeChange(mode: string): void
+          +onPeriodChange(period: Period): void
+        }
+        class IncomeStatementView <<Component>> {
+          -reportingStore: ReportingStore
+          +from: WritableSignal<Period>
+          +to: WritableSignal<Period>
+          +incomeStatement: Signal<IncomeStatement | null>
+          +onRangeChange(): void
+        }
+        class BalanceSheetView <<Component>> {
+          -reportingStore: ReportingStore
+          +balanceSheet: Signal<BalanceSheet | null>
+          +onPeriodChange(period: Period): void
+        }
+        class ProjectProfitabilityView <<Component>> {
+          -reportingStore: ReportingStore
+          -projectsStore: ProjectsStore
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<ProjectProfitability>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +selected: WritableSignal<ProjectProfitability | null>
+          +onSelect(row: ProjectProfitability): void
+        }
+      }
+
+      DashboardView --> ReportingStore : uses
+      CashFlowView --> ReportingStore : uses
+      IncomeStatementView --> ReportingStore : uses
+      BalanceSheetView --> ReportingStore : uses
+      ProjectProfitabilityView --> ReportingStore : uses
+      DashboardView --> KpiCard : contains
+      DashboardView --> CashFlowChart : contains
+      DashboardView --> AlertsPanel : contains
+      CashFlowView --> CashFlowChart : contains
+      CashFlowView --> CashFlowTable : contains
+      IncomeStatementView --> StatementSection : contains
+      BalanceSheetView --> StatementSection : contains
+      DashboardView --> app.shared.presentation.components.PeriodSelector : contains
+      CashFlowView --> app.shared.presentation.components.PeriodSelector : contains
+      BalanceSheetView --> app.shared.presentation.components.PeriodSelector : contains
+      ProjectProfitabilityView --> app.shared.presentation.components.StatusChip : contains
+      ProjectProfitabilityView --> app.projects.application.ProjectsStore : reads projects
+    }
+  }
+}
+
+note bottom
+  Contexto de solo lectura: no hay create/update/delete, por eso los endpoints extienden
+  ErrorHandlingEnabledBaseType (no BaseApiEndpoint) y los assemblers solo convierten Resource -> modelo.
+  DashboardView es la pantalla de inicio ('/dashboard'): KPIs (caja, por cobrar, por pagar,
+  utilidad acumulada, saldo proyectado), gráfico del flujo semanal y alertas (saldo proyectado
+  negativo, facturas vencidas, proyectos sobre presupuesto).
+  CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos.
+  Semanas proyectadas (projected = true) se pintan distinto a las reales.
+  json-server: /reports/cash-flow?year=&month=, /reports/income-statement, /reports/balance-sheet,
+  /reports/project-profitability, /reports/dashboard -> datos YA calculados en db.json.
+end note
+@enduml

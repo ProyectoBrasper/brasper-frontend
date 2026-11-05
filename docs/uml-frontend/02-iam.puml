@@ -1,0 +1,267 @@
+@startuml
+' Brasper Platform Frontend - IAM Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class ErrorHandlingEnabledBaseType
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class Layout <<Component>>
+      }
+    }
+  }
+
+  ' ==========================================
+  ' IAM BOUNDED CONTEXT
+  ' ==========================================
+  package "iam" {
+    package "domain.model" {
+      class User <<Entity>> {
+        - #id: number
+        - #username: string
+        - #fullName: string
+        - #role: Role
+        - #active: boolean
+        +id: number
+        +username: string
+        +fullName: string
+        +role: Role
+        +active: boolean
+        +hasRole(...roles: Role[]): boolean
+      }
+      User ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum Role {
+        ROLE_ADMIN
+        ROLE_MANAGEMENT
+        ROLE_ACCOUNTING
+        ROLE_ENGINEER
+      }
+      User --> Role : has
+
+      class SignInCommand {
+        - #username: string
+        - #password: string
+        +username: string
+        +password: string
+      }
+
+      class SignUpCommand {
+        - #username: string
+        - #password: string
+        - #fullName: string
+        - #role: Role
+        +username: string
+        +password: string
+        +fullName: string
+        +role: Role
+      }
+    }
+
+    package "infrastructure" {
+      class SignInResource <<Resource>> {
+        +id: number
+        +username: string
+        +role: string
+        +token: string
+      }
+      class SignUpResource <<Resource>> {
+        +id: number
+        +username: string
+      }
+      class UserResource <<Resource>> {
+        +id: number
+        +username: string
+        +fullName: string
+        +role: string
+        +active: boolean
+      }
+      class SignInResponse <<Response>> {
+      }
+      class SignUpResponse <<Response>> {
+      }
+      class UsersResponse <<Response>> {
+      }
+
+      class SignInAssembler <<Assembler>> {
+        +toEntityFromResource(resource: SignInResource): User
+        +toTokenFromResource(resource: SignInResource): string
+      }
+      class SignUpAssembler <<Assembler>> {
+        +toEntityFromResource(resource: SignUpResource): User
+      }
+      class UserAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: UsersResponse): User[]
+        +toEntityFromResource(resource: UserResource): User
+        +toResourceFromEntity(entity: User): UserResource
+      }
+
+      class SignInApiEndpoint {
+        -endpointUrl: string
+        -assembler: SignInAssembler
+        +signIn(command: SignInCommand): Observable<{user: User, token: string}>
+      }
+      class SignUpApiEndpoint {
+        -endpointUrl: string
+        -assembler: SignUpAssembler
+        +signUp(command: SignUpCommand): Observable<User>
+      }
+      class UsersApiEndpoint {
+        +changeRole(id: number, role: Role): Observable<User>
+        +deactivate(id: number): Observable<User>
+      }
+
+      class IamApi {
+        -signInEndpoint: SignInApiEndpoint
+        -signUpEndpoint: SignUpApiEndpoint
+        -usersEndpoint: UsersApiEndpoint
+        +signIn(command: SignInCommand): Observable<{user: User, token: string}>
+        +signUp(command: SignUpCommand): Observable<User>
+        +getUsers(): Observable<User[]>
+        +changeUserRole(id: number, role: Role): Observable<User>
+        +deactivateUser(id: number): Observable<User>
+      }
+
+      class authenticationInterceptor <<Interceptor>> {
+        +intercept(request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>>
+      }
+
+      SignInResource ..|> app.shared.infrastructure.BaseResource : implements
+      SignUpResource ..|> app.shared.infrastructure.BaseResource : implements
+      UserResource ..|> app.shared.infrastructure.BaseResource : implements
+      SignInResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      SignUpResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      UsersResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      UserAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      SignInApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      SignUpApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      UsersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      IamApi --|> app.shared.infrastructure.BaseApi : extends
+      IamApi --> SignInApiEndpoint : delegates to
+      IamApi --> SignUpApiEndpoint : delegates to
+      IamApi --> UsersApiEndpoint : delegates to
+      SignInApiEndpoint --> SignInAssembler : uses
+      SignUpApiEndpoint --> SignUpAssembler : uses
+      UsersApiEndpoint --> UserAssembler : uses
+      SignInAssembler --> User : builds
+      SignUpAssembler --> User : builds
+      UserAssembler --> User : builds
+    }
+
+    package "application" {
+      class IamStore <<Store>> {
+        -iamApi: IamApi
+        -currentUserSignal: WritableSignal<User | null>
+        -tokenSignal: WritableSignal<string | null>
+        -usersSignal: WritableSignal<User[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +currentUser: Signal<User | null>
+        +token: Signal<string | null>
+        +isSignedIn: Signal<boolean>
+        +currentUsername: Signal<string>
+        +currentRole: Signal<Role | null>
+        +users: Signal<User[]>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +signIn(command: SignInCommand, navigateTo: string[]): void
+        +signUp(command: SignUpCommand, navigateTo: string[]): void
+        +signOut(): void
+        +loadUsers(): void
+        +changeUserRole(id: number, role: Role): void
+        +deactivateUser(id: number): void
+        +hasAnyRole(...roles: Role[]): boolean
+      }
+
+      class authenticationGuard <<Guard>> {
+        +canActivate(): boolean | UrlTree
+      }
+      class roleGuard <<Guard>> {
+        +canActivate(route: ActivatedRouteSnapshot): boolean | UrlTree
+      }
+
+      IamStore --> IamApi : uses
+      IamStore --> User : manages
+      authenticationGuard --> IamStore : reads isSignedIn
+      roleGuard --> IamStore : reads currentRole
+      authenticationInterceptor --> IamStore : reads token
+    }
+
+    package "presentation" {
+      package "components" {
+        class AuthenticationSection <<Component>> {
+          -iamStore: IamStore
+          -router: Router
+          +isSignedIn: Signal<boolean>
+          +currentUsername: Signal<string>
+          +onSignIn(): void
+          +onSignUp(): void
+          +onSignOut(): void
+        }
+      }
+
+      package "views" {
+        class SignInForm <<Component>> {
+          -formBuilder: FormBuilder
+          -iamStore: IamStore
+          -router: Router
+          +signInForm: FormGroup
+          +onSubmit(): void
+        }
+        class SignUpForm <<Component>> {
+          -formBuilder: FormBuilder
+          -iamStore: IamStore
+          -router: Router
+          +signUpForm: FormGroup
+          +roles: Role[]
+          +onSubmit(): void
+        }
+        class UserList <<Component>> {
+          -iamStore: IamStore
+          -dialog: MatDialog
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<User>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +onChangeRole(id: number, role: Role): void
+          +onDeactivate(id: number): void
+        }
+      }
+
+      AuthenticationSection --> IamStore : uses
+      SignInForm --|> app.shared.presentation.BaseForm : extends
+      SignUpForm --|> app.shared.presentation.BaseForm : extends
+      SignInForm --> IamStore : uses
+      SignUpForm --> IamStore : uses
+      UserList --> IamStore : uses
+    }
+  }
+
+  app.shared.presentation.components.Layout --> app.iam.presentation.components.AuthenticationSection : includes
+}
+
+note bottom
+  JWT: IamStore guarda el token (signal + sessionStorage); authenticationInterceptor
+  agrega "Authorization: Bearer <token>" a cada request hacia la API.
+  Con json-server (fake API) el sign-in se simula con un middleware (server.js) que
+  responde POST /authentication/sign-in buscando el usuario en db.json y devolviendo
+  un token ficticio; el rol viene en SignInResource (mismo contrato que Spring).
+  authenticationGuard redirige a /sign-in si no hay sesión; roleGuard lee
+  route.data.roles y redirige al dashboard si el rol no está permitido.
+end note
+@enduml

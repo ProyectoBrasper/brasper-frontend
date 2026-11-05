@@ -1,0 +1,413 @@
+@startuml
+' Brasper Platform Frontend - Projects Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class StatusChip <<Component>>
+        class ConfirmDialog <<Component>>
+      }
+    }
+  }
+
+  ' ==========================================
+  ' PROJECTS BOUNDED CONTEXT
+  ' ==========================================
+  package "projects" {
+    package "domain.model" {
+      class Client <<Entity>> {
+        - #id: number
+        - #businessName: string
+        - #ruc: string
+        - #contactName: string
+        - #phone: string
+        - #email: string
+        +id: number
+        +businessName: string
+        +ruc: string
+        +contactName: string
+        +phone: string
+        +email: string
+      }
+      Client ..|> app.shared.domain.model.BaseEntity : implements
+
+      class Project <<Entity>> {
+        - #id: number
+        - #code: string
+        - #name: string
+        - #description: string
+        - #clientId: number
+        - #client: Client | null
+        - #budget: number
+        - #currency: string
+        - #quotedOn: string
+        - #status: ProjectStatus
+        - #participation: number
+        - #salesCommissionRate: number
+        - #accumulatedProgress: number
+        - #estimatedDirectCost: number
+        +id: number
+        +code: string
+        +name: string
+        +description: string
+        +clientId: number
+        +client: Client | null
+        +budget: number
+        +currency: string
+        +quotedOn: string
+        +status: ProjectStatus
+        +participation: number
+        +salesCommissionRate: number
+        +accumulatedProgress: number
+        +estimatedDirectCost: number
+        +isInProgress(): boolean
+        +remainingProgress(): number
+      }
+      Project ..|> app.shared.domain.model.BaseEntity : implements
+      Client "1" <-- "*" Project : references clientId
+
+      enum ProjectStatus {
+        QUOTED
+        IN_PROGRESS
+        COMPLETED
+        CANCELLED
+      }
+      Project --> ProjectStatus : has
+
+      class ProgressRecord <<Entity>> {
+        - #id: number
+        - #projectId: number
+        - #year: number
+        - #month: number
+        - #percentage: number
+        +id: number
+        +projectId: number
+        +year: number
+        +month: number
+        +percentage: number
+      }
+      ProgressRecord ..|> app.shared.domain.model.BaseEntity : implements
+      Project "1" <-- "*" ProgressRecord : references projectId
+
+      class CostEstimate <<Entity>> {
+        - #id: number
+        - #projectId: number
+        - #category: CostCategory
+        - #estimatedAmount: number
+        +id: number
+        +projectId: number
+        +category: CostCategory
+        +estimatedAmount: number
+      }
+      CostEstimate ..|> app.shared.domain.model.BaseEntity : implements
+      Project "1" <-- "*" CostEstimate : references projectId
+
+      enum CostCategory {
+        MATERIALS
+        LABOR
+        TRAVEL_EXPENSES
+        OTHER
+      }
+      CostEstimate --> CostCategory : has
+    }
+
+    package "infrastructure" {
+      class ClientResource <<Resource>> {
+        +id: number
+        +businessName: string
+        +ruc: string
+        +contactName: string
+        +phone: string
+        +email: string
+      }
+      class ProjectResource <<Resource>> {
+        +id: number
+        +code: string
+        +name: string
+        +description: string
+        +clientId: number
+        +budget: number
+        +currency: string
+        +quotedOn: string
+        +status: string
+        +participation: number
+        +salesCommissionRate: number
+        +accumulatedProgress: number
+        +estimatedDirectCost: number
+      }
+      class ProgressRecordResource <<Resource>> {
+        +id: number
+        +projectId: number
+        +year: number
+        +month: number
+        +percentage: number
+      }
+      class CostEstimateResource <<Resource>> {
+        +id: number
+        +projectId: number
+        +category: string
+        +estimatedAmount: number
+      }
+      class ClientsResponse <<Response>> {
+      }
+      class ProjectsResponse <<Response>> {
+      }
+      class ProgressRecordsResponse <<Response>> {
+      }
+      class CostEstimatesResponse <<Response>> {
+      }
+
+      class ClientAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: ClientsResponse): Client[]
+        +toEntityFromResource(resource: ClientResource): Client
+        +toResourceFromEntity(entity: Client): ClientResource
+      }
+      class ProjectAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: ProjectsResponse): Project[]
+        +toEntityFromResource(resource: ProjectResource): Project
+        +toResourceFromEntity(entity: Project): ProjectResource
+      }
+      class ProgressRecordAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: ProgressRecordsResponse): ProgressRecord[]
+        +toEntityFromResource(resource: ProgressRecordResource): ProgressRecord
+        +toResourceFromEntity(entity: ProgressRecord): ProgressRecordResource
+      }
+      class CostEstimateAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: CostEstimatesResponse): CostEstimate[]
+        +toEntityFromResource(resource: CostEstimateResource): CostEstimate
+        +toResourceFromEntity(entity: CostEstimate): CostEstimateResource
+      }
+
+      class ClientsApiEndpoint {
+      }
+      class ProjectsApiEndpoint {
+        +start(id: number): Observable<Project>
+        +cancel(id: number): Observable<Project>
+        +getByClientId(clientId: number): Observable<Project[]>
+      }
+      class ProgressRecordsApiEndpoint {
+        +getByProjectId(projectId: number): Observable<ProgressRecord[]>
+        +register(projectId: number, record: ProgressRecord): Observable<ProgressRecord>
+      }
+      class CostEstimatesApiEndpoint {
+        +getByProjectId(projectId: number): Observable<CostEstimate[]>
+        +set(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+      }
+
+      class ProjectsApi {
+        -clientsEndpoint: ClientsApiEndpoint
+        -projectsEndpoint: ProjectsApiEndpoint
+        -progressRecordsEndpoint: ProgressRecordsApiEndpoint
+        -costEstimatesEndpoint: CostEstimatesApiEndpoint
+        +getClients(): Observable<Client[]>
+        +getClientById(id: number): Observable<Client>
+        +createClient(client: Client): Observable<Client>
+        +updateClient(client: Client): Observable<Client>
+        +getProjects(): Observable<Project[]>
+        +getProjectById(id: number): Observable<Project>
+        +createProject(project: Project): Observable<Project>
+        +updateProject(project: Project): Observable<Project>
+        +startProject(id: number): Observable<Project>
+        +cancelProject(id: number): Observable<Project>
+        +getProgressRecords(projectId: number): Observable<ProgressRecord[]>
+        +registerProgress(projectId: number, record: ProgressRecord): Observable<ProgressRecord>
+        +getCostEstimates(projectId: number): Observable<CostEstimate[]>
+        +setCostEstimate(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+      }
+
+      ClientResource ..|> app.shared.infrastructure.BaseResource : implements
+      ProjectResource ..|> app.shared.infrastructure.BaseResource : implements
+      ProgressRecordResource ..|> app.shared.infrastructure.BaseResource : implements
+      CostEstimateResource ..|> app.shared.infrastructure.BaseResource : implements
+      ClientsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      ProjectsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      ProgressRecordsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      CostEstimatesResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      ClientAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      ProjectAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      ProgressRecordAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      CostEstimateAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      ClientsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ProjectsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ProgressRecordsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      CostEstimatesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ProjectsApi --|> app.shared.infrastructure.BaseApi : extends
+      ProjectsApi --> ClientsApiEndpoint : delegates to
+      ProjectsApi --> ProjectsApiEndpoint : delegates to
+      ProjectsApi --> ProgressRecordsApiEndpoint : delegates to
+      ProjectsApi --> CostEstimatesApiEndpoint : delegates to
+      ClientsApiEndpoint --> ClientAssembler : uses
+      ProjectsApiEndpoint --> ProjectAssembler : uses
+      ProgressRecordsApiEndpoint --> ProgressRecordAssembler : uses
+      CostEstimatesApiEndpoint --> CostEstimateAssembler : uses
+    }
+
+    package "application" {
+      class ProjectsStore <<Store>> {
+        -projectsApi: ProjectsApi
+        -clientsSignal: WritableSignal<Client[]>
+        -projectsSignal: WritableSignal<Project[]>
+        -progressRecordsSignal: WritableSignal<ProgressRecord[]>
+        -costEstimatesSignal: WritableSignal<CostEstimate[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +clients: Signal<Client[]>
+        +projects: Signal<Project[]>
+        +inProgressProjects: Signal<Project[]>
+        +progressRecords: Signal<ProgressRecord[]>
+        +costEstimates: Signal<CostEstimate[]>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +loadClients(): void
+        +loadProjects(): void
+        +createClient(client: Client): void
+        +updateClient(client: Client): void
+        +createProject(project: Project): void
+        +updateProject(project: Project): void
+        +startProject(id: number): void
+        +cancelProject(id: number): void
+        +loadProjectDetail(projectId: number): void
+        +registerProgress(projectId: number, record: ProgressRecord): void
+        +setCostEstimate(projectId: number, estimate: CostEstimate): void
+        +getClientById(id: number): Client | undefined
+        +getProjectById(id: number): Project | undefined
+      }
+      ProjectsStore --> ProjectsApi : uses
+      ProjectsStore --> Client : manages
+      ProjectsStore --> Project : manages
+      ProjectsStore --> ProgressRecord : manages
+      ProjectsStore --> CostEstimate : manages
+    }
+
+    package "presentation" {
+      package "components" {
+        class ProgressRecordTable <<Component>> {
+          +records: InputSignal<ProgressRecord[]>
+          +accumulated: Signal<number>
+        }
+        class CostEstimateTable <<Component>> {
+          +estimates: InputSignal<CostEstimate[]>
+          +total: Signal<number>
+          +edit: OutputEmitterRef<CostEstimate>
+        }
+        class RegisterProgressDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterProgressDialog>
+          +data: {project: Project}
+          +progressForm: FormGroup
+          +maxPercentage: number
+          +onSave(): void
+          +onCancel(): void
+        }
+        class CostEstimateDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<CostEstimateDialog>
+          +data: {estimate: CostEstimate | null}
+          +estimateForm: FormGroup
+          +categories: CostCategory[]
+          +onSave(): void
+          +onCancel(): void
+        }
+      }
+
+      package "views" {
+        class ClientList <<Component>> {
+          -projectsStore: ProjectsStore
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Client>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +onEdit(id: number): void
+          +onAdd(): void
+        }
+        class ClientForm <<Component>> {
+          -formBuilder: FormBuilder
+          -projectsStore: ProjectsStore
+          -router: Router
+          -route: ActivatedRoute
+          +clientForm: FormGroup
+          +isEdit: boolean
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class ProjectList <<Component>> {
+          -projectsStore: ProjectsStore
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Project>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +statusFilter: WritableSignal<ProjectStatus | null>
+          +getClientName(clientId: number): string
+          +onView(id: number): void
+          +onEdit(id: number): void
+          +onAdd(): void
+        }
+        class ProjectForm <<Component>> {
+          -formBuilder: FormBuilder
+          -projectsStore: ProjectsStore
+          -router: Router
+          -route: ActivatedRoute
+          +projectForm: FormGroup
+          +clients: Signal<Client[]>
+          +isEdit: boolean
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class ProjectDetail <<Component>> {
+          -projectsStore: ProjectsStore
+          -dialog: MatDialog
+          -route: ActivatedRoute
+          +project: Signal<Project | undefined>
+          +progressRecords: Signal<ProgressRecord[]>
+          +costEstimates: Signal<CostEstimate[]>
+          +onStart(): void
+          +onCancelProject(): void
+          +onRegisterProgress(): void
+          +onSetCostEstimate(estimate: CostEstimate | null): void
+        }
+      }
+
+      ClientList --> ProjectsStore : uses
+      ClientForm --> ProjectsStore : uses
+      ProjectList --> ProjectsStore : uses
+      ProjectForm --> ProjectsStore : uses
+      ProjectDetail --> ProjectsStore : uses
+      ClientForm --|> app.shared.presentation.BaseForm : extends
+      ProjectForm --|> app.shared.presentation.BaseForm : extends
+      ProjectDetail --> ProgressRecordTable : contains
+      ProjectDetail --> CostEstimateTable : contains
+      ProjectDetail --> RegisterProgressDialog : opens
+      ProjectDetail --> CostEstimateDialog : opens
+      ProjectDetail --> app.shared.presentation.components.ConfirmDialog : opens
+      ProjectList --> app.shared.presentation.components.StatusChip : contains
+    }
+  }
+}
+
+note bottom
+  Validaciones en ProjectForm: code con patrón ^\d{3}BR-(ENE|FEB|...|DIC)-\d{4}$, budget > 0,
+  participation entre 0 y 1. RegisterProgressDialog limita el porcentaje a
+  (100% - accumulatedProgress). El costo real del proyecto NO se muestra aquí:
+  viene de reporting (ProjectProfitabilityView).
+  json-server (colecciones planas + routes.json): /clients, /projects,
+  /progress-records?projectId=, /cost-estimates?projectId=; start/cancel = PATCH /projects/{id} {status}.
+end note
+@enduml

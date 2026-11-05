@@ -1,0 +1,346 @@
+@startuml
+' Brasper Platform Frontend - Staff Bounded Context (Angular 22 + Angular Material)
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "app" {
+
+  package "shared" {
+    package "domain.model" {
+      interface BaseEntity
+    }
+    package "infrastructure" {
+      interface BaseResource
+      interface BaseResponse
+      interface BaseAssembler<TEntity, TResource, TResponse>
+      abstract class BaseApiEndpoint<TEntity, TResource, TResponse, TAssembler>
+      abstract class BaseApi
+    }
+    package "presentation" {
+      abstract class BaseForm
+      package "components" {
+        class PeriodSelector <<Component>>
+        class ConfirmDialog <<Component>>
+      }
+    }
+  }
+
+  package "treasury" {
+    package "application" {
+      class TreasuryStore <<Store>>
+    }
+  }
+
+  ' ==========================================
+  ' STAFF BOUNDED CONTEXT
+  ' ==========================================
+  package "staff" {
+    package "domain.model" {
+      class Employee <<Entity>> {
+        - #id: number
+        - #fullName: string
+        - #dni: string
+        - #position: string
+        - #monthlySalary: number
+        - #hiredOn: string
+        - #terminatedOn: string | null
+        - #active: boolean
+        +id: number
+        +fullName: string
+        +dni: string
+        +position: string
+        +monthlySalary: number
+        +hiredOn: string
+        +terminatedOn: string | null
+        +active: boolean
+      }
+      Employee ..|> app.shared.domain.model.BaseEntity : implements
+
+      class FixedCost <<Entity>> {
+        - #id: number
+        - #code: string
+        - #concept: string
+        - #type: FixedCostType
+        - #monthlyAmount: number
+        - #employeeId: number | null
+        - #expectedWeeks: number[]
+        - #active: boolean
+        +id: number
+        +code: string
+        +concept: string
+        +type: FixedCostType
+        +monthlyAmount: number
+        +employeeId: number | null
+        +expectedWeeks: number[]
+        +active: boolean
+      }
+      FixedCost ..|> app.shared.domain.model.BaseEntity : implements
+      Employee "0..1" <-- "*" FixedCost : references employeeId
+
+      enum FixedCostType {
+        SALARY
+        OVERTIME
+        ACCOUNTING
+        SCTR_INSURANCE
+        LIFE_INSURANCE
+        OFFICE_RENT
+        CLEANING
+        BANK_FEES
+        ITF
+        HOSTING
+        ADMINISTRATIVE
+      }
+      FixedCost --> FixedCostType : has
+
+      class FixedCostPayment <<Entity>> {
+        - #id: number
+        - #fixedCostId: number
+        - #paidOn: string
+        - #year: number
+        - #month: number
+        - #amount: number
+        - #bankAccountId: number
+        - #notes: string
+        +id: number
+        +fixedCostId: number
+        +paidOn: string
+        +year: number
+        +month: number
+        +amount: number
+        +bankAccountId: number
+        +notes: string
+      }
+      FixedCostPayment ..|> app.shared.domain.model.BaseEntity : implements
+      FixedCost "1" <-- "*" FixedCostPayment : references fixedCostId
+    }
+
+    package "infrastructure" {
+      class EmployeeResource <<Resource>> {
+        +id: number
+        +fullName: string
+        +dni: string
+        +position: string
+        +monthlySalary: number
+        +hiredOn: string
+        +terminatedOn: string | null
+        +active: boolean
+      }
+      class FixedCostResource <<Resource>> {
+        +id: number
+        +code: string
+        +concept: string
+        +type: string
+        +monthlyAmount: number
+        +employeeId: number | null
+        +expectedWeeks: number[]
+        +active: boolean
+      }
+      class FixedCostPaymentResource <<Resource>> {
+        +id: number
+        +fixedCostId: number
+        +paidOn: string
+        +year: number
+        +month: number
+        +amount: number
+        +bankAccountId: number
+        +notes: string
+      }
+      class EmployeesResponse <<Response>> {
+      }
+      class FixedCostsResponse <<Response>> {
+      }
+      class FixedCostPaymentsResponse <<Response>> {
+      }
+
+      class EmployeeAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: EmployeesResponse): Employee[]
+        +toEntityFromResource(resource: EmployeeResource): Employee
+        +toResourceFromEntity(entity: Employee): EmployeeResource
+      }
+      class FixedCostAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: FixedCostsResponse): FixedCost[]
+        +toEntityFromResource(resource: FixedCostResource): FixedCost
+        +toResourceFromEntity(entity: FixedCost): FixedCostResource
+      }
+      class FixedCostPaymentAssembler <<Assembler>> {
+        +toEntitiesFromResponse(response: FixedCostPaymentsResponse): FixedCostPayment[]
+        +toEntityFromResource(resource: FixedCostPaymentResource): FixedCostPayment
+        +toResourceFromEntity(entity: FixedCostPayment): FixedCostPaymentResource
+      }
+
+      class EmployeesApiEndpoint {
+        +terminate(id: number, terminatedOn: string): Observable<Employee>
+      }
+      class FixedCostsApiEndpoint {
+        +deactivate(id: number): Observable<FixedCost>
+      }
+      class FixedCostPaymentsApiEndpoint {
+        +getByPeriod(year: number, month: number): Observable<FixedCostPayment[]>
+        +register(fixedCostId: number, payment: FixedCostPayment): Observable<FixedCostPayment>
+      }
+
+      class StaffApi {
+        -employeesEndpoint: EmployeesApiEndpoint
+        -fixedCostsEndpoint: FixedCostsApiEndpoint
+        -fixedCostPaymentsEndpoint: FixedCostPaymentsApiEndpoint
+        +getEmployees(): Observable<Employee[]>
+        +getEmployeeById(id: number): Observable<Employee>
+        +hireEmployee(employee: Employee): Observable<Employee>
+        +updateEmployee(employee: Employee): Observable<Employee>
+        +terminateEmployee(id: number, terminatedOn: string): Observable<Employee>
+        +getFixedCosts(): Observable<FixedCost[]>
+        +getFixedCostById(id: number): Observable<FixedCost>
+        +createFixedCost(fixedCost: FixedCost): Observable<FixedCost>
+        +updateFixedCost(fixedCost: FixedCost): Observable<FixedCost>
+        +deactivateFixedCost(id: number): Observable<FixedCost>
+        +getPaymentsByPeriod(year: number, month: number): Observable<FixedCostPayment[]>
+        +registerPayment(fixedCostId: number, payment: FixedCostPayment): Observable<FixedCostPayment>
+      }
+
+      EmployeeResource ..|> app.shared.infrastructure.BaseResource : implements
+      FixedCostResource ..|> app.shared.infrastructure.BaseResource : implements
+      FixedCostPaymentResource ..|> app.shared.infrastructure.BaseResource : implements
+      EmployeesResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      FixedCostsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      FixedCostPaymentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
+      EmployeeAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      FixedCostAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      FixedCostPaymentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
+      EmployeesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      FixedCostsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      FixedCostPaymentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      StaffApi --|> app.shared.infrastructure.BaseApi : extends
+      StaffApi --> EmployeesApiEndpoint : delegates to
+      StaffApi --> FixedCostsApiEndpoint : delegates to
+      StaffApi --> FixedCostPaymentsApiEndpoint : delegates to
+      EmployeesApiEndpoint --> EmployeeAssembler : uses
+      FixedCostsApiEndpoint --> FixedCostAssembler : uses
+      FixedCostPaymentsApiEndpoint --> FixedCostPaymentAssembler : uses
+    }
+
+    package "application" {
+      class StaffStore <<Store>> {
+        -staffApi: StaffApi
+        -employeesSignal: WritableSignal<Employee[]>
+        -fixedCostsSignal: WritableSignal<FixedCost[]>
+        -paymentsSignal: WritableSignal<FixedCostPayment[]>
+        -loadingSignal: WritableSignal<boolean>
+        -errorSignal: WritableSignal<string | null>
+        +employees: Signal<Employee[]>
+        +activeEmployees: Signal<Employee[]>
+        +fixedCosts: Signal<FixedCost[]>
+        +activeFixedCosts: Signal<FixedCost[]>
+        +monthlyFixedCostTotal: Signal<number>
+        +payments: Signal<FixedCostPayment[]>
+        +loading: Signal<boolean>
+        +error: Signal<string | null>
+        +loadEmployees(): void
+        +loadFixedCosts(): void
+        +loadPayments(year: number, month: number): void
+        +hireEmployee(employee: Employee): void
+        +updateEmployee(employee: Employee): void
+        +terminateEmployee(id: number, terminatedOn: string): void
+        +createFixedCost(fixedCost: FixedCost): void
+        +updateFixedCost(fixedCost: FixedCost): void
+        +deactivateFixedCost(id: number): void
+        +registerPayment(fixedCostId: number, payment: FixedCostPayment): void
+        +pendingAmount(fixedCostId: number, year: number, month: number): number
+        +getEmployeeById(id: number): Employee | undefined
+        +getFixedCostById(id: number): FixedCost | undefined
+      }
+      StaffStore --> StaffApi : uses
+      StaffStore --> Employee : manages
+      StaffStore --> FixedCost : manages
+      StaffStore --> FixedCostPayment : manages
+    }
+
+    package "presentation" {
+      package "components" {
+        class RegisterFixedCostPaymentDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterFixedCostPaymentDialog>
+          -treasuryStore: TreasuryStore
+          +data: {fixedCost: FixedCost, year: number, month: number}
+          +paymentForm: FormGroup
+          +bankAccounts: Signal<BankAccount[]>
+          +onSave(): void
+          +onCancel(): void
+        }
+      }
+
+      package "views" {
+        class EmployeeList <<Component>> {
+          -staffStore: StaffStore
+          -dialog: MatDialog
+          -router: Router
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<Employee>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +onEdit(id: number): void
+          +onTerminate(id: number): void
+          +onAdd(): void
+        }
+        class EmployeeForm <<Component>> {
+          -formBuilder: FormBuilder
+          -staffStore: StaffStore
+          -router: Router
+          -route: ActivatedRoute
+          +employeeForm: FormGroup
+          +isEdit: boolean
+          +onSubmit(): void
+          +onCancel(): void
+        }
+        class FixedCostList <<Component>> {
+          -staffStore: StaffStore
+          -dialog: MatDialog
+          -router: Router
+          +period: WritableSignal<Period>
+          +displayedColumns: string[]
+          +dataSource: Signal<MatTableDataSource<FixedCost>>
+          +paginator: Signal<MatPaginator>
+          +sort: Signal<MatSort>
+          +getEmployeeName(employeeId: number | null): string
+          +onEdit(id: number): void
+          +onDeactivate(id: number): void
+          +onRegisterPayment(fixedCost: FixedCost): void
+          +onAdd(): void
+        }
+        class FixedCostForm <<Component>> {
+          -formBuilder: FormBuilder
+          -staffStore: StaffStore
+          -router: Router
+          -route: ActivatedRoute
+          +fixedCostForm: FormGroup
+          +employees: Signal<Employee[]>
+          +types: FixedCostType[]
+          +isEdit: boolean
+          +onSubmit(): void
+          +onCancel(): void
+        }
+      }
+
+      EmployeeList --> StaffStore : uses
+      EmployeeForm --> StaffStore : uses
+      FixedCostList --> StaffStore : uses
+      FixedCostForm --> StaffStore : uses
+      EmployeeForm --|> app.shared.presentation.BaseForm : extends
+      FixedCostForm --|> app.shared.presentation.BaseForm : extends
+      FixedCostList --> RegisterFixedCostPaymentDialog : opens
+      FixedCostList --> app.shared.presentation.components.PeriodSelector : contains
+      EmployeeList --> app.shared.presentation.components.ConfirmDialog : opens
+      RegisterFixedCostPaymentDialog --> app.treasury.application.TreasuryStore : reads bank accounts
+    }
+  }
+}
+
+note bottom
+  FixedCostForm: si type = SALARY el empleado es obligatorio; expectedWeeks (1..5) indica en qué
+  semanas del mes se espera pagar (alimenta el flujo de caja proyectado).
+  FixedCostList muestra por período lo pagado vs. pendiente (pendingAmount).
+  Los gastos de proyecto NO se registran aquí, sino en expenses.
+  json-server (colecciones planas + routes.json): /employees, /fixed-costs,
+  /fixed-cost-payments?fixedCostId= y /fixed-cost-payments?year=&month=.
+end note
+@enduml
