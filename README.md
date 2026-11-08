@@ -1,59 +1,28 @@
-# BrasperFrontend
+# Brasper Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.6.
+App web de gestión financiera de Brasper: proyectos, facturación, gastos, personal, tesorería, contabilidad y reportes.
 
-## Development server
+## Stack
+- Angular 22 (standalone, signals, sin zone.js) + Angular Material (M3)
+- @ngx-translate (es / en)
+- json-server 0.17.4 como fake API mientras se integra el backend (Spring Boot)
+- Vitest + ESLint
+- Node.js 24 o superior (`^22.22.3 || ^24.15.0 || >=26`)
 
-To start a local development server, run:
+## Comandos
+| Comando | Qué hace |
+|---|---|
+| `npm start` | Servidor de desarrollo en http://localhost:4200 |
+| `npm run build` | Build de producción en `dist/` |
+| `npm test` | Tests (Vitest) |
+| `npm run lint` | ESLint |
 
-```bash
-ng serve
-```
+## Diseño
+- Diagramas de clases (fuente de verdad): `docs/uml-frontend/`
+- Un bounded context por carpeta en `src/app/` (`shared`, `iam`, `projects`, `billing`, `expenses`, `staff`, `treasury`, `accounting`, `reporting`), cada uno con `domain/model`, `infrastructure`, `application` y `presentation`.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Git (gitflow)
+- `main` = producción, `develop` = integración. Nunca commit directo a ninguna de las dos.
+- Ramas: `feature/<contexto>-<tema>`, `fix/<tema>`, `chore/<tema>`, `release/<versión>`, `hotfix/<tema>`; salen de `develop` y vuelven por PR con squash.
+- Commits: Conventional Commits en inglés, `feat(<contexto>): <asunto>` (imperativo, ≤ 72 caracteres).
+- PRs chicos y enfocados; CI (lint, test, build) en verde antes de mergear.
