@@ -10,13 +10,14 @@ import { registerLocaleData } from '@angular/common';
 import localeEsPe from '@angular/common/locales/es-PE';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
 import { authenticationInterceptor } from './iam/infrastructure/authentication.interceptor';
+import { PERU_DATE_FORMATS, PeruDateAdapter } from './shared/presentation/peru-date-adapter';
 
 registerLocaleData(localeEsPe);
 
@@ -34,7 +35,8 @@ export const appConfig: ApplicationConfig = {
       fallbackLang: 'es',
       lang: 'es',
     }),
-    provideNativeDateAdapter(),
+    { provide: DateAdapter, useClass: PeruDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: PERU_DATE_FORMATS },
     { provide: LOCALE_ID, useValue: 'es-PE' },
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
     { provide: DEFAULT_CURRENCY_CODE, useValue: 'PEN' },

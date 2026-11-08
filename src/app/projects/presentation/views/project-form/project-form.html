@@ -1,0 +1,141 @@
+<app-page-header
+  [title]="(isEdit() ? 'projects.edit' : 'projects.new') | translate"
+  [subtitle]="isEdit() ? (project()?.code ?? '') + ' · ' + (project()?.name ?? '') : ('projects.formSubtitle' | translate)"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.projects' | translate, link: '/projects' },
+    { label: (isEdit() ? 'common.edit' : 'projects.new') | translate }
+  ]"
+/>
+
+<form class="project-form" [formGroup]="projectForm" (ngSubmit)="onSubmit()" novalidate>
+  @if (isLocked()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>lock</mat-icon>
+      <span>{{ 'projects.lockedMessage' | translate }}</span>
+    </div>
+  }
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <section class="form-card">
+    <h2 class="form-card-title">{{ 'projects.generalData' | translate }}</h2>
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.code' | translate }}</mat-label>
+        <input matInput class="mono" formControlName="code" placeholder="001BR-ENE-2026" autocapitalize="characters" />
+        <mat-hint>{{ (isEdit() ? 'projects.codeLocked' : 'projects.codeHint') | translate }}</mat-hint>
+        @if (isInvalidControl(projectForm, 'code')) {
+          <mat-error>{{ codeError() }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.quotedOn' | translate }}</mat-label>
+        <input matInput formControlName="quotedOn" [matDatepicker]="quotedOnPicker" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="quotedOnPicker" />
+        <mat-datepicker #quotedOnPicker />
+        @if (isInvalidControl(projectForm, 'quotedOn')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'quotedOn') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'projects.projectName' | translate }}</mat-label>
+        <input matInput formControlName="name" />
+        @if (isInvalidControl(projectForm, 'name')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'name') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'projects.description' | translate }}</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+        @if (isInvalidControl(projectForm, 'description')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'description') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.client' | translate }}</mat-label>
+        <mat-select formControlName="clientId">
+          @for (client of clients(); track client.id) {
+            <mat-option [value]="client.id">{{ client.businessName }}</mat-option>
+          }
+        </mat-select>
+        @if (isInvalidControl(projectForm, 'clientId')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'clientId') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.currency' | translate }}</mat-label>
+        <mat-select formControlName="currency">
+          @for (currency of currencies; track currency) {
+            <mat-option [value]="currency">{{ currency }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <h2 class="form-card-title">{{ 'projects.amounts' | translate }}</h2>
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.budget' | translate }}</mat-label>
+        <span matTextPrefix>{{ projectForm.controls.currency.value === 'USD' ? 'US$' : 'S/' }}&nbsp;</span>
+        <input matInput class="amount" formControlName="budget" type="number" min="0" step="0.01" />
+        @if (isInvalidControl(projectForm, 'budget')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'budget') }}</mat-error>
+        } @else {
+          <mat-hint>{{ 'projects.budgetHint' | translate }}</mat-hint>
+        }
+      </mat-form-field>
+
+      @if (isEdit()) {
+        <div class="read-only-field">
+          <span class="label">{{ 'projects.estimatedDirectCost' | translate }}</span>
+          <span class="value amount">{{ project()?.estimatedDirectCost | money: project()?.currency }}</span>
+          <span class="hint">{{ 'projects.estimatedDirectCostHint' | translate }}</span>
+        </div>
+      } @else {
+        <div></div>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.participation' | translate }}</mat-label>
+        <input matInput class="amount" formControlName="participation" type="number" min="0" max="100" step="0.01" />
+        <span matTextSuffix>&nbsp;%</span>
+        @if (isInvalidControl(projectForm, 'participation')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'participation') }}</mat-error>
+        } @else {
+          <mat-hint>{{ 'projects.participationHint' | translate }}</mat-hint>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.salesCommissionRate' | translate }}</mat-label>
+        <input matInput class="amount" formControlName="salesCommissionRate" type="number" min="0" max="100" step="0.01" />
+        <span matTextSuffix>&nbsp;%</span>
+        @if (isInvalidControl(projectForm, 'salesCommissionRate')) {
+          <mat-error>{{ errorMessageForControl(projectForm, 'salesCommissionRate') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    @if (!isLocked()) {
+      <button mat-flat-button type="submit" [disabled]="loading()">
+        <mat-icon>save</mat-icon>
+        {{ (isEdit() ? 'common.saveChanges' : 'projects.save') | translate }}
+      </button>
+    }
+  </div>
+</form>

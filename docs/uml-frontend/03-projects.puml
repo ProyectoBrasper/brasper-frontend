@@ -77,6 +77,8 @@ package "app" {
         +accumulatedProgress: number
         +estimatedDirectCost: number
         +isInProgress(): boolean
+        +isOpen(): boolean
+        +canStart(): boolean
         +remainingProgress(): number
       }
       Project ..|> app.shared.domain.model.BaseEntity : implements
@@ -280,8 +282,9 @@ package "app" {
         +createClient(client: Client, navigateTo: string[]): void
         +updateClient(client: Client, navigateTo: string[]): void
         +clearError(): void
-        +createProject(project: Project): void
-        +updateProject(project: Project): void
+        +createProject(project: Project, navigateTo: string[]): void
+        +updateProject(project: Project, navigateTo: string[]): void
+        +countByStatus(status: ProjectStatus | null): number
         +startProject(id: number): void
         +cancelProject(id: number): void
         +loadProjectDetail(projectId: number): void
@@ -406,7 +409,11 @@ package "app" {
 
 note bottom
   Validaciones en ProjectForm: code con patrón ^\d{3}BR-(ENE|FEB|...|DIC)-\d{4}$, budget > 0,
-  participation entre 0 y 1. RegisterProgressDialog limita el porcentaje a
+  participation entre 0 y 1. Los porcentajes se escriben en % y viajan como fracción
+  (toPercent / toFraction); quotedOn viaja como yyyy-MM-dd (toIsoDate, sin UTC).
+  Al editar quedan bloqueados code, clientId, currency y quotedOn (UpdateProjectResource);
+  completados y cancelados no se editan. estimatedDirectCost es de solo lectura (suma de
+  CostEstimate). RegisterProgressDialog limita el porcentaje a
   (100% - accumulatedProgress). El costo real del proyecto NO se muestra aquí:
   viene de reporting (ProjectProfitabilityView).
   Contrato del backend (develop): /clients (PUT no cambia el RUC; RUC = 11 dígitos, único),

@@ -71,7 +71,8 @@
     "maxlength": "Debe tener como máximo {{value}} caracteres.",
     "pattern": "El formato no es válido.",
     "username": "Usa de 3 a 50 caracteres: minúsculas, números, punto, guion o guion bajo.",
-    "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número."
+    "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número.",
+    "matDatepickerParse": "Usa el formato dd/mm/aaaa."
   },
   "common": {
     "home": "Inicio",
@@ -83,7 +84,8 @@
     "edit": "Editar",
     "editItem": "Editar {{name}}",
     "new": "Nuevo",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "all": "Todos"
   },
   "signIn": {
     "title": "Iniciar sesión",
@@ -154,5 +156,42 @@
     "phone": "Teléfono",
     "email": "Correo electrónico",
     "empty": "Aún no hay clientes registrados."
+  },
+  "projects": {
+    "subtitle": "Cartera de proyectos y su avance",
+    "new": "Nuevo proyecto",
+    "edit": "Editar proyecto",
+    "save": "Guardar proyecto",
+    "formSubtitle": "Registra la cotización de un proyecto",
+    "filterByStatus": "Filtrar por estado",
+    "code": "Código",
+    "codeHint": "Ejemplo: 006BR-NOV-2026",
+    "codeLocked": "El código no se puede cambiar",
+    "codeFormat": "Formato inválido. Ejemplo: 006BR-NOV-2026",
+    "name": "Proyecto",
+    "projectName": "Nombre del proyecto",
+    "description": "Descripción",
+    "client": "Cliente",
+    "currency": "Moneda",
+    "quotedOn": "Fecha de cotización",
+    "budget": "Presupuesto",
+    "budgetHint": "Debe ser mayor a 0",
+    "progress": "Avance",
+    "status": "Estado",
+    "participation": "Participación",
+    "participationHint": "Mayor a 0 % y hasta 100 %",
+    "salesCommissionRate": "Comisión de ventas",
+    "estimatedDirectCost": "Costo directo estimado",
+    "estimatedDirectCostHint": "Suma de los costos estimados por categoría (se define en el detalle)",
+    "generalData": "Datos generales",
+    "amounts": "Montos y condiciones",
+    "start": "Iniciar proyecto",
+    "cancel": "Cancelar proyecto",
+    "startTitle": "Iniciar proyecto",
+    "startMessage": "{{code}} · {{name}} pasará a En ejecución. ¿Deseas continuar?",
+    "cancelTitle": "Cancelar proyecto",
+    "cancelMessage": "{{code}} · {{name}} quedará cancelado y no admitirá cambios ni avances. Esta acción no se puede deshacer. ¿Deseas continuar?",
+    "lockedMessage": "Este proyecto está completado o cancelado y ya no se puede editar.",
+    "empty": "No hay proyectos con este estado."
   }
 }
