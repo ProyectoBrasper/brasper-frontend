@@ -1,9 +1,11 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Invoice } from '../domain/model/invoice.entity';
 import { InvoiceStatus } from '../domain/model/invoice-status';
+import { IssueInvoiceCommand } from '../domain/model/issue-invoice.command';
 import { BillingApi } from '../infrastructure/billing-api';
 
 /**
@@ -13,6 +15,7 @@ import { BillingApi } from '../infrastructure/billing-api';
 export class BillingStore {
   private readonly billingApi = inject(BillingApi);
   private readonly iamStore = inject(IamStore);
+  private readonly router = inject(Router);
 
   private readonly invoicesSignal = signal<Invoice[]>([]);
   /** Requests in flight; several can run at once. */
@@ -35,6 +38,14 @@ export class BillingStore {
     this.run(this.billingApi.getInvoices(), 'Failed to load invoices', (invoices) =>
       this.invoicesSignal.set(invoices),
     );
+  }
+
+  /** Issues an invoice and navigates to `navigateTo` when the API accepts it. */
+  issueInvoice(command: IssueInvoiceCommand, navigateTo: string[]): void {
+    this.run(this.billingApi.issueInvoice(command), 'Failed to issue invoice', (invoice) => {
+      this.invoicesSignal.update((invoices) => [...invoices, invoice]);
+      void this.router.navigate(navigateTo);
+    });
   }
 
   getInvoiceById(id: number): Invoice | undefined {

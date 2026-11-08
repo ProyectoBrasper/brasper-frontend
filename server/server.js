@@ -49,6 +49,7 @@ server.use(jsonServer.bodyParser);
 require('./routes/iam')(server, context);
 require('./routes/projects')(server, context);
 require('./routes/billing')(server, context);
+require('./routes/accounting')(server, context);
 
 // Every other /api/v1 route needs a session.
 server.use('/api/v1', requireRoles());

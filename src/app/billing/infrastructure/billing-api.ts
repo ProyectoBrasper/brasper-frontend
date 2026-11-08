@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { Invoice } from '../domain/model/invoice.entity';
+import { IssueInvoiceCommand } from '../domain/model/issue-invoice.command';
 import { InvoicesApiEndpoint } from './invoices-api-endpoint';
 
 /**
@@ -19,5 +20,9 @@ export class BillingApi extends BaseApi {
 
   getInvoiceById(id: number): Observable<Invoice> {
     return this.invoicesEndpoint.getById(id);
+  }
+
+  issueInvoice(command: IssueInvoiceCommand): Observable<Invoice> {
+    return this.invoicesEndpoint.issue(command);
   }
 }

@@ -7,6 +7,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ProjectsStore } from '../../../../projects/application/projects.store';
 import { PageHeader } from '../../../../shared/presentation/components/page-header/page-header';
@@ -26,6 +27,7 @@ const AMOUNT_COLUMNS = ['taxableBase', 'igv', 'total', 'collectedAmount', 'outst
   selector: 'app-invoice-list',
   imports: [
     DatePipe,
+    RouterLink,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
@@ -47,6 +49,7 @@ export class InvoiceList implements OnInit {
 
   readonly loading = computed(() => this.billingStore.loading() || this.projectsStore.loading());
   readonly error = computed(() => this.billingStore.error() ?? this.projectsStore.error());
+  readonly canWrite = this.billingStore.canWrite;
   readonly totalOutstanding = this.billingStore.totalOutstanding;
   readonly pendingCount = computed(() => this.billingStore.pendingInvoices().length);
   readonly statuses: readonly (InvoiceStatus | null)[] = [null, ...INVOICE_STATUSES];

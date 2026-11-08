@@ -23,6 +23,22 @@ export interface InvoiceResource extends BaseResource {
   notes: string | null;
 }
 
+/** Body of `POST /invoices` (backend `IssueInvoiceResource`). */
+export interface IssueInvoiceRequest {
+  series: string;
+  correlative: number;
+  issuedOn: string;
+  purchaseOrder: string | null;
+  projectId: number;
+  taxableBase: number;
+  currency: string;
+  hasRetention: boolean;
+  hasDetraction: boolean;
+  selfDetraction: boolean;
+  advance: boolean;
+  notes: string | null;
+}
+
 /** Envelope for an invoice collection (the API returns a plain array). */
 export interface InvoicesResponse extends BaseResponse {
   invoices: InvoiceResource[];
