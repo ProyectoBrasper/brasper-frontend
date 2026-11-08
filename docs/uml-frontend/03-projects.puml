@@ -274,10 +274,12 @@ package "app" {
         +costEstimates: Signal<CostEstimate[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
         +loadClients(): void
         +loadProjects(): void
-        +createClient(client: Client): void
-        +updateClient(client: Client): void
+        +createClient(client: Client, navigateTo: string[]): void
+        +updateClient(client: Client, navigateTo: string[]): void
+        +clearError(): void
         +createProject(project: Project): void
         +updateProject(project: Project): void
         +startProject(id: number): void
@@ -407,7 +409,11 @@ note bottom
   participation entre 0 y 1. RegisterProgressDialog limita el porcentaje a
   (100% - accumulatedProgress). El costo real del proyecto NO se muestra aquí:
   viene de reporting (ProjectProfitabilityView).
-  json-server (colecciones planas + routes.json): /clients, /projects,
-  /progress-records?projectId=, /cost-estimates?projectId=; start/cancel = PATCH /projects/{id} {status}.
+  Contrato del backend (develop): /clients (PUT no cambia el RUC; RUC = 11 dígitos, único),
+  /projects?status=&clientId=, POST /projects/{id}/start y /cancel,
+  GET/POST /projects/{id}/progress, GET/PUT /projects/{id}/cost-estimates.
+  Escriben ADMIN, ACCOUNTING y ENGINEER (ProjectsStore.canWrite); MANAGEMENT solo lee.
+  Crear/editar navegan solo si la API acepta (navigateTo); si falla, el error se muestra en el formulario.
+  Fake API: server/routes/projects.js replica rutas, reglas y errores del backend.
 end note
 @enduml

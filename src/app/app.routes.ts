@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authenticationGuard } from './iam/application/authentication.guard';
 import { roleGuard } from './iam/application/role.guard';
 import { AREA_ROLES } from './iam/domain/model/role';
 
@@ -9,6 +10,7 @@ const signUpForm = () =>
 const userList = () => import('./iam/presentation/views/user-list/user-list').then((m) => m.UserList);
 const pageNotFound = () =>
   import('./shared/presentation/views/page-not-found/page-not-found').then((m) => m.PageNotFound);
+const projectsRoutes = () => import('./projects/presentation/projects.routes').then((m) => m.projectsRoutes);
 
 /**
  * Root routes (docs/uml-frontend/00-app.puml). Each bounded context is lazy loaded with
@@ -32,5 +34,6 @@ export const routes: Routes = [
     data: { roles: AREA_ROLES.users },
     title: 'Brasper',
   },
+  { path: 'projects', loadChildren: projectsRoutes, canActivate: [authenticationGuard] },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];

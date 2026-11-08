@@ -65,6 +65,150 @@ h3 {
   outline-offset: 2px;
 }
 
+/* ---------- Shared page building blocks (DESIGN.md §3–4) ---------- */
+
+/* Error banner shown above a table or form */
+.page-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
+}
+
+/* Card that wraps a MatTable + paginator */
+.table-card {
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+/* Wide tables scroll horizontally instead of pushing columns out of view */
+.table-scroll {
+  overflow-x: auto;
+}
+
+table.data-table {
+  width: 100%;
+  --mat-table-header-container-height: 48px;
+  --mat-table-row-item-container-height: 56px;
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+}
+
+table.data-table th.mat-mdc-header-cell {
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+table.data-table td.mat-mdc-cell {
+  white-space: nowrap;
+}
+
+table.data-table tr.mat-mdc-row:hover {
+  background: var(--mat-sys-surface-container);
+}
+
+table.data-table tr.clickable {
+  cursor: pointer;
+}
+
+table.data-table .empty-row td {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+table.data-table .actions-col {
+  width: 72px;
+  text-align: right;
+}
+
+/* Initials avatar for people and companies */
+.entity-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.entity-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+/* Form inside a card: sections, 2 columns on desktop / 1 on mobile, actions at the bottom */
+.form-card {
+  max-width: 880px;
+  padding: 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.form-card-title {
+  margin: 0 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-title-medium);
+  font-family: var(--brasper-font-brand);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+}
+
+.form-grid mat-form-field {
+  width: 100%;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+@media (max-width: 599px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card {
+    padding: 16px;
+  }
+}
+
 /* Amounts: tabular digits, right-aligned in tables */
 .amount {
   font-variant-numeric: tabular-nums;
