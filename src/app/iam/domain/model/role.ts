@@ -23,4 +23,6 @@ export const AREA_ROLES = {
   users: [Role.ROLE_ADMIN],
   /** Create / edit clients, projects, suppliers and expenses (management only reads). */
   operationsWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_ENGINEER],
+  /** Issue / void invoices, register collections and scheduled collections. */
+  billingWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
 } as const satisfies Record<string, readonly Role[]>;

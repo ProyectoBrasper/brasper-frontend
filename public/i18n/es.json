@@ -223,5 +223,24 @@
     "LABOR": "Mano de obra",
     "TRAVEL_EXPENSES": "Viáticos",
     "OTHER": "Otros"
+  },
+  "invoices": {
+    "subtitle": "Facturas emitidas y su cobranza",
+    "totalOutstanding": "Saldo por cobrar",
+    "withBalance": "Facturas con saldo",
+    "filterByStatus": "Filtrar por estado",
+    "all": "Todas",
+    "number": "N°",
+    "issuedOn": "Emisión",
+    "project": "Proyecto",
+    "client": "Cliente",
+    "taxableBase": "Base imponible",
+    "igv": "IGV",
+    "total": "Total",
+    "collected": "Cobrado",
+    "balance": "Saldo",
+    "status": "Estado",
+    "advance": "Adelanto",
+    "empty": "No hay facturas con este estado."
   }
 }
