@@ -4,6 +4,7 @@ import { AREA_ROLES } from '../../iam/domain/model/role';
 
 const projectList = () => import('./views/project-list/project-list').then((m) => m.ProjectList);
 const projectForm = () => import('./views/project-form/project-form').then((m) => m.ProjectForm);
+const projectDetail = () => import('./views/project-detail/project-detail').then((m) => m.ProjectDetail);
 const clientList = () => import('./views/client-list/client-list').then((m) => m.ClientList);
 const clientForm = () => import('./views/client-form/client-form').then((m) => m.ClientForm);
 
@@ -11,7 +12,7 @@ const canWrite = { canActivate: [roleGuard], data: { roles: AREA_ROLES.operation
 
 /**
  * Projects context routes (docs/uml-frontend/00-app.puml), lazy loaded under `/projects`.
- * The project detail (`:id`) comes in the next PR.
+ * Order matters: `new` and `:id/edit` before `:id`.
  */
 export const projectsRoutes: Routes = [
   { path: 'clients', loadComponent: clientList, title: 'Brasper' },
@@ -20,4 +21,5 @@ export const projectsRoutes: Routes = [
   { path: '', loadComponent: projectList, title: 'Brasper' },
   { path: 'new', loadComponent: projectForm, title: 'Brasper', ...canWrite },
   { path: ':id/edit', loadComponent: projectForm, title: 'Brasper', ...canWrite },
+  { path: ':id', loadComponent: projectDetail, title: 'Brasper' },
 ];

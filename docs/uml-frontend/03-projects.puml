@@ -155,24 +155,28 @@ package "app" {
       }
       class ProgressRecordResource <<Resource>> {
         +id: number
-        +projectId: number
+        +year: number
+        +month: number
+        +percentage: number
+      }
+      class RegisterProgressRequest <<Request>> {
         +year: number
         +month: number
         +percentage: number
       }
       class CostEstimateResource <<Resource>> {
         +id: number
-        +projectId: number
         +category: string
         +estimatedAmount: number
+      }
+      class SetCostEstimateRequest <<Request>> {
+        +category: string
+        +estimatedAmount: number
+        +currency: string
       }
       class ClientsResponse <<Response>> {
       }
       class ProjectsResponse <<Response>> {
-      }
-      class ProgressRecordsResponse <<Response>> {
-      }
-      class CostEstimatesResponse <<Response>> {
       }
 
       class ClientAssembler <<Assembler>> {
@@ -186,14 +190,12 @@ package "app" {
         +toResourceFromEntity(entity: Project): ProjectResource
       }
       class ProgressRecordAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: ProgressRecordsResponse): ProgressRecord[]
-        +toEntityFromResource(resource: ProgressRecordResource): ProgressRecord
-        +toResourceFromEntity(entity: ProgressRecord): ProgressRecordResource
+        +toEntityFromResource(resource: ProgressRecordResource, projectId: number): ProgressRecord
+        +toRequestFromEntity(entity: ProgressRecord): RegisterProgressRequest
       }
       class CostEstimateAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: CostEstimatesResponse): CostEstimate[]
-        +toEntityFromResource(resource: CostEstimateResource): CostEstimate
-        +toResourceFromEntity(entity: CostEstimate): CostEstimateResource
+        +toEntityFromResource(resource: CostEstimateResource, projectId: number): CostEstimate
+        +toRequestFromEntity(entity: CostEstimate, currency: string): SetCostEstimateRequest
       }
 
       class ClientsApiEndpoint {
@@ -209,7 +211,7 @@ package "app" {
       }
       class CostEstimatesApiEndpoint {
         +getByProjectId(projectId: number): Observable<CostEstimate[]>
-        +set(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+        +set(projectId: number, estimate: CostEstimate, currency: string): Observable<CostEstimate>
       }
 
       class ProjectsApi {
@@ -230,7 +232,7 @@ package "app" {
         +getProgressRecords(projectId: number): Observable<ProgressRecord[]>
         +registerProgress(projectId: number, record: ProgressRecord): Observable<ProgressRecord>
         +getCostEstimates(projectId: number): Observable<CostEstimate[]>
-        +setCostEstimate(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+        +setCostEstimate(projectId: number, estimate: CostEstimate, currency: string): Observable<CostEstimate>
       }
 
       ClientResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -239,16 +241,12 @@ package "app" {
       CostEstimateResource ..|> app.shared.infrastructure.BaseResource : implements
       ClientsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       ProjectsResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      ProgressRecordsResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      CostEstimatesResponse ..|> app.shared.infrastructure.BaseResponse : implements
       ClientAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       ProjectAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      ProgressRecordAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      CostEstimateAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       ClientsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       ProjectsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      ProgressRecordsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      CostEstimatesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ProgressRecordsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      CostEstimatesApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
       ProjectsApi --|> app.shared.infrastructure.BaseApi : extends
       ProjectsApi --> ClientsApiEndpoint : delegates to
       ProjectsApi --> ProjectsApiEndpoint : delegates to

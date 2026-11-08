@@ -85,7 +85,9 @@
     "editItem": "Edit {{name}}",
     "new": "New",
     "saveChanges": "Save changes",
-    "all": "All"
+    "all": "All",
+    "total": "Total",
+    "save": "Save"
   },
   "signIn": {
     "title": "Sign in",
@@ -192,6 +194,34 @@
     "cancelTitle": "Cancel project",
     "cancelMessage": "{{code}} · {{name}} will be cancelled and will not accept changes or progress. This cannot be undone. Continue?",
     "lockedMessage": "This project is completed or cancelled and can no longer be edited.",
-    "empty": "There are no projects with this status."
+    "empty": "There are no projects with this status.",
+    "view": "View details",
+    "projectData": "Project data",
+    "participationAndCommission": "Participation / Commission",
+    "accumulatedProgress": "Accumulated progress",
+    "remaining": "Remaining",
+    "progressRecords": "Registered progress",
+    "costEstimates": "Cost estimates",
+    "period": "Period",
+    "monthProgress": "Progress of the month",
+    "accumulated": "Accumulated",
+    "noProgress": "No progress registered yet.",
+    "category": "Category",
+    "estimatedAmount": "Estimated amount",
+    "noEstimates": "No cost estimates yet.",
+    "registerProgress": "Register progress",
+    "month": "Month",
+    "year": "Year",
+    "periodTaken": "That month already has progress.",
+    "progressHint": "Up to {{max}} % (what is left to reach 100 %)",
+    "willComplete": "This progress takes the project to 100 % and it will be completed.",
+    "addEstimate": "Add estimate",
+    "editEstimate": "Edit estimate"
+  },
+  "costCategory": {
+    "MATERIALS": "Materials",
+    "LABOR": "Labor",
+    "TRAVEL_EXPENSES": "Travel expenses",
+    "OTHER": "Other"
   }
 }

@@ -11,7 +11,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { filter } from 'rxjs';
 import { ConfirmDialog } from '../../../../shared/presentation/components/confirm-dialog/confirm-dialog';
 import { PageHeader } from '../../../../shared/presentation/components/page-header/page-header';
 import { StatusChip } from '../../../../shared/presentation/components/status-chip/status-chip';
@@ -101,9 +100,13 @@ export class ProjectList implements OnInit {
     return this.projectsStore.getClientById(clientId)?.businessName ?? '';
   }
 
-  /** Actions are shown only when the user can write and the project's status allows them. */
-  hasActions(project: Project): boolean {
+  /** Edit / start / cancel are shown only when the user can write and the status allows them. */
+  canChange(project: Project): boolean {
     return this.canWrite() && project.isOpen();
+  }
+
+  onView(id: number): void {
+    void this.router.navigate(['/projects', id]);
   }
 
   onEdit(id: number): void {
@@ -127,15 +130,9 @@ export class ProjectList implements OnInit {
   }
 
   private confirm(titleKey: string, messageKey: string, project: Project) {
-    return this.dialog
-      .open(ConfirmDialog, {
-        data: {
-          title: this.translate.instant(titleKey),
-          message: this.translate.instant(messageKey, { code: project.code, name: project.name }),
-        },
-        width: '440px',
-      })
-      .afterClosed()
-      .pipe(filter((confirmed): confirmed is true => confirmed === true));
+    return ConfirmDialog.confirm(this.dialog, {
+      title: this.translate.instant(titleKey),
+      message: this.translate.instant(messageKey, { code: project.code, name: project.name }),
+    });
   }
 }
