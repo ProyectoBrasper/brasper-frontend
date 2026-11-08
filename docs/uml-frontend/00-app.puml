@@ -18,9 +18,9 @@ package "app" {
   }
 
   class routes <<Routes>> {
-    +'' -> redirect 'dashboard'
+    +'' -> redirect 'projects' (pasa a 'dashboard' cuando exista)
     +'sign-in' -> SignInForm
-    +'sign-up' -> SignUpForm
+    +'sign-up' -> SignUpForm [roleGuard: ROLE_ADMIN]
     +'dashboard' -> DashboardView [authenticationGuard]
     +'users' -> UserList [roleGuard: ROLE_ADMIN]
     +'projects/**' -> loadChildren(projectsRoutes) [authenticationGuard]

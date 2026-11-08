@@ -69,6 +69,70 @@
     "max": "El valor máximo es {{value}}.",
     "minlength": "Debe tener al menos {{value}} caracteres.",
     "maxlength": "Debe tener como máximo {{value}} caracteres.",
-    "pattern": "El formato no es válido."
+    "pattern": "El formato no es válido.",
+    "username": "Usa de 3 a 50 caracteres: minúsculas, números, punto, guion o guion bajo.",
+    "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número."
+  },
+  "common": {
+    "home": "Inicio",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "actions": "Acciones",
+    "actionsFor": "Acciones para {{name}}",
+    "loading": "Cargando…"
+  },
+  "signIn": {
+    "title": "Iniciar sesión",
+    "subtitle": "Ingresa con tu usuario y contraseña",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "submit": "Ingresar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "value1": "Proyectos, avances y costos en un solo lugar",
+    "value2": "Facturación con IGV, detracciones y retenciones",
+    "value3": "Flujo de caja semanal real y proyectado"
+  },
+  "signUp": {
+    "subtitle": "Registra un usuario y su rol",
+    "submit": "Registrar usuario",
+    "usernameHint": "Minúsculas, números, punto o guion",
+    "passwordHint": "8 a 72 caracteres, con letras y números"
+  },
+  "users": {
+    "subtitle": "Roles y acceso a la plataforma",
+    "new": "Nuevo usuario",
+    "username": "Usuario",
+    "fullName": "Nombre completo",
+    "role": "Rol",
+    "status": "Estado",
+    "empty": "No hay usuarios registrados.",
+    "changeRole": "Cambiar rol",
+    "deactivate": "Desactivar",
+    "changeRoleTitle": "Cambiar rol",
+    "changeRoleMessage": "¿Cambiar el rol de {{name}} a {{role}}?",
+    "deactivateTitle": "Desactivar usuario",
+    "deactivateMessage": "{{name}} ya no podrá ingresar a la plataforma. ¿Deseas continuar?"
+  },
+  "status": {
+    "ACTIVE": "Activo",
+    "INACTIVE": "Inactivo",
+    "COLLECTED": "Cobrada",
+    "PARTIALLY_COLLECTED": "Cobro parcial",
+    "PAID": "Pagado",
+    "PARTIALLY_PAID": "Pago parcial",
+    "PENDING": "Pendiente",
+    "SCHEDULED": "Programado",
+    "RESCHEDULED": "Reprogramado",
+    "REALIZED": "Realizado",
+    "DRAFT": "Borrador",
+    "FILED": "Presentada",
+    "QUOTED": "Cotizado",
+    "IN_PROGRESS": "En ejecución",
+    "COMPLETED": "Completado",
+    "CANCELLED": "Cancelado",
+    "VOIDED": "Anulada",
+    "ANNULLED": "Anulado",
+    "OVERDUE": "Vencida"
   }
 }

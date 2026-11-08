@@ -110,6 +110,12 @@ package "app" {
         class StatusChip <<Component>> {
           +status: InputSignal<string>
           +color: Signal<string>
+          +icon: Signal<string>
+        }
+        class PageHeader <<Component>> {
+          +title: InputSignal<string>
+          +subtitle: InputSignal<string>
+          +breadcrumbs: InputSignal<Array<{label: string, link?: string}>>
         }
       }
 

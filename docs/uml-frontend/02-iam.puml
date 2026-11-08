@@ -267,5 +267,8 @@ note bottom
   Fake API: server/server.js (json-server) simula /auth y /users con el mismo contrato.
   authenticationGuard redirige a /sign-in si no hay sesión; roleGuard lee
   route.data.roles y redirige a '/' si el rol no está permitido.
+  Alta de usuarios solo ADMIN (igual que el backend): SignInForm no tiene "Crear cuenta";
+  SignUpForm es "Nuevo usuario" dentro del layout, se abre desde UserList y vuelve a /users.
+  Validaciones iguales al backend: usernameValidator y passwordValidator.
 end note
 @enduml
