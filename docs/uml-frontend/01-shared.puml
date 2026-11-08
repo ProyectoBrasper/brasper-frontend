@@ -82,9 +82,12 @@ package "app" {
       package "components" {
         class Layout <<Component>> {
           -iamStore: IamStore
-          +options: Signal<Array<{link: string, label: string, icon: string, roles: string[]}>>
+          +options: Signal<Array<{link: string, label: string, icon: string, roles: Role[], group: string}>>
           +sidenavOpened: WritableSignal<boolean>
+          +isMobile: Signal<boolean>
+          +activeLink: Signal<string | null>
           +toggleSidenav(): void
+          +onNavigate(): void
         }
         class FooterContent <<Component>> {
         }

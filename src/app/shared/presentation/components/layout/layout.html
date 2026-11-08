@@ -1,0 +1,64 @@
+@if (isSignedIn()) {
+  <mat-sidenav-container class="shell">
+    <mat-sidenav
+      class="sidebar"
+      [mode]="isMobile() ? 'over' : 'side'"
+      [opened]="sidenavOpened()"
+      (closedStart)="sidenavOpened.set(false)"
+    >
+      <div class="sidebar-inner">
+        <a class="brand" routerLink="/" (click)="onNavigate()">
+          <span class="brand-mark" aria-hidden="true">B</span>
+          <span class="brand-name">{{ 'app.name' | translate }}</span>
+        </a>
+
+        <nav class="menu" [attr.aria-label]="'nav.label' | translate">
+          @for (section of sections(); track section.group) {
+            <p class="menu-group">{{ 'nav.groups.' + section.group | translate }}</p>
+            @for (option of section.options; track option.link) {
+              <a
+                class="menu-item"
+                [class.active]="option.link === activeLink()"
+                [attr.aria-current]="option.link === activeLink() ? 'page' : null"
+                [routerLink]="option.link"
+                (click)="onNavigate()"
+              >
+                <mat-icon>{{ option.icon }}</mat-icon>
+                <span>{{ option.label | translate }}</span>
+              </a>
+            }
+          }
+        </nav>
+
+        <div class="sidebar-footer">
+          <app-authentication-section mode="sidebar" />
+        </div>
+      </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="main">
+      <mat-toolbar class="toolbar">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="toggleSidenav()"
+          [attr.aria-label]="'layout.toggleMenu' | translate"
+          [attr.aria-expanded]="sidenavOpened()"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="spacer"></span>
+        <app-language-switcher />
+        <span class="divider" aria-hidden="true"></span>
+        <app-authentication-section mode="toolbar" />
+      </mat-toolbar>
+
+      <main class="content">
+        <router-outlet />
+        <app-footer-content />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet />
+}

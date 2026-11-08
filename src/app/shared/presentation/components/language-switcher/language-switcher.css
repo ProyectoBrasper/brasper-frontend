@@ -1,0 +1,11 @@
+.switcher {
+  --mat-button-toggle-height: 36px;
+  --mat-button-toggle-shape: 8px;
+  --mat-button-toggle-divider-color: var(--mat-sys-outline-variant);
+  --mat-button-toggle-background-color: var(--mat-sys-surface-container);
+  --mat-button-toggle-text-color: var(--mat-sys-on-surface-variant);
+  --mat-button-toggle-selected-state-background-color: var(--mat-sys-surface-container);
+  --mat-button-toggle-selected-state-text-color: var(--mat-sys-primary);
+  --mat-button-toggle-label-text-weight: 600;
+  border: none;
+}

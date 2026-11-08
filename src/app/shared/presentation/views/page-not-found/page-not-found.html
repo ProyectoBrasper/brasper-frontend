@@ -1,0 +1,11 @@
+<section class="not-found">
+  <div class="icon-circle" aria-hidden="true">
+    <mat-icon>travel_explore</mat-icon>
+  </div>
+  <h1>{{ 'notFound.title' | translate }}</h1>
+  <p>{{ 'notFound.message' | translate: { path: invalidPath } }}</p>
+  <button mat-flat-button type="button" (click)="navigateToHome()">
+    <mat-icon>home</mat-icon>
+    {{ 'notFound.home' | translate }}
+  </button>
+</section>

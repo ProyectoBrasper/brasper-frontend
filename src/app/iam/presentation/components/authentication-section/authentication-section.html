@@ -1,0 +1,24 @@
+@if (isSignedIn()) {
+  @if (mode() === 'toolbar') {
+    <div class="user-inline" [title]="currentUsername()">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <span class="name">{{ fullName() }}</span>
+    </div>
+  } @else {
+    <div class="user-card">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <div class="user-text">
+        <span class="name">{{ fullName() }}</span>
+        @if (role(); as currentRole) {
+          <span class="role-chip">{{ 'role.' + currentRole | translate }}</span>
+        }
+      </div>
+    </div>
+    <button type="button" class="sign-out" (click)="onSignOut()">
+      <mat-icon>logout</mat-icon>
+      <span>{{ 'auth.signOut' | translate }}</span>
+    </button>
+  }
+} @else {
+  <button mat-flat-button type="button" (click)="onSignIn()">{{ 'auth.signIn' | translate }}</button>
+}

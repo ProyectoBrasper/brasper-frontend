@@ -1,0 +1,43 @@
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+  margin: 10vh auto;
+  padding: 40px 32px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+  text-align: center;
+}
+
+.icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-primary);
+}
+
+.icon-circle mat-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+}
+
+h1 {
+  font: var(--mat-sys-headline-small);
+  font-family: var(--brasper-font-brand);
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 8px;
+  color: var(--mat-sys-on-surface-variant);
+  word-break: break-all;
+}

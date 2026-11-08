@@ -204,10 +204,13 @@ package "app" {
         class AuthenticationSection <<Component>> {
           -iamStore: IamStore
           -router: Router
+          +mode: InputSignal<'toolbar' | 'sidebar'>
           +isSignedIn: Signal<boolean>
           +currentUsername: Signal<string>
+          +fullName: Signal<string>
+          +role: Signal<Role | null>
+          +initials: Signal<string>
           +onSignIn(): void
-          +onSignUp(): void
           +onSignOut(): void
         }
       }
