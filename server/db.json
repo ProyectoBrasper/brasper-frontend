@@ -74,5 +74,26 @@
     {"id":22,"projectId":6,"category":"LABOR","estimatedAmount":62000},
     {"id":23,"projectId":6,"category":"TRAVEL_EXPENSES","estimatedAmount":8000},
     {"id":24,"projectId":6,"category":"OTHER","estimatedAmount":10000}
+  ],
+  "invoice-payments": [
+    {"id":1,"invoiceId":1,"receivedOn":"2026-04-28","amount":207680,"type":"NET_DEPOSIT","bankAccountId":1,"reference":null},
+    {"id":2,"invoiceId":1,"receivedOn":"2026-04-29","amount":28320,"type":"DETRACTION_DEPOSIT","bankAccountId":3,"reference":null},
+    {"id":3,"invoiceId":2,"receivedOn":"2026-07-05","amount":186912,"type":"NET_DEPOSIT","bankAccountId":1,"reference":null},
+    {"id":4,"invoiceId":2,"receivedOn":"2026-07-06","amount":25488,"type":"DETRACTION_DEPOSIT","bankAccountId":3,"reference":null},
+    {"id":5,"invoiceId":3,"receivedOn":"2026-09-02","amount":103840,"type":"NET_DEPOSIT","bankAccountId":1,"reference":null},
+    {"id":6,"invoiceId":3,"receivedOn":"2026-09-03","amount":14160,"type":"DETRACTION_DEPOSIT","bankAccountId":3,"reference":null},
+    {"id":7,"invoiceId":4,"receivedOn":"2026-10-06","amount":60000,"type":"NET_DEPOSIT","bankAccountId":1,"reference":null},
+    {"id":8,"invoiceId":4,"receivedOn":"2026-10-07","amount":16992,"type":"DETRACTION_DEPOSIT","bankAccountId":3,"reference":null},
+    {"id":9,"invoiceId":6,"receivedOn":"2026-10-14","amount":21240,"type":"DETRACTION_DEPOSIT","bankAccountId":3,"reference":null}
+  ],
+  "invoices": [
+    {"id":1,"series":"F001","correlative":31,"number":"F001-00000031","issuedOn":"2026-04-15","purchaseOrder":"OC-2026-0412","projectId":1,"clientId":1,"currency":"PEN","taxableBase":200000,"igv":36000,"total":236000,"retention":0,"detraction":28320,"hasRetention":false,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":207680,"collectedAmount":236000,"outstandingBalance":0,"status":"COLLECTED","notes":null},
+    {"id":2,"series":"F001","correlative":38,"number":"F001-00000038","issuedOn":"2026-06-20","purchaseOrder":"OC-2026-0587","projectId":1,"clientId":1,"currency":"PEN","taxableBase":180000,"igv":32400,"total":212400,"retention":0,"detraction":25488,"hasRetention":false,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":186912,"collectedAmount":212400,"outstandingBalance":0,"status":"COLLECTED","notes":null},
+    {"id":3,"series":"F001","correlative":44,"number":"F001-00000044","issuedOn":"2026-08-18","purchaseOrder":"OC-LA-0044","projectId":4,"clientId":4,"currency":"PEN","taxableBase":100000,"igv":18000,"total":118000,"retention":0,"detraction":14160,"hasRetention":false,"hasDetraction":true,"selfDetraction":false,"advance":true,"netAmount":103840,"collectedAmount":118000,"outstandingBalance":0,"status":"COLLECTED","notes":null},
+    {"id":4,"series":"F001","correlative":47,"number":"F001-00000047","issuedOn":"2026-09-10","purchaseOrder":"OC-RC-118","projectId":2,"clientId":2,"currency":"PEN","taxableBase":120000,"igv":21600,"total":141600,"retention":4248,"detraction":16992,"hasRetention":true,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":120360,"collectedAmount":76992,"outstandingBalance":64608,"status":"PARTIALLY_COLLECTED","notes":null},
+    {"id":5,"series":"F001","correlative":48,"number":"F001-00000048","issuedOn":"2026-09-22","purchaseOrder":"OC-RC-122","projectId":2,"clientId":2,"currency":"PEN","taxableBase":50000,"igv":9000,"total":59000,"retention":0,"detraction":0,"hasRetention":false,"hasDetraction":false,"selfDetraction":false,"advance":false,"netAmount":59000,"collectedAmount":0,"outstandingBalance":59000,"status":"VOIDED","notes":"Anulada por error en OC"},
+    {"id":6,"series":"F001","correlative":50,"number":"F001-00000050","issuedOn":"2026-09-25","purchaseOrder":"OC-2026-0733","projectId":1,"clientId":1,"currency":"PEN","taxableBase":150000,"igv":27000,"total":177000,"retention":0,"detraction":21240,"hasRetention":false,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":155760,"collectedAmount":21240,"outstandingBalance":155760,"status":"PARTIALLY_COLLECTED","notes":null},
+    {"id":7,"series":"F001","correlative":53,"number":"F001-00000053","issuedOn":"2026-10-28","purchaseOrder":"OC-LA-0066","projectId":4,"clientId":4,"currency":"PEN","taxableBase":250000,"igv":45000,"total":295000,"retention":0,"detraction":35400,"hasRetention":false,"hasDetraction":true,"selfDetraction":true,"advance":false,"netAmount":259600,"collectedAmount":0,"outstandingBalance":295000,"status":"PENDING","notes":null},
+    {"id":8,"series":"F001","correlative":54,"number":"F001-00000054","issuedOn":"2026-10-30","purchaseOrder":"OC-RC-131","projectId":2,"clientId":2,"currency":"PEN","taxableBase":100000,"igv":18000,"total":118000,"retention":3540,"detraction":14160,"hasRetention":true,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":100300,"collectedAmount":0,"outstandingBalance":118000,"status":"PENDING","notes":null}
   ]
 }

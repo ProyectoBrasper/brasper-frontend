@@ -223,5 +223,24 @@
     "LABOR": "Labor",
     "TRAVEL_EXPENSES": "Travel expenses",
     "OTHER": "Other"
+  },
+  "invoices": {
+    "subtitle": "Issued invoices and their collection",
+    "totalOutstanding": "Accounts receivable",
+    "withBalance": "Invoices with balance",
+    "filterByStatus": "Filter by status",
+    "all": "All",
+    "number": "No.",
+    "issuedOn": "Issued",
+    "project": "Project",
+    "client": "Client",
+    "taxableBase": "Taxable base",
+    "igv": "IGV",
+    "total": "Total",
+    "collected": "Collected",
+    "balance": "Balance",
+    "status": "Status",
+    "advance": "Advance",
+    "empty": "There are no invoices with this status."
   }
 }

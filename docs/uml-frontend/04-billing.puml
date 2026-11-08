@@ -57,6 +57,7 @@ package "app" {
         - #purchaseOrder: string
         - #projectId: number
         - #clientId: number
+        - #currency: string
         - #taxableBase: number
         - #igv: number
         - #total: number
@@ -75,6 +76,7 @@ package "app" {
         +purchaseOrder: string
         +projectId: number
         +clientId: number
+        +currency: string
         +taxableBase: number
         +igv: number
         +total: number
@@ -87,7 +89,9 @@ package "app" {
         +outstandingBalance: number
         +status: InvoiceStatus
         +notes: string
+        +isVoided(): boolean
         +isCollectable(): boolean
+        +canBeVoided(): boolean
       }
       Invoice ..|> app.shared.domain.model.BaseEntity : implements
 
@@ -168,6 +172,7 @@ package "app" {
         +purchaseOrder: string
         +projectId: number
         +clientId: number
+        +currency: string
         +taxableBase: number
         +igv: number
         +total: number
@@ -287,7 +292,9 @@ package "app" {
         +scheduledCollections: Signal<ScheduledCollection[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
         +loadInvoices(): void
+        +countByStatus(status: InvoiceStatus | null): number
         +loadInvoiceDetail(id: number): void
         +issueInvoice(invoice: Invoice): void
         +voidInvoice(id: number): void

@@ -9,4 +9,5 @@ export const environment = {
   platformProviderUsersEndpointPath: '/users',
   platformProviderClientsEndpointPath: '/clients',
   platformProviderProjectsEndpointPath: '/projects',
+  platformProviderInvoicesEndpointPath: '/invoices',
 };

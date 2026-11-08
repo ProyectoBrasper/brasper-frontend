@@ -11,6 +11,7 @@ const userList = () => import('./iam/presentation/views/user-list/user-list').th
 const pageNotFound = () =>
   import('./shared/presentation/views/page-not-found/page-not-found').then((m) => m.PageNotFound);
 const projectsRoutes = () => import('./projects/presentation/projects.routes').then((m) => m.projectsRoutes);
+const billingRoutes = () => import('./billing/presentation/billing.routes').then((m) => m.billingRoutes);
 
 /**
  * Root routes (docs/uml-frontend/00-app.puml). Each bounded context is lazy loaded with
@@ -35,5 +36,6 @@ export const routes: Routes = [
     title: 'Brasper',
   },
   { path: 'projects', loadChildren: projectsRoutes, canActivate: [authenticationGuard] },
+  { path: 'billing', loadChildren: billingRoutes, canActivate: [authenticationGuard] },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];
