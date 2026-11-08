@@ -1,0 +1,10 @@
+{
+  "app": {
+    "name": "Brasper",
+    "tagline": "Gestión financiera de tus proyectos"
+  },
+  "language": {
+    "es": "ES",
+    "en": "EN"
+  }
+}
