@@ -1,0 +1,98 @@
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
+}
+
+.table-card {
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 720px;
+  --mat-table-header-container-height: 48px;
+  --mat-table-row-item-container-height: 56px;
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+}
+
+th.mat-mdc-header-cell {
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+tr.mat-mdc-row:hover {
+  background: var(--mat-sys-surface-container);
+}
+
+tr.inactive td {
+  color: var(--mat-sys-outline);
+}
+
+.identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.username {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-weight: 600;
+}
+
+.role-chip {
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ROLE_ADMIN { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+.ROLE_MANAGEMENT { background: #efe4fb; color: #5b2c91; }
+.ROLE_ACCOUNTING { background: var(--brasper-success-container); color: var(--brasper-success); }
+.ROLE_ENGINEER { background: var(--brasper-warning-container); color: var(--brasper-warning); }
+
+tr.inactive .role-chip {
+  opacity: 0.6;
+}
+
+.actions-col {
+  width: 96px;
+  text-align: right;
+}
+
+.empty-row td {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}

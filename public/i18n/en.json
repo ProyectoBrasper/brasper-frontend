@@ -69,6 +69,70 @@
     "max": "The maximum value is {{value}}.",
     "minlength": "Must be at least {{value}} characters.",
     "maxlength": "Must be at most {{value}} characters.",
-    "pattern": "The format is not valid."
+    "pattern": "The format is not valid.",
+    "username": "Use 3 to 50 characters: lowercase letters, digits, dot, hyphen or underscore.",
+    "password": "Must be 8 to 72 characters with at least one letter and one digit."
+  },
+  "common": {
+    "home": "Home",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "actions": "Actions",
+    "actionsFor": "Actions for {{name}}",
+    "loading": "Loading…"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "subtitle": "Enter your username and password",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "value1": "Projects, progress and costs in one place",
+    "value2": "Invoicing with IGV, withholdings and deductions",
+    "value3": "Weekly cash flow, actual and projected"
+  },
+  "signUp": {
+    "subtitle": "Register a user and their role",
+    "submit": "Register user",
+    "usernameHint": "Lowercase letters, digits, dot or hyphen",
+    "passwordHint": "8 to 72 characters, with letters and digits"
+  },
+  "users": {
+    "subtitle": "Roles and platform access",
+    "new": "New user",
+    "username": "Username",
+    "fullName": "Full name",
+    "role": "Role",
+    "status": "Status",
+    "empty": "There are no users.",
+    "changeRole": "Change role",
+    "deactivate": "Deactivate",
+    "changeRoleTitle": "Change role",
+    "changeRoleMessage": "Change the role of {{name}} to {{role}}?",
+    "deactivateTitle": "Deactivate user",
+    "deactivateMessage": "{{name}} will no longer be able to sign in. Continue?"
+  },
+  "status": {
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "COLLECTED": "Collected",
+    "PARTIALLY_COLLECTED": "Partially collected",
+    "PAID": "Paid",
+    "PARTIALLY_PAID": "Partially paid",
+    "PENDING": "Pending",
+    "SCHEDULED": "Scheduled",
+    "RESCHEDULED": "Rescheduled",
+    "REALIZED": "Realized",
+    "DRAFT": "Draft",
+    "FILED": "Filed",
+    "QUOTED": "Quoted",
+    "IN_PROGRESS": "In progress",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "VOIDED": "Voided",
+    "ANNULLED": "Annulled",
+    "OVERDUE": "Overdue"
   }
 }
