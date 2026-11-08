@@ -1,1 +1,77 @@
-/* You can add global styles to this file, and also import other style files */
+/* Brasper — global tokens and base styles (docs/mockups/DESIGN.md). Material roles live in material-theme.scss. */
+:root {
+  /* Sidebar */
+  --brasper-sidebar: #0b2545;
+  --brasper-sidebar-hover: #133563;
+  --brasper-sidebar-active: #1d4c87;
+  --brasper-sidebar-text: #c9d6ea;
+  --brasper-sidebar-muted: #7f93b3;
+  --brasper-accent: #f2a900;
+
+  /* Status colors (StatusChip, KPIs, charts) */
+  --brasper-success: #1b7f4b;
+  --brasper-success-container: #ddf3e6;
+  --brasper-warning: #b26a00;
+  --brasper-warning-container: #fff0d6;
+  --brasper-info: #0b6ea8;
+  --brasper-info-container: #dceffa;
+  --brasper-danger: #ba1a1a;
+  --brasper-danger-container: #fde4e1;
+  --brasper-neutral: #6b7280;
+  --brasper-neutral-container: #eef0f3;
+
+  /* Layout */
+  --brasper-sidebar-width: 272px;
+  --brasper-toolbar-height: 64px;
+  --brasper-content-max-width: 1440px;
+  --brasper-gutter: 24px;
+
+  /* Radii and elevation */
+  --brasper-radius-sm: 4px;
+  --brasper-radius-md: 8px;
+  --brasper-radius-lg: 12px;
+  --brasper-radius-xl: 16px;
+  --brasper-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --brasper-shadow-dialog: 0 12px 32px rgba(16, 24, 40, 0.18);
+
+  /* Typography */
+  --brasper-font-brand: 'Manrope', sans-serif;
+  --brasper-font-plain: 'Inter', sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--mat-sys-background);
+  color: var(--mat-sys-on-background);
+  font: var(--mat-sys-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--brasper-font-brand);
+  margin: 0;
+}
+
+/* Visible focus (accessibility, DESIGN.md §6) */
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+/* Amounts: tabular digits, right-aligned in tables */
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+td.amount,
+th.amount {
+  text-align: right;
+}

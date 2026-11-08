@@ -1,0 +1,73 @@
+// Brasper — Angular Material (M3) theme built from docs/mockups/DESIGN.md (v2).
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: (
+      plain-family: 'Inter, sans-serif',
+      brand-family: 'Manrope, sans-serif',
+    ),
+    density: 0,
+  ));
+
+  // Exact role colors from DESIGN.md (the generated palettes only approximate them).
+  @include mat.theme-overrides((
+    primary: #0b4f8a,
+    on-primary: #ffffff,
+    primary-container: #d4e3ff,
+    on-primary-container: #00264d,
+    secondary: #4f6074,
+    on-secondary: #ffffff,
+    secondary-container: #dce7f5,
+    on-secondary-container: #16273b,
+    tertiary: #f2a900,
+    on-tertiary: #2b1d00,
+    tertiary-container: #ffe9b8,
+    on-tertiary-container: #3d2a00,
+    background: #eef2f7,
+    on-background: #101828,
+    surface: #ffffff,
+    on-surface: #101828,
+    on-surface-variant: #475467,
+    surface-container-lowest: #ffffff,
+    surface-container-low: #ffffff,
+    surface-container: #f4f6fa,
+    surface-container-high: #e9edf4,
+    surface-container-highest: #dde3ec,
+    outline: #8a94a6,
+    outline-variant: #dde3ec,
+    error: #ba1a1a,
+    on-error: #ffffff,
+    error-container: #fde4e1,
+  ));
+
+  // Shapes: buttons and fields 8px, cards 12px, dialogs 16px, chips fully rounded.
+  @include mat.button-overrides((
+    filled-container-shape: 8px,
+    outlined-container-shape: 8px,
+    protected-container-shape: 8px,
+    text-container-shape: 8px,
+    tonal-container-shape: 8px,
+  ));
+  @include mat.form-field-overrides((
+    outlined-container-shape: 8px,
+  ));
+  @include mat.card-overrides((
+    elevated-container-shape: 12px,
+    outlined-container-shape: 12px,
+    filled-container-shape: 12px,
+  ));
+  @include mat.dialog-overrides((
+    container-shape: 16px,
+    container-color: #ffffff,
+  ));
+  @include mat.chips-overrides((
+    container-shape-radius: 9999px,
+  ));
+}
