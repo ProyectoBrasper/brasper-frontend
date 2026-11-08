@@ -8,4 +8,5 @@ export const environment = {
   platformProviderSignInEndpointPath: '/auth/sign-in',
   platformProviderSignUpEndpointPath: '/auth/sign-up',
   platformProviderUsersEndpointPath: '/users',
+  platformProviderClientsEndpointPath: '/clients',
 };

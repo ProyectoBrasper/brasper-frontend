@@ -8,15 +8,15 @@
   ]"
 />
 
-<form class="card" [formGroup]="signUpForm" (ngSubmit)="onSubmit()" novalidate>
+<form class="form-card" [formGroup]="signUpForm" (ngSubmit)="onSubmit()" novalidate>
   @if (error()) {
-    <div class="alert" role="alert">
+    <div class="page-alert" role="alert">
       <mat-icon>error</mat-icon>
       <span>{{ error() }}</span>
     </div>
   }
 
-  <div class="grid">
+  <div class="form-grid">
     <mat-form-field appearance="outline">
       <mat-label>{{ 'users.fullName' | translate }}</mat-label>
       <input matInput formControlName="fullName" autocomplete="name" />
@@ -68,7 +68,7 @@
     </mat-form-field>
   </div>
 
-  <div class="actions">
+  <div class="form-actions">
     <a mat-button routerLink="/users">{{ 'common.cancel' | translate }}</a>
     <button mat-flat-button type="submit" [disabled]="loading()">{{ 'signUp.submit' | translate }}</button>
   </div>

@@ -5,5 +5,12 @@
     { "id": 3, "username": "lvargas", "fullName": "Lucía Vargas Paredes", "role": "ROLE_ACCOUNTING", "active": true, "password": "Brasper2026" },
     { "id": 4, "username": "jtorres", "fullName": "Jorge Torres Salas", "role": "ROLE_ENGINEER", "active": true, "password": "Brasper2026" },
     { "id": 5, "username": "pramos", "fullName": "Pedro Ramos Ccori", "role": "ROLE_ENGINEER", "active": false, "password": "Brasper2026" }
+  ],
+  "clients": [
+    { "id": 1, "businessName": "Agroindustrias Pampa Dorada S.A.C.", "ruc": "20601234561", "contactName": "Elena Cárdenas", "phone": "987 654 321", "email": "ecardenas@pampadorada.example" },
+    { "id": 2, "businessName": "Constructora Río Chillón S.A.C.", "ruc": "20512345672", "contactName": "Marco Benites", "phone": "986 543 210", "email": "mbenites@riochillon.example" },
+    { "id": 3, "businessName": "Textiles Quinua S.A.", "ruc": "20498765433", "contactName": "Patricia Ñahui", "phone": "985 432 109", "email": "pnahui@textilesquinua.example" },
+    { "id": 4, "businessName": "Logística Andina del Pacífico S.A.C.", "ruc": "20134567894", "contactName": "Hugo Salinas", "phone": "984 321 098", "email": "hsalinas@andinapacifico.example" },
+    { "id": 5, "businessName": "Inmobiliaria Torre Sol E.I.R.L.", "ruc": "20556789015", "contactName": "Rosa Mejía", "phone": "983 210 987", "email": "rmejia@torresol.example" }
   ]
 }

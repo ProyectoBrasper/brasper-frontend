@@ -13,6 +13,7 @@ import { filter } from 'rxjs';
 import { ConfirmDialog } from '../../../../shared/presentation/components/confirm-dialog/confirm-dialog';
 import { PageHeader } from '../../../../shared/presentation/components/page-header/page-header';
 import { StatusChip } from '../../../../shared/presentation/components/status-chip/status-chip';
+import { initialsOf } from '../../../../shared/presentation/initials';
 import { IamStore } from '../../../application/iam.store';
 import { Role, ROLES } from '../../../domain/model/role';
 import { User } from '../../../domain/model/user.entity';
@@ -73,14 +74,7 @@ export class UserList implements OnInit {
     this.iamStore.loadUsers();
   }
 
-  initials(fullName: string): string {
-    return fullName
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0].toUpperCase())
-      .join('');
-  }
+  readonly initials = initialsOf;
 
   onChangeRole(id: number, role: Role): void {
     const user = this.iamStore.users().find((u) => u.id === id);

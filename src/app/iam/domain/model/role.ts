@@ -21,4 +21,6 @@ export const AREA_ROLES = {
   reports: [Role.ROLE_ADMIN, Role.ROLE_MANAGEMENT, Role.ROLE_ACCOUNTING],
   staff: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_MANAGEMENT],
   users: [Role.ROLE_ADMIN],
+  /** Create / edit clients, projects, suppliers and expenses (management only reads). */
+  operationsWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_ENGINEER],
 } as const satisfies Record<string, readonly Role[]>;

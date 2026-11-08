@@ -79,7 +79,11 @@
     "confirm": "Confirmar",
     "actions": "Acciones",
     "actionsFor": "Acciones para {{name}}",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "edit": "Editar",
+    "editItem": "Editar {{name}}",
+    "new": "Nuevo",
+    "saveChanges": "Guardar cambios"
   },
   "signIn": {
     "title": "Iniciar sesión",
@@ -134,5 +138,21 @@
     "VOIDED": "Anulada",
     "ANNULLED": "Anulado",
     "OVERDUE": "Vencida"
+  },
+  "clients": {
+    "subtitle": "Empresas a las que se cotizan y facturan proyectos",
+    "new": "Nuevo cliente",
+    "edit": "Editar cliente",
+    "create": "Crear cliente",
+    "formSubtitle": "Registra una empresa para cotizarle y facturarle proyectos",
+    "data": "Datos del cliente",
+    "businessName": "Razón social",
+    "ruc": "RUC",
+    "rucHint": "11 dígitos",
+    "rucLocked": "El RUC no se puede cambiar",
+    "contactName": "Nombre de contacto",
+    "phone": "Teléfono",
+    "email": "Correo electrónico",
+    "empty": "Aún no hay clientes registrados."
   }
 }

@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { initialsOf } from '../../../../shared/presentation/initials';
 import { IamStore } from '../../../application/iam.store';
 
 /**
@@ -25,14 +26,7 @@ export class AuthenticationSection {
   readonly currentUsername = this.iamStore.currentUsername;
   readonly fullName = computed(() => this.iamStore.currentUser()?.fullName ?? '');
   readonly role = this.iamStore.currentRole;
-  readonly initials = computed(() =>
-    this.fullName()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0].toUpperCase())
-      .join(''),
-  );
+  readonly initials = computed(() => initialsOf(this.fullName()));
 
   onSignIn(): void {
     void this.router.navigate(['/sign-in']);

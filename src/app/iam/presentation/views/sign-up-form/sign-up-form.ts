@@ -31,7 +31,6 @@ import { passwordValidator, usernameValidator } from '../../credential-validator
     PageHeader,
   ],
   templateUrl: './sign-up-form.html',
-  styleUrl: './sign-up-form.css',
 })
 export class SignUpForm extends BaseForm {
   private readonly formBuilder = inject(FormBuilder);

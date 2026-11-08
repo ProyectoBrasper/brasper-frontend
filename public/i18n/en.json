@@ -79,7 +79,11 @@
     "confirm": "Confirm",
     "actions": "Actions",
     "actionsFor": "Actions for {{name}}",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "edit": "Edit",
+    "editItem": "Edit {{name}}",
+    "new": "New",
+    "saveChanges": "Save changes"
   },
   "signIn": {
     "title": "Sign in",
@@ -134,5 +138,21 @@
     "VOIDED": "Voided",
     "ANNULLED": "Annulled",
     "OVERDUE": "Overdue"
+  },
+  "clients": {
+    "subtitle": "Companies we quote and invoice projects to",
+    "new": "New client",
+    "edit": "Edit client",
+    "create": "Create client",
+    "formSubtitle": "Register a company to quote and invoice projects",
+    "data": "Client details",
+    "businessName": "Business name",
+    "ruc": "RUC (tax id)",
+    "rucHint": "11 digits",
+    "rucLocked": "The RUC cannot be changed",
+    "contactName": "Contact name",
+    "phone": "Phone",
+    "email": "Email",
+    "empty": "There are no clients yet."
   }
 }
