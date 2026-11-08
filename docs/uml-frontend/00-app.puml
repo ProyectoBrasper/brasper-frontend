@@ -181,7 +181,7 @@ note right of environment
     platformProviderApiBaseUrl = 'https://<host>/api/v1'
   Cambiar de fake API a backend real = cambiar SOLO esta URL.
   Rutas de recursos (iguales en json-server y en Spring):
-    /authentication/sign-in, /authentication/sign-up, /users,
+    /auth/sign-in, /auth/sign-up, /users,
     /clients, /projects, /projects/{id}/progress-records,
     /projects/{id}/cost-estimates, /invoices, /invoices/{id}/payments,
     /scheduled-collections, /suppliers, /expenses, /employees,
