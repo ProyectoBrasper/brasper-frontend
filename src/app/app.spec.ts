@@ -1,23 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideRouter([]), provideTranslateService({ lang: 'es' })],
     }).compileComponents();
   });
 
-  it('should create the app', () => {
+  it('renders the layout', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, brasper-frontend');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-layout')).not.toBeNull();
   });
 });

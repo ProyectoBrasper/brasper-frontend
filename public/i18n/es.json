@@ -7,6 +7,61 @@
     "es": "ES",
     "en": "EN"
   },
+  "layout": {
+    "toggleMenu": "Mostrar u ocultar el menú"
+  },
+  "nav": {
+    "label": "Menú principal",
+    "groups": {
+      "operation": "Operación",
+      "finance": "Finanzas",
+      "accounting": "Contabilidad",
+      "reports": "Reportes",
+      "administration": "Administración"
+    },
+    "dashboard": "Dashboard",
+    "projects": "Proyectos",
+    "clients": "Clientes",
+    "invoices": "Facturas",
+    "scheduledCollections": "Cobranzas programadas",
+    "expenses": "Gastos",
+    "suppliers": "Proveedores",
+    "employees": "Empleados",
+    "fixedCosts": "Costos fijos",
+    "bankAccounts": "Cuentas bancarias",
+    "payables": "Cuentas por pagar",
+    "loans": "Préstamos",
+    "partners": "Socios",
+    "ledgerAccounts": "Plan de cuentas",
+    "journalEntries": "Asientos",
+    "trialBalance": "Balance de comprobación",
+    "taxReturns": "Declaraciones",
+    "taxParameters": "Parámetros tributarios",
+    "fixedAssets": "Activos fijos",
+    "cashFlow": "Flujo de caja",
+    "incomeStatement": "Estado de resultados",
+    "balanceSheet": "Balance general",
+    "projectProfitability": "Rentabilidad por proyecto",
+    "users": "Usuarios"
+  },
+  "role": {
+    "ROLE_ADMIN": "Administrador",
+    "ROLE_MANAGEMENT": "Gerencia",
+    "ROLE_ACCOUNTING": "Contabilidad",
+    "ROLE_ENGINEER": "Ingeniería"
+  },
+  "auth": {
+    "signIn": "Ingresar",
+    "signOut": "Cerrar sesión"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "message": "La ruta {{path}} no existe o fue movida.",
+    "home": "Volver al inicio"
+  },
+  "footer": {
+    "copyright": "© {{year}} Brasper"
+  },
   "validation": {
     "required": "Este campo es obligatorio.",
     "email": "Ingresa un correo válido.",
