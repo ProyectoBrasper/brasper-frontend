@@ -1,16 +1,24 @@
 {
   "users": [
-    { "id": 1, "username": "cmendoza", "fullName": "Carla Mendoza Rojas", "role": "ROLE_ADMIN", "active": true, "password": "Brasper2026" },
-    { "id": 2, "username": "rquispe", "fullName": "Ricardo Quispe Lazo", "role": "ROLE_MANAGEMENT", "active": true, "password": "Brasper2026" },
-    { "id": 3, "username": "lvargas", "fullName": "Lucía Vargas Paredes", "role": "ROLE_ACCOUNTING", "active": true, "password": "Brasper2026" },
-    { "id": 4, "username": "jtorres", "fullName": "Jorge Torres Salas", "role": "ROLE_ENGINEER", "active": true, "password": "Brasper2026" },
-    { "id": 5, "username": "pramos", "fullName": "Pedro Ramos Ccori", "role": "ROLE_ENGINEER", "active": false, "password": "Brasper2026" }
+    {"id":1,"username":"cmendoza","fullName":"Carla Mendoza Rojas","role":"ROLE_ADMIN","active":true,"password":"Brasper2026"},
+    {"id":2,"username":"rquispe","fullName":"Ricardo Quispe Lazo","role":"ROLE_MANAGEMENT","active":true,"password":"Brasper2026"},
+    {"id":3,"username":"lvargas","fullName":"Lucía Vargas Paredes","role":"ROLE_ACCOUNTING","active":true,"password":"Brasper2026"},
+    {"id":4,"username":"jtorres","fullName":"Jorge Torres Salas","role":"ROLE_ENGINEER","active":true,"password":"Brasper2026"},
+    {"id":5,"username":"pramos","fullName":"Pedro Ramos Ccori","role":"ROLE_ENGINEER","active":false,"password":"Brasper2026"}
   ],
   "clients": [
-    { "id": 1, "businessName": "Agroindustrias Pampa Dorada S.A.C.", "ruc": "20601234561", "contactName": "Elena Cárdenas", "phone": "987 654 321", "email": "ecardenas@pampadorada.example" },
-    { "id": 2, "businessName": "Constructora Río Chillón S.A.C.", "ruc": "20512345672", "contactName": "Marco Benites", "phone": "986 543 210", "email": "mbenites@riochillon.example" },
-    { "id": 3, "businessName": "Textiles Quinua S.A.", "ruc": "20498765433", "contactName": "Patricia Ñahui", "phone": "985 432 109", "email": "pnahui@textilesquinua.example" },
-    { "id": 4, "businessName": "Logística Andina del Pacífico S.A.C.", "ruc": "20134567894", "contactName": "Hugo Salinas", "phone": "984 321 098", "email": "hsalinas@andinapacifico.example" },
-    { "id": 5, "businessName": "Inmobiliaria Torre Sol E.I.R.L.", "ruc": "20556789015", "contactName": "Rosa Mejía", "phone": "983 210 987", "email": "rmejia@torresol.example" }
+    {"id":1,"businessName":"Agroindustrias Pampa Dorada S.A.C.","ruc":"20601234561","contactName":"Elena Cárdenas","phone":"987 654 321","email":"ecardenas@pampadorada.example"},
+    {"id":2,"businessName":"Constructora Río Chillón S.A.C.","ruc":"20512345672","contactName":"Marco Benites","phone":"986 543 210","email":"mbenites@riochillon.example"},
+    {"id":3,"businessName":"Textiles Quinua S.A.","ruc":"20498765433","contactName":"Patricia Ñahui","phone":"985 432 109","email":"pnahui@textilesquinua.example"},
+    {"id":4,"businessName":"Logística Andina del Pacífico S.A.C.","ruc":"20134567894","contactName":"Hugo Salinas","phone":"984 321 098","email":"hsalinas@andinapacifico.example"},
+    {"id":5,"businessName":"Inmobiliaria Torre Sol E.I.R.L.","ruc":"20556789015","contactName":"Rosa Mejía","phone":"983 210 987","email":"rmejia@torresol.example"}
+  ],
+  "projects": [
+    {"id":1,"code":"001BR-ENE-2026","name":"Ampliación planta de empaque","description":null,"clientId":1,"budget":850000,"currency":"PEN","quotedOn":"2026-01-14","status":"IN_PROGRESS","participation":0.6,"salesCommissionRate":0.02,"accumulatedProgress":0.72,"estimatedDirectCost":480000},
+    {"id":2,"code":"002BR-FEB-2026","name":"Instalación eléctrica Torre Norte","description":null,"clientId":2,"budget":420500,"currency":"PEN","quotedOn":"2026-02-09","status":"IN_PROGRESS","participation":0.45,"salesCommissionRate":0.025,"accumulatedProgress":0.68,"estimatedDirectCost":250000},
+    {"id":3,"code":"003BR-MAR-2026","name":"Climatización de nave textil","description":null,"clientId":3,"budget":275000,"currency":"PEN","quotedOn":"2026-03-18","status":"QUOTED","participation":1,"salesCommissionRate":0,"accumulatedProgress":0,"estimatedDirectCost":171000},
+    {"id":4,"code":"004BR-ABR-2026","name":"Centro de distribución refrigerado","description":null,"clientId":4,"budget":630000,"currency":"PEN","quotedOn":"2026-04-06","status":"IN_PROGRESS","participation":0.55,"salesCommissionRate":0.015,"accumulatedProgress":0.45,"estimatedDirectCost":330000},
+    {"id":5,"code":"012BR-OCT-2025","name":"Remodelación de oficinas administrativas","description":null,"clientId":5,"budget":195000,"currency":"PEN","quotedOn":"2025-10-20","status":"COMPLETED","participation":1,"salesCommissionRate":0.02,"accumulatedProgress":1,"estimatedDirectCost":128000},
+    {"id":6,"code":"005BR-JUN-2026","name":"Subestación Parque Industrial","description":null,"clientId":2,"budget":310000,"currency":"PEN","quotedOn":"2026-06-02","status":"CANCELLED","participation":0.5,"salesCommissionRate":0.02,"accumulatedProgress":0,"estimatedDirectCost":190000}
   ]
 }

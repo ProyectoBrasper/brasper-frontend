@@ -9,7 +9,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const jsonServer = require('json-server');
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT ?? 3000);
 
 const runtimeDb = path.join(__dirname, 'db.runtime.json');
 fs.copyFileSync(path.join(__dirname, 'db.json'), runtimeDb);

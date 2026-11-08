@@ -71,7 +71,8 @@
     "maxlength": "Must be at most {{value}} characters.",
     "pattern": "The format is not valid.",
     "username": "Use 3 to 50 characters: lowercase letters, digits, dot, hyphen or underscore.",
-    "password": "Must be 8 to 72 characters with at least one letter and one digit."
+    "password": "Must be 8 to 72 characters with at least one letter and one digit.",
+    "matDatepickerParse": "Use the dd/mm/yyyy format."
   },
   "common": {
     "home": "Home",
@@ -83,7 +84,8 @@
     "edit": "Edit",
     "editItem": "Edit {{name}}",
     "new": "New",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "all": "All"
   },
   "signIn": {
     "title": "Sign in",
@@ -154,5 +156,42 @@
     "phone": "Phone",
     "email": "Email",
     "empty": "There are no clients yet."
+  },
+  "projects": {
+    "subtitle": "Project portfolio and progress",
+    "new": "New project",
+    "edit": "Edit project",
+    "save": "Save project",
+    "formSubtitle": "Register a project quote",
+    "filterByStatus": "Filter by status",
+    "code": "Code",
+    "codeHint": "Example: 006BR-NOV-2026",
+    "codeLocked": "The code cannot be changed",
+    "codeFormat": "Invalid format. Example: 006BR-NOV-2026",
+    "name": "Project",
+    "projectName": "Project name",
+    "description": "Description",
+    "client": "Client",
+    "currency": "Currency",
+    "quotedOn": "Quote date",
+    "budget": "Budget",
+    "budgetHint": "Must be greater than 0",
+    "progress": "Progress",
+    "status": "Status",
+    "participation": "Participation",
+    "participationHint": "Above 0 % and up to 100 %",
+    "salesCommissionRate": "Sales commission",
+    "estimatedDirectCost": "Estimated direct cost",
+    "estimatedDirectCostHint": "Sum of the cost estimates by category (set in the detail)",
+    "generalData": "General data",
+    "amounts": "Amounts and terms",
+    "start": "Start project",
+    "cancel": "Cancel project",
+    "startTitle": "Start project",
+    "startMessage": "{{code}} · {{name}} will move to In progress. Continue?",
+    "cancelTitle": "Cancel project",
+    "cancelMessage": "{{code}} · {{name}} will be cancelled and will not accept changes or progress. This cannot be undone. Continue?",
+    "lockedMessage": "This project is completed or cancelled and can no longer be edited.",
+    "empty": "There are no projects with this status."
   }
 }

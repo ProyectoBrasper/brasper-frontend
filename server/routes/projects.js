@@ -1,4 +1,5 @@
-// Projects fake routes: /clients (write: ADMIN, ACCOUNTING, ENGINEER). Reads use the generic routes.
+// Projects fake routes: /clients and /projects (write: ADMIN, ACCOUNTING, ENGINEER).
+// Reads (GET /clients, GET /projects?status=&clientId=) use the generic json-server routes.
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_ENGINEER'];
 
 const text = (value, max) => (typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null);
@@ -57,6 +58,95 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     if (!clients().find({ id: Number(req.params.id) }).value()) {
       return problem(res, 404, 'Not Found', 'Cliente no encontrado.');
     }
+    next();
+  });
+
+  // ---------- Projects (same rules and messages as the backend Project aggregate) ----------
+  const projects = () => db.get('projects');
+  const findProject = (req) => projects().find({ id: Number(req.params.id) }).value();
+  const isOpen = (project) => project.status === 'QUOTED' || project.status === 'IN_PROGRESS';
+  const NOT_FOUND = 'Proyecto no encontrado.';
+  const INVALID_TRANSITION = 'El estado del proyecto no permite esta operación.';
+
+  /** Validates the editable project fields; returns an error message or null. */
+  const invalidProject = (body) => {
+    if (!text(body.name, 200)) return 'El nombre del proyecto es obligatorio.';
+    if (!(Number(body.budget) > 0)) return 'El presupuesto debe ser mayor a 0.';
+    const participation = Number(body.participation);
+    if (!(participation > 0 && participation <= 1)) return 'La participación debe ser mayor a 0 y como máximo 1.';
+    const commission = Number(body.salesCommissionRate);
+    if (!(commission >= 0 && commission <= 1)) return 'La comisión de ventas debe estar entre 0 y 1.';
+    return null;
+  };
+
+  const editableFields = (body) => ({
+    name: text(body.name, 200),
+    description: text(body.description, 1000),
+    budget: Number(body.budget),
+    participation: Number(body.participation),
+    salesCommissionRate: Number(body.salesCommissionRate),
+  });
+
+  server.post('/api/v1/projects', canWrite, (req, res) => {
+    const body = req.body ?? {};
+    const code = String(body.code ?? '').trim().toUpperCase();
+    if (!/^\d{3}BR-(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)-\d{4}$/.test(code)) {
+      return problem(res, 400, 'Bad Request', 'El código debe tener el formato 862BR-AGO-2026.');
+    }
+    const error = invalidProject(body);
+    if (error) return problem(res, 400, 'Bad Request', error);
+    if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.quotedOn ?? '')) {
+      return problem(res, 400, 'Bad Request', 'La fecha de cotización no es válida.');
+    }
+    if (!clients().find({ id: Number(body.clientId) }).value()) {
+      return problem(res, 404, 'Not Found', 'Cliente no encontrado.');
+    }
+    if (projects().find({ code }).value()) return problem(res, 409, 'Conflict', 'Ya existe un proyecto con ese código.');
+    const project = {
+      id: nextId('projects'),
+      code,
+      ...editableFields(body),
+      clientId: Number(body.clientId),
+      currency: body.currency,
+      quotedOn: body.quotedOn,
+      status: 'QUOTED',
+      accumulatedProgress: 0,
+      estimatedDirectCost: 0,
+    };
+    projects().push(project).write();
+    res.status(201).json(project);
+  });
+
+  // Like UpdateProjectResource: code, client, currency and quote date do not change.
+  server.put('/api/v1/projects/:id', canWrite, (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    if (!isOpen(project)) return problem(res, 409, 'Conflict', INVALID_TRANSITION);
+    const error = invalidProject(req.body ?? {});
+    if (error) return problem(res, 400, 'Bad Request', error);
+    projects().find({ id: project.id }).assign(editableFields(req.body)).write();
+    res.json(findProject(req));
+  });
+
+  server.post('/api/v1/projects/:id/start', canWrite, (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    if (project.status !== 'QUOTED') return problem(res, 409, 'Conflict', INVALID_TRANSITION);
+    projects().find({ id: project.id }).assign({ status: 'IN_PROGRESS' }).write();
+    res.json(findProject(req));
+  });
+
+  server.post('/api/v1/projects/:id/cancel', canWrite, (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    if (!isOpen(project)) return problem(res, 409, 'Conflict', INVALID_TRANSITION);
+    projects().find({ id: project.id }).assign({ status: 'CANCELLED' }).write();
+    res.json(findProject(req));
+  });
+
+  server.get('/api/v1/projects/:id', requireRoles(), (req, res, next) => {
+    if (!findProject(req)) return problem(res, 404, 'Not Found', NOT_FOUND);
     next();
   });
 };

@@ -112,6 +112,13 @@ package "app" {
           +color: Signal<string>
           +icon: Signal<string>
         }
+        class MoneyPipe <<Pipe>> {
+          +transform(amount: number, currency: string): string
+        }
+        class PeruDateAdapter <<DateAdapter>> {
+          +parse(value: string): Date | null
+          +format(date: Date, displayFormat: object): string
+        }
         class PageHeader <<Component>> {
           +title: InputSignal<string>
           +subtitle: InputSignal<string>
