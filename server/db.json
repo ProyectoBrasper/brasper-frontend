@@ -1,0 +1,9 @@
+{
+  "users": [
+    { "id": 1, "username": "cmendoza", "fullName": "Carla Mendoza Rojas", "role": "ROLE_ADMIN", "active": true, "password": "Brasper2026" },
+    { "id": 2, "username": "rquispe", "fullName": "Ricardo Quispe Lazo", "role": "ROLE_MANAGEMENT", "active": true, "password": "Brasper2026" },
+    { "id": 3, "username": "lvargas", "fullName": "Lucía Vargas Paredes", "role": "ROLE_ACCOUNTING", "active": true, "password": "Brasper2026" },
+    { "id": 4, "username": "jtorres", "fullName": "Jorge Torres Salas", "role": "ROLE_ENGINEER", "active": true, "password": "Brasper2026" },
+    { "id": 5, "username": "pramos", "fullName": "Pedro Ramos Ccori", "role": "ROLE_ENGINEER", "active": false, "password": "Brasper2026" }
+  ]
+}

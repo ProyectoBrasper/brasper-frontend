@@ -74,15 +74,22 @@ package "app" {
     }
 
     package "infrastructure" {
+      class SignInRequest <<Request>> {
+        +username: string
+        +password: string
+      }
       class SignInResource <<Resource>> {
         +id: number
         +username: string
+        +fullName: string
         +role: string
         +token: string
       }
-      class SignUpResource <<Resource>> {
-        +id: number
+      class SignUpRequest <<Request>> {
         +username: string
+        +password: string
+        +fullName: string
+        +role: string
       }
       class UserResource <<Resource>> {
         +id: number
@@ -91,19 +98,13 @@ package "app" {
         +role: string
         +active: boolean
       }
-      class SignInResponse <<Response>> {
-      }
-      class SignUpResponse <<Response>> {
-      }
       class UsersResponse <<Response>> {
       }
 
       class SignInAssembler <<Assembler>> {
+        +toRequestFromCommand(command: SignInCommand): SignInRequest
         +toEntityFromResource(resource: SignInResource): User
         +toTokenFromResource(resource: SignInResource): string
-      }
-      class SignUpAssembler <<Assembler>> {
-        +toEntityFromResource(resource: SignUpResource): User
       }
       class UserAssembler <<Assembler>> {
         +toEntitiesFromResponse(response: UsersResponse): User[]
@@ -118,7 +119,7 @@ package "app" {
       }
       class SignUpApiEndpoint {
         -endpointUrl: string
-        -assembler: SignUpAssembler
+        -assembler: UserAssembler
         +signUp(command: SignUpCommand): Observable<User>
       }
       class UsersApiEndpoint {
@@ -142,10 +143,7 @@ package "app" {
       }
 
       SignInResource ..|> app.shared.infrastructure.BaseResource : implements
-      SignUpResource ..|> app.shared.infrastructure.BaseResource : implements
       UserResource ..|> app.shared.infrastructure.BaseResource : implements
-      SignInResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      SignUpResponse ..|> app.shared.infrastructure.BaseResponse : implements
       UsersResponse ..|> app.shared.infrastructure.BaseResponse : implements
       UserAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       SignInApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
@@ -156,10 +154,9 @@ package "app" {
       IamApi --> SignUpApiEndpoint : delegates to
       IamApi --> UsersApiEndpoint : delegates to
       SignInApiEndpoint --> SignInAssembler : uses
-      SignUpApiEndpoint --> SignUpAssembler : uses
+      SignUpApiEndpoint --> UserAssembler : uses
       UsersApiEndpoint --> UserAssembler : uses
       SignInAssembler --> User : builds
-      SignUpAssembler --> User : builds
       UserAssembler --> User : builds
     }
 
@@ -256,12 +253,16 @@ package "app" {
 }
 
 note bottom
-  JWT: IamStore guarda el token (signal + sessionStorage); authenticationInterceptor
-  agrega "Authorization: Bearer <token>" a cada request hacia la API.
-  Con json-server (fake API) el sign-in se simula con un middleware (server.js) que
-  responde POST /authentication/sign-in buscando el usuario en db.json y devolviendo
-  un token ficticio; el rol viene en SignInResource (mismo contrato que Spring).
+  Contrato del backend (Spring, develop): POST /auth/sign-in -> SignInResource
+  (AuthenticatedUserResource); POST /auth/sign-up solo ADMIN, responde UserResource;
+  /users solo ADMIN: GET, PUT /{id}/role {role}, POST /{id}/deactivate.
+  Errores RFC 9457 (ProblemDetail): 401 credenciales, 403 inactivo, 409 usuario repetido
+  o último admin, 422 contraseña débil (8-72, letra y número). Username [a-z0-9._-]{3,50}.
+  JWT: IamStore guarda token y usuario (signals + sessionStorage); authenticationInterceptor
+  agrega "Authorization: Bearer <token>" y "Accept-Language" a las requests de la API y
+  cierra la sesión ante un 401 con token.
+  Fake API: server/server.js (json-server) simula /auth y /users con el mismo contrato.
   authenticationGuard redirige a /sign-in si no hay sesión; roleGuard lee
-  route.data.roles y redirige al dashboard si el rol no está permitido.
+  route.data.roles y redirige a '/' si el rol no está permitido.
 end note
 @enduml
