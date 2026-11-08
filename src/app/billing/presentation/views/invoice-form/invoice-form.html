@@ -1,0 +1,182 @@
+<app-page-header
+  [title]="'invoices.issue' | translate"
+  [subtitle]="'invoices.issueSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.invoices' | translate, link: '/billing/invoices' },
+    { label: 'invoices.issue' | translate }
+  ]"
+/>
+
+<form class="layout" [formGroup]="invoiceForm" (ngSubmit)="onSubmit()" novalidate>
+  <div class="main">
+    @if (error()) {
+      <div class="page-alert" role="alert">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <section class="form-card">
+      <h2 class="form-card-title"><mat-icon>receipt_long</mat-icon>{{ 'invoices.invoiceData' | translate }}</h2>
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'invoices.project' | translate }}</mat-label>
+          <mat-select formControlName="projectId">
+            @for (project of projects(); track project.id) {
+              <mat-option [value]="project.id">{{ project.code }} · {{ project.name }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'invoices.projectHint' | translate }}</mat-hint>
+          @if (isInvalidControl(invoiceForm, 'projectId')) {
+            <mat-error>{{ errorMessageForControl(invoiceForm, 'projectId') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="read-only full">
+          <span class="label">{{ 'invoices.client' | translate }}</span>
+          <span class="value">
+            @if (client(); as client) {
+              {{ client.businessName }} · RUC <span class="mono">{{ client.ruc }}</span>
+            } @else {
+              <span class="muted">{{ 'invoices.clientFromProject' | translate }}</span>
+            }
+          </span>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'invoices.series' | translate }}</mat-label>
+          <input matInput class="mono" formControlName="series" maxlength="4" autocapitalize="characters" />
+          @if (isInvalidControl(invoiceForm, 'series')) {
+            <mat-error>{{ 'invoices.seriesFormat' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'invoices.correlative' | translate }}</mat-label>
+          <input matInput class="mono" formControlName="correlative" type="number" min="1" />
+          @if (isInvalidControl(invoiceForm, 'correlative')) {
+            <mat-error>{{ errorMessageForControl(invoiceForm, 'correlative') }}</mat-error>
+          } @else if (numberPreview()) {
+            <mat-hint>{{ 'invoices.numberPreview' | translate: { number: numberPreview() } }}</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'invoices.issuedOn' | translate }}</mat-label>
+          <input matInput formControlName="issuedOn" [matDatepicker]="issuedOnPicker" placeholder="dd/mm/aaaa" />
+          <mat-datepicker-toggle matIconSuffix [for]="issuedOnPicker" />
+          <mat-datepicker #issuedOnPicker />
+          @if (isInvalidControl(invoiceForm, 'issuedOn')) {
+            <mat-error>{{ errorMessageForControl(invoiceForm, 'issuedOn') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'invoices.purchaseOrder' | translate }}</mat-label>
+          <input matInput formControlName="purchaseOrder" />
+          @if (isInvalidControl(invoiceForm, 'purchaseOrder')) {
+            <mat-error>{{ errorMessageForControl(invoiceForm, 'purchaseOrder') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'invoices.taxableBase' | translate }}</mat-label>
+          <span matTextPrefix>{{ currency() === 'USD' ? 'US$' : 'S/' }}&nbsp;</span>
+          <input matInput class="amount" formControlName="taxableBase" type="number" min="0" step="0.01" />
+          @if (isInvalidControl(invoiceForm, 'taxableBase')) {
+            <mat-error>{{ errorMessageForControl(invoiceForm, 'taxableBase') }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </section>
+
+    <section class="form-card">
+      <h2 class="form-card-title"><mat-icon>tune</mat-icon>{{ 'invoices.conditions' | translate }}</h2>
+      <div class="toggles">
+        <div class="toggle-row">
+          <span>
+            <strong id="hasRetention-label">{{ 'invoices.hasRetention' | translate }}</strong>
+            <small id="hasRetention-hint">{{ 'invoices.hasRetentionHint' | translate }}</small>
+          </span>
+          <mat-slide-toggle
+            formControlName="hasRetention"
+            aria-labelledby="hasRetention-label"
+            aria-describedby="hasRetention-hint"
+          />
+        </div>
+        <div class="toggle-row">
+          <span>
+            <strong id="hasDetraction-label">{{ 'invoices.hasDetraction' | translate }}</strong>
+            <small id="hasDetraction-hint">{{ 'invoices.hasDetractionHint' | translate }}</small>
+          </span>
+          <mat-slide-toggle
+            formControlName="hasDetraction"
+            aria-labelledby="hasDetraction-label"
+            aria-describedby="hasDetraction-hint"
+          />
+        </div>
+        <div class="toggle-row" [class.disabled]="invoiceForm.controls.selfDetraction.disabled">
+          <span>
+            <strong id="selfDetraction-label">{{ 'invoices.selfDetraction' | translate }}</strong>
+            <small id="selfDetraction-hint">{{ 'invoices.selfDetractionHint' | translate }}</small>
+          </span>
+          <mat-slide-toggle
+            formControlName="selfDetraction"
+            aria-labelledby="selfDetraction-label"
+            aria-describedby="selfDetraction-hint"
+          />
+        </div>
+        <div class="toggle-row">
+          <span>
+            <strong id="advance-label">{{ 'invoices.advanceToggle' | translate }}</strong>
+            <small id="advance-hint">{{ 'invoices.advanceHint' | translate }}</small>
+          </span>
+          <mat-slide-toggle
+            formControlName="advance"
+            aria-labelledby="advance-label"
+            aria-describedby="advance-hint"
+          />
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" class="notes">
+        <mat-label>{{ 'invoices.notes' | translate }}</mat-label>
+        <textarea matInput formControlName="notes" rows="3"></textarea>
+        @if (isInvalidControl(invoiceForm, 'notes')) {
+          <mat-error>{{ errorMessageForControl(invoiceForm, 'notes') }}</mat-error>
+        }
+      </mat-form-field>
+    </section>
+
+    <div class="actions">
+      <button mat-stroked-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+      <button mat-flat-button type="submit" [disabled]="loading()">
+        <mat-icon>send</mat-icon>
+        {{ 'invoices.issue' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <aside class="preview form-card">
+    <h2 class="form-card-title"><mat-icon>calculate</mat-icon>{{ 'invoices.amountsPreview' | translate }}</h2>
+    <app-invoice-amounts-summary
+      [taxableBase]="preview().taxableBase"
+      [igv]="preview().igv"
+      [total]="preview().total"
+      [retention]="preview().retention"
+      [detraction]="preview().detraction"
+      [netAmount]="preview().netAmount"
+      [currency]="currency()"
+      [rates]="rates()"
+    />
+    <p class="note">
+      <mat-icon>info</mat-icon>
+      @if (taxParameters(); as parameters) {
+        {{ 'invoices.previewNote' | translate: { date: (parameters.effectiveFrom | date: 'dd/MM/yyyy') } }}
+      } @else {
+        {{ 'invoices.previewNoteStandard' | translate }}
+      }
+    </p>
+  </aside>
+</form>

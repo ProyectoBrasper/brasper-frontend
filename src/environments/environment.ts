@@ -11,4 +11,5 @@ export const environment = {
   platformProviderClientsEndpointPath: '/clients',
   platformProviderProjectsEndpointPath: '/projects',
   platformProviderInvoicesEndpointPath: '/invoices',
+  platformProviderTaxParametersEndpointPath: '/tax-parameters',
 };

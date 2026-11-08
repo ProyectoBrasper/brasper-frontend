@@ -95,5 +95,8 @@
     {"id":6,"series":"F001","correlative":50,"number":"F001-00000050","issuedOn":"2026-09-25","purchaseOrder":"OC-2026-0733","projectId":1,"clientId":1,"currency":"PEN","taxableBase":150000,"igv":27000,"total":177000,"retention":0,"detraction":21240,"hasRetention":false,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":155760,"collectedAmount":21240,"outstandingBalance":155760,"status":"PARTIALLY_COLLECTED","notes":null},
     {"id":7,"series":"F001","correlative":53,"number":"F001-00000053","issuedOn":"2026-10-28","purchaseOrder":"OC-LA-0066","projectId":4,"clientId":4,"currency":"PEN","taxableBase":250000,"igv":45000,"total":295000,"retention":0,"detraction":35400,"hasRetention":false,"hasDetraction":true,"selfDetraction":true,"advance":false,"netAmount":259600,"collectedAmount":0,"outstandingBalance":295000,"status":"PENDING","notes":null},
     {"id":8,"series":"F001","correlative":54,"number":"F001-00000054","issuedOn":"2026-10-30","purchaseOrder":"OC-RC-131","projectId":2,"clientId":2,"currency":"PEN","taxableBase":100000,"igv":18000,"total":118000,"retention":3540,"detraction":14160,"hasRetention":true,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":100300,"collectedAmount":0,"outstandingBalance":118000,"status":"PENDING","notes":null}
+  ],
+  "tax-parameters": [
+    {"id":1,"effectiveFrom":"2026-01-01","igv":0.18,"detraction":0.12,"retention":0.03,"incomeTaxPrepayment":0.015}
   ]
 }

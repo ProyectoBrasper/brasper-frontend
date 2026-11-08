@@ -180,6 +180,11 @@ export class Project implements BaseEntity {
     return this.#status === ProjectStatus.QUOTED || this.#status === ProjectStatus.IN_PROGRESS;
   }
 
+  /** Backend rule (`canBeInvoiced`): only in-progress or completed projects are invoiced. */
+  canBeInvoiced(): boolean {
+    return this.#status === ProjectStatus.IN_PROGRESS || this.#status === ProjectStatus.COMPLETED;
+  }
+
   /** Only a quoted project can be started. */
   canStart(): boolean {
     return this.#status === ProjectStatus.QUOTED;

@@ -4,8 +4,9 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { Invoice } from '../domain/model/invoice.entity';
+import { IssueInvoiceCommand } from '../domain/model/issue-invoice.command';
 import { InvoiceAssembler } from './invoice-assembler';
-import { InvoiceResource, InvoicesResponse } from './invoice.resource';
+import { InvoiceResource, InvoicesResponse, IssueInvoiceRequest } from './invoice.resource';
 
 /**
  * Client for `/invoices` (list with `?status=&projectId=&year=&month=`, get). Issue, void and
@@ -17,6 +18,28 @@ export class InvoicesApiEndpoint extends BaseApiEndpoint<Invoice, InvoiceResourc
       http,
       `${environment.platformProviderApiBaseUrl}${environment.platformProviderInvoicesEndpointPath}`,
       new InvoiceAssembler(),
+    );
+  }
+
+  /** `POST /invoices`: the backend computes the amounts and takes the client from the project. */
+  issue(command: IssueInvoiceCommand): Observable<Invoice> {
+    const request: IssueInvoiceRequest = {
+      series: command.series,
+      correlative: command.correlative,
+      issuedOn: command.issuedOn,
+      purchaseOrder: command.purchaseOrder || null,
+      projectId: command.projectId,
+      taxableBase: command.taxableBase,
+      currency: command.currency,
+      hasRetention: command.hasRetention,
+      hasDetraction: command.hasDetraction,
+      selfDetraction: command.selfDetraction,
+      advance: command.advance,
+      notes: command.notes || null,
+    };
+    return this.http.post<InvoiceResource>(this.endpointUrl, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to issue invoice')),
     );
   }
 

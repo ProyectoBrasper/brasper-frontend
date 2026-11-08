@@ -301,7 +301,7 @@ package "app" {
         +pay(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
       }
       class TaxParametersApiEndpoint {
-        +getCurrent(): Observable<TaxParameters>
+        +getAt(date: string): Observable<TaxParameters | null>
       }
       class FixedAssetsApiEndpoint {
         +dispose(id: number): Observable<FixedAsset>
@@ -324,7 +324,7 @@ package "app" {
         +getTaxReturn(year: number, month: number): Observable<TaxReturn | null>
         +prepareTaxReturn(year: number, month: number): Observable<TaxReturn>
         +payTaxReturn(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
-        +getCurrentTaxParameters(): Observable<TaxParameters>
+        +getTaxParametersAt(date: string): Observable<TaxParameters | null>
         +setTaxParameters(parameters: TaxParameters): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
         +registerFixedAsset(asset: FixedAsset): Observable<FixedAsset>

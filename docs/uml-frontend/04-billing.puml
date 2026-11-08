@@ -162,6 +162,25 @@ package "app" {
       class InvoiceAmountsCalculator <<DomainService>> {
         +preview(taxableBase: number, hasRetention: boolean, hasDetraction: boolean, rates: TaxRates): InvoiceAmountsPreview
       }
+      note right of InvoiceAmountsCalculator
+        Igual que el backend: IGV = base x tasa (2 dec. HALF_UP); retención = total x tasa;
+        detracción = total x tasa redondeada a soles; neto = total - retención - detracción.
+        Céntimos enteros; tasas de la fecha de emisión (STANDARD 18/12/3 si no hay parámetros).
+      end note
+      class IssueInvoiceCommand {
+        +series: string
+        +correlative: number
+        +issuedOn: string
+        +purchaseOrder: string
+        +projectId: number
+        +taxableBase: number
+        +currency: string
+        +hasRetention: boolean
+        +hasDetraction: boolean
+        +selfDetraction: boolean
+        +advance: boolean
+        +notes: string
+      }
     }
 
     package "infrastructure" {
@@ -230,6 +249,7 @@ package "app" {
       }
 
       class InvoicesApiEndpoint {
+        +issue(command: IssueInvoiceCommand): Observable<Invoice>
         +voidInvoice(id: number): Observable<Invoice>
         +getByProjectId(projectId: number): Observable<Invoice[]>
       }
@@ -247,7 +267,7 @@ package "app" {
         -scheduledCollectionsEndpoint: ScheduledCollectionsApiEndpoint
         +getInvoices(): Observable<Invoice[]>
         +getInvoiceById(id: number): Observable<Invoice>
-        +issueInvoice(invoice: Invoice): Observable<Invoice>
+        +issueInvoice(command: IssueInvoiceCommand): Observable<Invoice>
         +voidInvoice(id: number): Observable<Invoice>
         +getPayments(invoiceId: number): Observable<InvoicePayment[]>
         +registerPayment(invoiceId: number, payment: InvoicePayment): Observable<InvoicePayment>
@@ -296,7 +316,7 @@ package "app" {
         +loadInvoices(): void
         +countByStatus(status: InvoiceStatus | null): number
         +loadInvoiceDetail(id: number): void
-        +issueInvoice(invoice: Invoice): void
+        +issueInvoice(command: IssueInvoiceCommand, navigateTo: string[]): void
         +voidInvoice(id: number): void
         +registerPayment(invoiceId: number, payment: InvoicePayment): void
         +loadScheduledCollections(year: number, month: number): void

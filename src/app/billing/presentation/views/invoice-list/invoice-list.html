@@ -2,7 +2,14 @@
   [title]="'nav.invoices' | translate"
   [subtitle]="'invoices.subtitle' | translate"
   [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.invoices' | translate }]"
-/>
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/billing/invoices/new">
+      <mat-icon>add</mat-icon>
+      {{ 'invoices.issue' | translate }}
+    </a>
+  }
+</app-page-header>
 
 <section class="summary">
   <article class="summary-card">
