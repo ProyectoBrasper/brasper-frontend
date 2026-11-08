@@ -87,7 +87,9 @@
     "saveChanges": "Save changes",
     "all": "All",
     "total": "Total",
-    "save": "Save"
+    "save": "Save",
+    "yes": "Yes",
+    "no": "No"
   },
   "signIn": {
     "title": "Sign in",
@@ -267,6 +269,35 @@
     "detraction": "Detraction",
     "netAmount": "Net to deposit",
     "previewNote": "Reference calculation with the rates in force since {{date}}. The official amount is calculated when issuing.",
-    "previewNoteStandard": "Reference calculation with the standard rates (IGV 18 %, detraction 12 %, withholding 3 %). The official amount is calculated when issuing."
+    "previewNoteStandard": "Reference calculation with the standard rates (IGV 18 %, detraction 12 %, withholding 3 %). The official amount is calculated when issuing.",
+    "invoice": "Invoice",
+    "issuedOnLabel": "Issued on {{date}}",
+    "amounts": "Amounts",
+    "outstanding": "Outstanding balance",
+    "collectionProgress": "Collection progress",
+    "payments": "Registered payments",
+    "totalCollected": "Total collected",
+    "noPayments": "No payments registered yet.",
+    "registerPayment": "Register payment",
+    "paymentType": "Type",
+    "receivedOn": "Date",
+    "amount": "Amount",
+    "bankAccount": "Account",
+    "reference": "Reference",
+    "void": "Void",
+    "voidOnlyWithoutPayments": "Only invoices without payments can be voided",
+    "voidTitle": "Void invoice",
+    "voidMessage": "Invoice {{number}} will be voided and will not accept payments. This cannot be undone. Continue?"
+  },
+  "bank": {
+    "BCP": "BCP",
+    "BBVA": "BBVA",
+    "BANCO_DE_LA_NACION": "Banco de la Nación",
+    "CASH": "Cash"
+  },
+  "paymentType": {
+    "NET_DEPOSIT": "Net deposit",
+    "DETRACTION_DEPOSIT": "Detraction deposit",
+    "RETENTION_CERTIFICATE": "Withholding certificate"
   }
 }

@@ -387,6 +387,10 @@ package "app" {
         +toResourceFromEntity(entity: PartnerContribution): PartnerContributionResource
       }
 
+      note top of BankAccountsApiEndpoint
+        Implementado por ahora solo getAll() (lo usa Billing para registrar cobros);
+        el resto de Tesorería llega con sus pantallas.
+      end note
       class BankAccountsApiEndpoint {
         +transferFunds(transfer: FundsTransfer): Observable<void>
       }

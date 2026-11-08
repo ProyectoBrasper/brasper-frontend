@@ -98,5 +98,11 @@
   ],
   "tax-parameters": [
     {"id":1,"effectiveFrom":"2026-01-01","igv":0.18,"detraction":0.12,"retention":0.03,"incomeTaxPrepayment":0.015}
+  ],
+  "bank-accounts": [
+    {"id":1,"bank":"BCP","accountNumber":"193-2456789-0-12","type":"CHECKING","currency":"PEN","openingBalance":450000,"currentBalance":318450},
+    {"id":2,"bank":"BBVA","accountNumber":"0011-0234-0200123456","type":"CHECKING","currency":"PEN","openingBalance":150000,"currentBalance":96200},
+    {"id":3,"bank":"BANCO_DE_LA_NACION","accountNumber":"00-045-123456","type":"DETRACTIONS","currency":"PEN","openingBalance":40000,"currentBalance":76200},
+    {"id":4,"bank":"CASH","accountNumber":"Caja chica","type":"PETTY_CASH","currency":"PEN","openingBalance":6000,"currentBalance":3500}
   ]
 }

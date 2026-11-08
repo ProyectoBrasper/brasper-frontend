@@ -43,6 +43,14 @@ export class InvoicesApiEndpoint extends BaseApiEndpoint<Invoice, InvoiceResourc
     );
   }
 
+  /** `POST /invoices/{id}/void`: only an invoice without payments. */
+  voidInvoice(id: number): Observable<Invoice> {
+    return this.http.post<InvoiceResource>(`${this.endpointUrl}/${id}/void`, {}).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to void invoice')),
+    );
+  }
+
   getByProjectId(projectId: number): Observable<Invoice[]> {
     const params = new HttpParams().set('projectId', projectId);
     return this.http.get<InvoiceResource[] | InvoicesResponse>(this.endpointUrl, { params }).pipe(

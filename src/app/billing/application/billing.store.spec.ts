@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { Role } from '../../iam/domain/model/role';
+import { InvoicePayment, InvoicePaymentType } from '../domain/model/invoice-payment.entity';
 import { InvoiceStatus } from '../domain/model/invoice-status';
 import { BillingApi } from '../infrastructure/billing-api';
 import { invoiceFixture } from '../testing/invoice-fixtures';
@@ -61,6 +62,35 @@ describe('BillingStore', () => {
     store.loadInvoices();
     expect(store.error()).toBe('Sesión no válida.');
     expect(store.loading()).toBe(false);
+  });
+
+  it('registers a payment in date order and refreshes the invoice from the API', () => {
+    const before = invoiceFixture();
+    const after = invoiceFixture({ collectedAmount: 137352, outstandingBalance: 4248 });
+    const existing = new InvoicePayment({ id: 7, invoiceId: 4, receivedOn: '2026-10-06', amount: 60000, type: InvoicePaymentType.NET_DEPOSIT, bankAccountId: 1, reference: '' });
+    const saved = new InvoicePayment({ id: 10, invoiceId: 4, receivedOn: '2026-11-06', amount: 60360, type: InvoicePaymentType.NET_DEPOSIT, bankAccountId: 1, reference: '' });
+    Object.assign(api, {
+      getInvoiceById: vi.fn().mockReturnValueOnce(of(before)).mockReturnValueOnce(of(after)),
+      getPayments: vi.fn().mockReturnValue(of([existing])),
+      registerPayment: vi.fn().mockReturnValue(of(saved)),
+    });
+    const store = createStore();
+    store.loadInvoiceDetail(4);
+
+    store.registerPayment(4, saved);
+
+    expect((api as unknown as Record<string, ReturnType<typeof vi.fn>>)['registerPayment']).toHaveBeenCalledWith(4, saved, 'PEN');
+    expect(store.payments().map((p) => p.id)).toEqual([7, 10]);
+    expect(store.getInvoiceById(4)?.outstandingBalance).toBe(4248);
+  });
+
+  it('replaces a voided invoice', () => {
+    Object.assign(api, { voidInvoice: vi.fn().mockReturnValue(of(invoiceFixture({ id: 8, status: InvoiceStatus.VOIDED, collectedAmount: 0 }))) });
+    const store = createStore();
+    store.loadInvoices();
+    store.voidInvoice(8);
+    expect(store.getInvoiceById(8)?.isVoided()).toBe(true);
+    expect(store.totalOutstanding()).toBe(633368 - 118000);
   });
 
   it('lets only administration and accounting write', () => {

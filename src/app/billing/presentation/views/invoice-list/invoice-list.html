@@ -114,7 +114,13 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let invoice; columns: displayedColumns" [class.voided]="invoice.isVoided()"></tr>
+      <tr
+        mat-row
+        class="clickable"
+        *matRowDef="let invoice; columns: displayedColumns"
+        [class.voided]="invoice.isVoided()"
+        [routerLink]="['/billing/invoices', invoice.id]"
+      ></tr>
       <tr class="mat-mdc-row empty-row" *matNoDataRow>
         <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
           {{ (loading() ? 'common.loading' : 'invoices.empty') | translate }}
