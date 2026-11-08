@@ -1,0 +1,151 @@
+.status-row {
+  margin: -12px 0 20px;
+}
+
+.danger {
+  color: var(--mat-sys-error);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.kpi-label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.kpi-value {
+  font: 700 22px/28px var(--brasper-font-brand);
+  white-space: nowrap;
+}
+
+.kpi mat-progress-bar {
+  --mat-progress-bar-track-height: 8px;
+  --mat-progress-bar-active-indicator-height: 8px;
+  border-radius: 4px;
+}
+
+.kpi-hint {
+  align-self: flex-end;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.info-card {
+  max-width: none;
+  margin-bottom: 24px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.info-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 16px 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.label,
+.client-box dt {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.client-box {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-surface-container);
+}
+
+.client-box dd {
+  margin: 0;
+  text-align: right;
+  word-break: break-word;
+}
+
+.tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.tables .form-card {
+  max-width: none;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-head .form-card-title {
+  flex: 1;
+}
+
+.tonal {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.placeholder {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 1199px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tables,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 599px) {
+  .kpis,
+  .info-main {
+    grid-template-columns: 1fr;
+  }
+}

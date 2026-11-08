@@ -85,7 +85,9 @@
     "editItem": "Editar {{name}}",
     "new": "Nuevo",
     "saveChanges": "Guardar cambios",
-    "all": "Todos"
+    "all": "Todos",
+    "total": "Total",
+    "save": "Guardar"
   },
   "signIn": {
     "title": "Iniciar sesión",
@@ -192,6 +194,34 @@
     "cancelTitle": "Cancelar proyecto",
     "cancelMessage": "{{code}} · {{name}} quedará cancelado y no admitirá cambios ni avances. Esta acción no se puede deshacer. ¿Deseas continuar?",
     "lockedMessage": "Este proyecto está completado o cancelado y ya no se puede editar.",
-    "empty": "No hay proyectos con este estado."
+    "empty": "No hay proyectos con este estado.",
+    "view": "Ver detalle",
+    "projectData": "Datos del proyecto",
+    "participationAndCommission": "Participación / Comisión",
+    "accumulatedProgress": "Avance acumulado",
+    "remaining": "Restante",
+    "progressRecords": "Avances registrados",
+    "costEstimates": "Costos estimados",
+    "period": "Período",
+    "monthProgress": "Avance del mes",
+    "accumulated": "Acumulado",
+    "noProgress": "Aún no hay avances registrados.",
+    "category": "Categoría",
+    "estimatedAmount": "Monto estimado",
+    "noEstimates": "Aún no hay costos estimados.",
+    "registerProgress": "Registrar avance",
+    "month": "Mes",
+    "year": "Año",
+    "periodTaken": "Ese mes ya tiene avance registrado.",
+    "progressHint": "Máximo {{max}} % (lo que falta para llegar a 100 %)",
+    "willComplete": "Con este avance el proyecto llega a 100 % y pasará a Completado.",
+    "addEstimate": "Agregar estimación",
+    "editEstimate": "Editar estimación"
+  },
+  "costCategory": {
+    "MATERIALS": "Materiales",
+    "LABOR": "Mano de obra",
+    "TRAVEL_EXPENSES": "Viáticos",
+    "OTHER": "Otros"
   }
 }

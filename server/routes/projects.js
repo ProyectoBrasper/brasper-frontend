@@ -145,6 +145,84 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     res.json(findProject(req));
   });
 
+  // ---------- Progress and cost estimates (nested under the project, like the backend) ----------
+  const progressOf = (projectId) =>
+    db
+      .get('progress-records')
+      .filter({ projectId })
+      .sortBy((r) => r.year * 100 + r.month)
+      .value();
+  const estimatesOf = (projectId) => db.get('cost-estimates').filter({ projectId }).value();
+  const round4 = (value) => Math.round(value * 10000) / 10000;
+  const round2 = (value) => Math.round(value * 100) / 100;
+  // The resources do not carry projectId (it is in the URL).
+  const progressResource = ({ projectId, ...record }) => record;
+  const estimateResource = ({ projectId, ...estimate }) => estimate;
+  const CATEGORIES = ['MATERIALS', 'LABOR', 'TRAVEL_EXPENSES', 'OTHER'];
+
+  server.get('/api/v1/projects/:id/progress', requireRoles(), (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    res.json(progressOf(project.id).map(progressResource));
+  });
+
+  server.post('/api/v1/projects/:id/progress', canWrite, (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    const year = Number(req.body?.year);
+    const month = Number(req.body?.month);
+    const percentage = round4(Number(req.body?.percentage));
+    if (!(year >= 2000 && year <= 2100) || !(month >= 1 && month <= 12) || !(percentage > 0 && percentage <= 1)) {
+      return problem(res, 400, 'Bad Request', 'Datos de avance no válidos.');
+    }
+    if (project.status !== 'IN_PROGRESS') return problem(res, 409, 'Conflict', INVALID_TRANSITION);
+    const records = progressOf(project.id);
+    if (records.some((r) => r.year === year && r.month === month)) {
+      return problem(res, 409, 'Conflict', 'Ya hay avance registrado para ese mes.');
+    }
+    const total = round4(records.reduce((sum, r) => sum + r.percentage, 0) + percentage);
+    if (total > 1) return problem(res, 422, 'Unprocessable Entity', 'El avance total no puede superar el 100%.');
+    const record = { id: nextId('progress-records'), projectId: project.id, year, month, percentage };
+    db.get('progress-records').push(record).write();
+    projects()
+      .find({ id: project.id })
+      .assign({ accumulatedProgress: total, status: total === 1 ? 'COMPLETED' : project.status })
+      .write();
+    res.status(201).json(progressResource(record));
+  });
+
+  server.get('/api/v1/projects/:id/cost-estimates', requireRoles(), (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    res.json(estimatesOf(project.id).map(estimateResource));
+  });
+
+  // Creates or replaces the estimate of a category and recalculates the estimated direct cost.
+  server.put('/api/v1/projects/:id/cost-estimates', canWrite, (req, res) => {
+    const project = findProject(req);
+    if (!project) return problem(res, 404, 'Not Found', NOT_FOUND);
+    const { category, currency } = req.body ?? {};
+    const estimatedAmount = round2(Number(req.body?.estimatedAmount));
+    if (!CATEGORIES.includes(category) || !(estimatedAmount >= 0)) {
+      return problem(res, 400, 'Bad Request', 'Datos de estimación no válidos.');
+    }
+    if (currency !== project.currency) {
+      return problem(res, 422, 'Unprocessable Entity', 'La moneda del estimado debe ser la del proyecto.');
+    }
+    if (!isOpen(project)) return problem(res, 409, 'Conflict', INVALID_TRANSITION);
+    const existing = db.get('cost-estimates').find({ projectId: project.id, category }).value();
+    if (existing) {
+      db.get('cost-estimates').find({ id: existing.id }).assign({ estimatedAmount }).write();
+    } else {
+      db.get('cost-estimates')
+        .push({ id: nextId('cost-estimates'), projectId: project.id, category, estimatedAmount })
+        .write();
+    }
+    const total = round2(estimatesOf(project.id).reduce((sum, e) => sum + e.estimatedAmount, 0));
+    projects().find({ id: project.id }).assign({ estimatedDirectCost: total }).write();
+    res.json(estimateResource(db.get('cost-estimates').find({ projectId: project.id, category }).value()));
+  });
+
   server.get('/api/v1/projects/:id', requireRoles(), (req, res, next) => {
     if (!findProject(req)) return problem(res, 404, 'Not Found', NOT_FOUND);
     next();

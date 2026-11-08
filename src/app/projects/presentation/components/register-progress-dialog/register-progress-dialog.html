@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>{{ 'projects.registerProgress' | translate }}</h2>
+<form [formGroup]="progressForm" (ngSubmit)="onSave()" novalidate>
+  <mat-dialog-content>
+    <p class="remaining">
+      {{ data.project.code }} · {{ 'projects.remaining' | translate }}:
+      <strong>{{ data.project.remainingProgress() | percent: '1.0-2' }}</strong>
+    </p>
+
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.month' | translate }}</mat-label>
+        <mat-select formControlName="month">
+          @for (month of months; track month) {
+            <mat-option [value]="month">{{ monthName(month) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'projects.year' | translate }}</mat-label>
+        <input matInput formControlName="year" type="number" min="2000" max="2100" />
+        @if (isInvalidControl(progressForm, 'year')) {
+          <mat-error>{{ errorMessageForControl(progressForm, 'year') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    @if (progressForm.hasError('periodTaken')) {
+      <p class="period-error" role="alert">{{ 'projects.periodTaken' | translate }}</p>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'projects.monthProgress' | translate }}</mat-label>
+      <input matInput class="amount" formControlName="percentage" type="number" min="0.01" [max]="maxPercentage" step="0.01" />
+      <span matTextSuffix>&nbsp;%</span>
+      @if (isInvalidControl(progressForm, 'percentage')) {
+        <mat-error>{{ errorMessageForControl(progressForm, 'percentage') }}</mat-error>
+      } @else {
+        <mat-hint>{{ 'projects.progressHint' | translate: { max: maxPercentage } }}</mat-hint>
+      }
+    </mat-form-field>
+    @if (completesProject()) {
+      <p class="complete-note">{{ 'projects.willComplete' | translate }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit">{{ 'common.save' | translate }}</button>
+  </mat-dialog-actions>
+</form>
