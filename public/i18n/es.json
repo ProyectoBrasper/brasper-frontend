@@ -87,7 +87,9 @@
     "saveChanges": "Guardar cambios",
     "all": "Todos",
     "total": "Total",
-    "save": "Guardar"
+    "save": "Guardar",
+    "yes": "Sí",
+    "no": "No"
   },
   "signIn": {
     "title": "Iniciar sesión",
@@ -267,6 +269,35 @@
     "detraction": "Detracción",
     "netAmount": "Neto a depositar",
     "previewNote": "Cálculo referencial con las tasas vigentes desde el {{date}}. El monto oficial lo calcula el sistema al emitir.",
-    "previewNoteStandard": "Cálculo referencial con las tasas estándar (IGV 18 %, detracción 12 %, retención 3 %). El monto oficial lo calcula el sistema al emitir."
+    "previewNoteStandard": "Cálculo referencial con las tasas estándar (IGV 18 %, detracción 12 %, retención 3 %). El monto oficial lo calcula el sistema al emitir.",
+    "invoice": "Factura",
+    "issuedOnLabel": "Emitida el {{date}}",
+    "amounts": "Montos",
+    "outstanding": "Saldo pendiente",
+    "collectionProgress": "Progreso de recaudación",
+    "payments": "Cobros registrados",
+    "totalCollected": "Total cobrado",
+    "noPayments": "Aún no hay cobros registrados.",
+    "registerPayment": "Registrar cobro",
+    "paymentType": "Tipo",
+    "receivedOn": "Fecha",
+    "amount": "Monto",
+    "bankAccount": "Cuenta",
+    "reference": "Referencia",
+    "void": "Anular",
+    "voidOnlyWithoutPayments": "Solo se anulan facturas sin cobros",
+    "voidTitle": "Anular factura",
+    "voidMessage": "La factura {{number}} quedará anulada y no recibirá cobros. Esta acción no se puede deshacer. ¿Deseas continuar?"
+  },
+  "bank": {
+    "BCP": "BCP",
+    "BBVA": "BBVA",
+    "BANCO_DE_LA_NACION": "Banco de la Nación",
+    "CASH": "Caja"
+  },
+  "paymentType": {
+    "NET_DEPOSIT": "Depósito neto",
+    "DETRACTION_DEPOSIT": "Depósito de detracción",
+    "RETENTION_CERTIFICATE": "Certificado de retención"
   }
 }

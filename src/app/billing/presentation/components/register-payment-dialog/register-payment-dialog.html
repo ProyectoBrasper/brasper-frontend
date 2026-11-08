@@ -1,0 +1,65 @@
+<h2 mat-dialog-title>{{ 'invoices.registerPayment' | translate }}</h2>
+<form [formGroup]="paymentForm" (ngSubmit)="onSave()" novalidate>
+  <mat-dialog-content>
+    <p class="balance">
+      {{ invoice.number }} · {{ 'invoices.outstanding' | translate }}:
+      <strong>{{ outstanding | money: invoice.currency }}</strong>
+    </p>
+
+    <div class="grid">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'invoices.paymentType' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          @for (type of types; track type) {
+            <mat-option [value]="type">{{ 'paymentType.' + type | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'invoices.receivedOn' | translate }}</mat-label>
+        <input matInput formControlName="receivedOn" [matDatepicker]="receivedOnPicker" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="receivedOnPicker" />
+        <mat-datepicker #receivedOnPicker />
+        @if (isInvalidControl(paymentForm, 'receivedOn')) {
+          <mat-error>{{ errorMessageForControl(paymentForm, 'receivedOn') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'invoices.amount' | translate }}</mat-label>
+        <span matTextPrefix>{{ invoice.currency === 'USD' ? 'US$' : 'S/' }}&nbsp;</span>
+        <input matInput class="amount" formControlName="amount" type="number" min="0.01" [max]="outstanding" step="0.01" />
+        @if (isInvalidControl(paymentForm, 'amount')) {
+          <mat-error>{{ errorMessageForControl(paymentForm, 'amount') }}</mat-error>
+        }
+      </mat-form-field>
+
+      @if (paymentForm.controls.bankAccountId.enabled) {
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'invoices.bankAccount' | translate }}</mat-label>
+          <mat-select formControlName="bankAccountId">
+            @for (account of accounts; track account.id) {
+              <mat-option [value]="account.id">{{ accountLabel(account) }}</mat-option>
+            }
+          </mat-select>
+          @if (isInvalidControl(paymentForm, 'bankAccountId')) {
+            <mat-error>{{ errorMessageForControl(paymentForm, 'bankAccountId') }}</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'invoices.reference' | translate }}</mat-label>
+        <input matInput formControlName="reference" />
+        @if (isInvalidControl(paymentForm, 'reference')) {
+          <mat-error>{{ errorMessageForControl(paymentForm, 'reference') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit">{{ 'invoices.registerPayment' | translate }}</button>
+  </mat-dialog-actions>
+</form>

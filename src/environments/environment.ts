@@ -12,4 +12,5 @@ export const environment = {
   platformProviderProjectsEndpointPath: '/projects',
   platformProviderInvoicesEndpointPath: '/invoices',
   platformProviderTaxParametersEndpointPath: '/tax-parameters',
+  platformProviderBankAccountsEndpointPath: '/bank-accounts',
 };

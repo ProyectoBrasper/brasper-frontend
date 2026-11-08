@@ -207,7 +207,6 @@ package "app" {
       }
       class InvoicePaymentResource <<Resource>> {
         +id: number
-        +invoiceId: number
         +receivedOn: string
         +amount: number
         +type: string
@@ -255,8 +254,14 @@ package "app" {
       }
       class InvoicePaymentsApiEndpoint {
         +getByInvoiceId(invoiceId: number): Observable<InvoicePayment[]>
-        +register(invoiceId: number, payment: InvoicePayment): Observable<InvoicePayment>
+        +register(invoiceId: number, payment: InvoicePayment, currency: string): Observable<InvoicePayment>
       }
+      note right of InvoicePaymentsApiEndpoint
+        GET/POST /invoices/{id}/payments (sin invoiceId en el resource).
+        Reglas del backend: monto > 0 y <= saldo (422), misma moneda (422), los depósitos
+        necesitan cuenta (400), el certificado de retención no; anulada no cobra (409).
+        Anular: POST /invoices/{id}/void, solo sin cobros (409).
+      end note
       class ScheduledCollectionsApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<ScheduledCollection[]>
       }
@@ -270,7 +275,7 @@ package "app" {
         +issueInvoice(command: IssueInvoiceCommand): Observable<Invoice>
         +voidInvoice(id: number): Observable<Invoice>
         +getPayments(invoiceId: number): Observable<InvoicePayment[]>
-        +registerPayment(invoiceId: number, payment: InvoicePayment): Observable<InvoicePayment>
+        +registerPayment(invoiceId: number, payment: InvoicePayment, currency: string): Observable<InvoicePayment>
         +getScheduledCollections(year: number, month: number): Observable<ScheduledCollection[]>
         +scheduleCollection(collection: ScheduledCollection): Observable<ScheduledCollection>
         +updateScheduledCollection(collection: ScheduledCollection): Observable<ScheduledCollection>

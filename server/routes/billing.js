@@ -103,4 +103,80 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     if (!invoice) return problem(res, 404, 'Not Found', 'Factura no encontrada.');
     res.json(invoiceResource(invoice));
   });
+
+  // ---------- Void and payments (same rules and messages as the backend) ----------
+  const NOT_FOUND = 'Factura no encontrada.';
+  const findInvoice = (req) => invoices().find({ id: Number(req.params.id) }).value();
+  const paymentsOf = (invoiceId) => db.get('invoice-payments').filter({ invoiceId }).sortBy('receivedOn').value();
+  // InvoicePaymentResource has no invoiceId (it is in the URL).
+  const paymentResource = ({ invoiceId, ...payment }) => payment;
+  const PAYMENT_TYPES = ['NET_DEPOSIT', 'DETRACTION_DEPOSIT', 'RETENTION_CERTIFICATE'];
+
+  server.post('/api/v1/invoices/:id/void', requireRoles(...WRITERS), (req, res) => {
+    const invoice = findInvoice(req);
+    if (!invoice) return problem(res, 404, 'Not Found', NOT_FOUND);
+    if (invoice.status === 'VOIDED') return problem(res, 409, 'Conflict', 'La factura ya está anulada.');
+    if (paymentsOf(invoice.id).length > 0) return problem(res, 409, 'Conflict', 'No se puede anular una factura con pagos.');
+    invoices().find({ id: invoice.id }).assign({ status: 'VOIDED' }).write();
+    res.json(invoiceResource(findInvoice(req)));
+  });
+
+  server.get('/api/v1/invoices/:id/payments', requireRoles(), (req, res) => {
+    const invoice = findInvoice(req);
+    if (!invoice) return problem(res, 404, 'Not Found', NOT_FOUND);
+    res.json(paymentsOf(invoice.id).map(paymentResource));
+  });
+
+  server.post('/api/v1/invoices/:id/payments', requireRoles(...WRITERS), (req, res) => {
+    const invoice = findInvoice(req);
+    if (!invoice) return problem(res, 404, 'Not Found', NOT_FOUND);
+    const body = req.body ?? {};
+    const amount = Number(body.amount);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.receivedOn ?? '') || !PAYMENT_TYPES.includes(body.type) || !(amount > 0)) {
+      return problem(res, 400, 'Bad Request', 'Datos de cobro no válidos.');
+    }
+    if (invoice.status === 'VOIDED') return problem(res, 409, 'Conflict', 'La factura ya está anulada.');
+    if (body.currency !== invoice.currency) {
+      return problem(res, 422, 'Unprocessable Entity', 'La moneda del pago debe ser la de la factura.');
+    }
+    const amountC = Math.round(amount * 100);
+    const outstandingC = Math.round(invoice.outstandingBalance * 100);
+    if (amountC > outstandingC) {
+      return problem(res, 422, 'Unprocessable Entity', 'El pago supera el saldo pendiente de la factura.');
+    }
+    let account = null;
+    if (body.type !== 'RETENTION_CERTIFICATE') {
+      if (!body.bankAccountId) return problem(res, 400, 'Bad Request', 'Un depósito necesita la cuenta bancaria donde ingresó.');
+      account = db.get('bank-accounts').find({ id: Number(body.bankAccountId) }).value();
+      if (!account || account.currency !== invoice.currency) {
+        return problem(res, 400, 'Bad Request', 'La cuenta bancaria no existe o es de otra moneda.');
+      }
+    }
+    const payment = {
+      id: nextId('invoice-payments'),
+      invoiceId: invoice.id,
+      receivedOn: body.receivedOn,
+      amount: amountC / 100,
+      type: body.type,
+      bankAccountId: account ? account.id : null,
+      reference: typeof body.reference === 'string' && body.reference.trim() ? body.reference.trim().slice(0, 100) : null,
+    };
+    db.get('invoice-payments').push(payment).write();
+    const collectedC = Math.round(invoice.collectedAmount * 100) + amountC;
+    const remainingC = Math.round(invoice.total * 100) - collectedC;
+    invoices()
+      .find({ id: invoice.id })
+      .assign({
+        collectedAmount: collectedC / 100,
+        outstandingBalance: remainingC / 100,
+        status: remainingC > 0 ? 'PARTIALLY_COLLECTED' : 'COLLECTED',
+      })
+      .write();
+    // Treasury reacts to the payment event: the deposit enters the account (no cash for certificates).
+    if (account) {
+      const balanceC = Math.round(account.currentBalance * 100) + amountC;
+      db.get('bank-accounts').find({ id: account.id }).assign({ currentBalance: balanceC / 100 }).write();
+    }
+    res.status(201).json(paymentResource(payment));
+  });
 };

@@ -5,8 +5,12 @@ import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Invoice } from '../domain/model/invoice.entity';
 import { InvoiceStatus } from '../domain/model/invoice-status';
+import { InvoicePayment } from '../domain/model/invoice-payment.entity';
 import { IssueInvoiceCommand } from '../domain/model/issue-invoice.command';
 import { BillingApi } from '../infrastructure/billing-api';
+
+const sortByDate = (payments: InvoicePayment[]) =>
+  [...payments].sort((a, b) => a.receivedOn.localeCompare(b.receivedOn) || a.id - b.id);
 
 /**
  * Billing context state (invoices for now; payments and scheduled collections follow).
@@ -18,11 +22,14 @@ export class BillingStore {
   private readonly router = inject(Router);
 
   private readonly invoicesSignal = signal<Invoice[]>([]);
+  private readonly paymentsSignal = signal<InvoicePayment[]>([]);
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
 
   readonly invoices = this.invoicesSignal.asReadonly();
+  /** Payments of the invoice opened in the detail, in date order. */
+  readonly payments = this.paymentsSignal.asReadonly();
   /** Invoices with something left to collect (not voided, outstanding balance > 0). */
   readonly pendingInvoices = computed(() => this.invoicesSignal().filter((invoice) => invoice.isCollectable()));
   /** Accounts receivable: sum of the outstanding balances of non-voided invoices. */
@@ -48,8 +55,43 @@ export class BillingStore {
     });
   }
 
+  /** Loads one invoice (fresh from the API) and its payments, in date order. */
+  loadInvoiceDetail(id: number): void {
+    this.paymentsSignal.set([]);
+    this.refreshInvoice(id);
+    this.run(this.billingApi.getPayments(id), 'Failed to load payments', (payments) =>
+      this.paymentsSignal.set(sortByDate(payments)),
+    );
+  }
+
+  /** Registers a payment; the backend recalculates collected amount, balance and status. */
+  registerPayment(invoiceId: number, payment: InvoicePayment): void {
+    const currency = this.getInvoiceById(invoiceId)?.currency ?? 'PEN';
+    this.run(this.billingApi.registerPayment(invoiceId, payment, currency), 'Failed to register payment', (saved) => {
+      this.paymentsSignal.update((payments) => sortByDate([...payments, saved]));
+      this.refreshInvoice(invoiceId);
+    });
+  }
+
+  /** Voids an invoice without payments. */
+  voidInvoice(id: number): void {
+    this.run(this.billingApi.voidInvoice(id), 'Failed to void invoice', (invoice) => this.upsertInvoice(invoice));
+  }
+
   getInvoiceById(id: number): Invoice | undefined {
     return this.invoicesSignal().find((invoice) => invoice.id === id);
+  }
+
+  private refreshInvoice(id: number): void {
+    this.run(this.billingApi.getInvoiceById(id), 'Failed to load invoice', (invoice) => this.upsertInvoice(invoice));
+  }
+
+  private upsertInvoice(invoice: Invoice): void {
+    this.invoicesSignal.update((invoices) =>
+      invoices.some((i) => i.id === invoice.id)
+        ? invoices.map((i) => (i.id === invoice.id ? invoice : i))
+        : [...invoices, invoice],
+    );
   }
 
   countByStatus(status: InvoiceStatus | null): number {
