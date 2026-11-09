@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>{{ 'bankAccounts.transfer' | translate }}</h2>
+<form [formGroup]="transferForm" (ngSubmit)="onSave()" novalidate>
+  <mat-dialog-content>
+    <div class="grid">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'bankAccounts.fromAccount' | translate }}</mat-label>
+        <mat-select formControlName="fromAccountId">
+          @for (account of accounts; track account.id) {
+            <mat-option [value]="account.id">{{ accountLabel(account) }}</mat-option>
+          }
+        </mat-select>
+        @if (origin(); as origin) {
+          <mat-hint>{{ 'bankAccounts.available' | translate }}: {{ origin.currentBalance | money: origin.currency }}</mat-hint>
+        }
+        @if (isInvalidControl(transferForm, 'fromAccountId')) {
+          <mat-error>{{ errorMessageForControl(transferForm, 'fromAccountId') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'bankAccounts.toAccount' | translate }}</mat-label>
+        <mat-select formControlName="toAccountId">
+          @for (account of targets(); track account.id) {
+            <mat-option [value]="account.id">{{ accountLabel(account) }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'bankAccounts.toAccountHint' | translate }}</mat-hint>
+        @if (isInvalidControl(transferForm, 'toAccountId')) {
+          <mat-error>{{ errorMessageForControl(transferForm, 'toAccountId') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bankAccounts.date' | translate }}</mat-label>
+        <input matInput formControlName="transferredOn" [matDatepicker]="datePicker" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+        <mat-datepicker #datePicker />
+        @if (isInvalidControl(transferForm, 'transferredOn')) {
+          <mat-error>{{ errorMessageForControl(transferForm, 'transferredOn') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bankAccounts.amount' | translate }}</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput class="amount" formControlName="amount" type="number" min="0" step="0.01" />
+        @if (isInvalidControl(transferForm, 'amount')) {
+          <mat-error>{{ errorMessageForControl(transferForm, 'amount') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (leavesNegative()) {
+      <p class="warning" role="status">
+        <mat-icon>warning</mat-icon>
+        {{ 'bankAccounts.negativeWarning' | translate }}
+      </p>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'bankAccounts.concept' | translate }}</mat-label>
+      <input matInput formControlName="concept" />
+      @if (isInvalidControl(transferForm, 'concept')) {
+        <mat-error>{{ errorMessageForControl(transferForm, 'concept') }}</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit">{{ 'bankAccounts.transfer' | translate }}</button>
+  </mat-dialog-actions>
+</form>

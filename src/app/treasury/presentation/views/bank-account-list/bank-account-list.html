@@ -4,6 +4,10 @@
   [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.bankAccounts' | translate }]"
 >
   @if (canWrite()) {
+    <button mat-stroked-button type="button" (click)="onTransfer()" [disabled]="accounts().length < 2">
+      <mat-icon>swap_horiz</mat-icon>
+      {{ 'bankAccounts.transfer' | translate }}
+    </button>
     <a mat-flat-button routerLink="/treasury/bank-accounts/new">
       <mat-icon>add</mat-icon>
       {{ 'bankAccounts.open' | translate }}
@@ -50,6 +54,12 @@
           {{ 'bankAccounts.openingBalance' | translate }}: {{ account.openingBalance | money: account.currency }}
         </span>
       </div>
+      <footer class="account-foot">
+        <a class="movements-link" [routerLink]="['/treasury/bank-accounts', account.id]">
+          {{ 'bankAccounts.viewMovements' | translate }}
+          <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        </a>
+      </footer>
     </article>
   } @empty {
     @if (!loading()) {

@@ -126,6 +126,30 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+.account-foot {
+  padding-top: 16px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.movements-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+}
+
+.movements-link:hover {
+  text-decoration: underline;
+}
+
+.movements-link mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
 .empty {
   grid-column: 1 / -1;
   padding: 32px 16px;

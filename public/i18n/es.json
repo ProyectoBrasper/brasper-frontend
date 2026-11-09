@@ -518,6 +518,46 @@
     "openedOn": "Fecha de apertura",
     "empty": "Aún no hay cuentas registradas.",
     "balanceNote": "Los saldos se calculan a partir de los movimientos registrados.",
-    "balanceFormNote": "El saldo actual se calcula con los movimientos; no se edita manualmente."
+    "balanceFormNote": "El saldo actual se calcula con los movimientos; no se edita manualmente.",
+    "viewMovements": "Ver movimientos",
+    "transfer": "Transferir fondos",
+    "fromAccount": "Cuenta de origen",
+    "toAccount": "Cuenta de destino",
+    "toAccountHint": "Otra cuenta de la misma moneda",
+    "available": "Saldo disponible",
+    "negativeWarning": "La cuenta de origen quedará con saldo negativo. El sistema lo permite; revisa antes de confirmar.",
+    "date": "Fecha",
+    "amount": "Monto",
+    "concept": "Concepto",
+    "adjustment": "Registrar ajuste",
+    "registerAdjustment": "Registrar ajuste",
+    "direction": "Tipo de ajuste",
+    "directionRequired": "Elige si es un ingreso o un egreso.",
+    "adjustmentConceptHint": "Explica el motivo: el ajuste queda en el historial de la cuenta.",
+    "movements": "Movimientos",
+    "periodInflows": "Ingresos del período",
+    "periodOutflows": "Egresos del período",
+    "source": "Origen",
+    "inflow": "Ingreso",
+    "outflow": "Egreso",
+    "periodTotals": "Totales del período",
+    "noMovements": "No hay movimientos en este período."
+  },
+  "movementDirection": {
+    "INFLOW": "Ingreso",
+    "OUTFLOW": "Egreso"
+  },
+  "movementSource": {
+    "OPENING_BALANCE": "Saldo inicial",
+    "INVOICE_PAYMENT": "Cobro de factura",
+    "EXPENSE": "Gasto",
+    "FIXED_COST_PAYMENT": "Costo fijo",
+    "PAYABLE_PAYMENT": "Cuenta por pagar",
+    "LOAN_DISBURSEMENT": "Desembolso de préstamo",
+    "LOAN_INSTALLMENT": "Cuota de préstamo",
+    "PARTNER_CONTRIBUTION": "Aporte de socio",
+    "TAX_PAYMENT": "Declaración",
+    "TRANSFER": "Transferencia",
+    "ADJUSTMENT": "Ajuste"
   }
 }
