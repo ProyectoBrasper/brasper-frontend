@@ -112,5 +112,21 @@
     {"id":4,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":11,"week":3,"status":"SCHEDULED","invoiceId":null,"notes":null},
     {"id":5,"projectId":2,"expectedAmount":118000,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null},
     {"id":6,"projectId":4,"expectedAmount":259600,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null}
+  ],
+  "suppliers": [
+    {"id":1,"businessName":"Aceros y Estructuras del Norte S.A.C.","ruc":"20601112221","type":"COMPANY","phone":"01 555 0101"},
+    {"id":2,"businessName":"Electro Andes Distribuciones S.A.C.","ruc":"20512223332","type":"COMPANY","phone":"01 555 0102"},
+    {"id":3,"businessName":"Marco Antonio Huamán Ríos","ruc":null,"type":"NATURAL_PERSON","phone":"976 123 456"},
+    {"id":4,"businessName":"Grifo y Servicios El Cruce E.I.R.L.","ruc":"20498884443","type":"COMPANY","phone":"01 555 0104"},
+    {"id":5,"businessName":"Oficinas y Coworking Centro S.A.C.","ruc":"20134445554","type":"COMPANY","phone":"01 555 0105"}
+  ],
+  "expenses": [
+    {"id":1,"spentOn":"2026-10-02","projectId":1,"supplierId":1,"category":"MATERIALS","description":"Estructuras metálicas","voucherType":"INVOICE","voucherNumber":"E001-2210","taxableBase":120000,"igv":21600,"total":141600,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":1,"partnerId":null,"paymentStatus":"PAID","annulled":false},
+    {"id":2,"spentOn":"2026-10-08","projectId":2,"supplierId":2,"category":"MATERIALS","description":"Cable y tableros eléctricos","voucherType":"INVOICE","voucherNumber":"F010-8841","taxableBase":60000,"igv":10800,"total":70800,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":1,"partnerId":null,"paymentStatus":"PARTIALLY_PAID","annulled":false},
+    {"id":3,"spentOn":"2026-10-15","projectId":4,"supplierId":3,"category":"LABOR","description":"Honorarios instalador","voucherType":"FEE_RECEIPT","voucherNumber":"E001-00057","taxableBase":8000,"igv":0,"total":8000,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":2,"partnerId":null,"paymentStatus":"PAID","annulled":false},
+    {"id":4,"spentOn":"2026-10-18","projectId":1,"supplierId":4,"category":"TRAVEL_EXPENSES","description":"Combustible y peajes","voucherType":"SALES_RECEIPT","voucherNumber":"B001-3372","taxableBase":1850,"igv":0,"total":1850,"currency":"PEN","paymentMethod":"PETTY_CASH","bankAccountId":4,"partnerId":null,"paymentStatus":"PAID","annulled":false},
+    {"id":5,"spentOn":"2026-10-22","projectId":null,"supplierId":5,"category":"OTHER","description":"Alquiler de sala de reuniones","voucherType":"INVOICE","voucherNumber":"F002-1204","taxableBase":25000,"igv":4500,"total":29500,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":2,"partnerId":null,"paymentStatus":"PAID","annulled":false},
+    {"id":6,"spentOn":"2026-10-25","projectId":2,"supplierId":null,"category":"MATERIALS","description":"Materiales menores (aporte socio)","voucherType":"NO_VOUCHER","voucherNumber":null,"taxableBase":2400,"igv":0,"total":2400,"currency":"PEN","paymentMethod":"PARTNER_CONTRIBUTION","bankAccountId":null,"partnerId":1,"paymentStatus":"PAID","annulled":false},
+    {"id":7,"spentOn":"2026-10-27","projectId":1,"supplierId":1,"category":"OTHER","description":"Compra duplicada","voucherType":"INVOICE","voucherNumber":"E001-2210","taxableBase":5000,"igv":900,"total":5900,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":1,"partnerId":null,"paymentStatus":"PENDING","annulled":true}
   ]
 }
