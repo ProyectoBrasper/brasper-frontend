@@ -132,5 +132,12 @@
   "partners": [
     {"id":1,"fullName":"Roberto Salas Lazo","role":"Socio fundador","totalContributed":60000},
     {"id":2,"fullName":"Mariela Cuba Núñez","role":"Socia","totalContributed":25000}
+  ],
+  "employees": [
+    {"id":1,"fullName":"Carla Mendoza Rojas","dni":"41234561","position":"Gerente administrativa","monthlySalary":8500,"currency":"PEN","hiredOn":"2024-01-02","terminatedOn":null,"active":true},
+    {"id":2,"fullName":"Jorge Torres Salas","dni":"42345672","position":"Ingeniero residente","monthlySalary":7200,"currency":"PEN","hiredOn":"2024-03-15","terminatedOn":null,"active":true},
+    {"id":3,"fullName":"Diego Flores Quispe","dni":"43456783","position":"Asistente administrativo","monthlySalary":3200,"currency":"PEN","hiredOn":"2025-08-10","terminatedOn":null,"active":true},
+    {"id":4,"fullName":"Rosa Díaz Campos","dni":"44567894","position":"Técnica electricista","monthlySalary":3800,"currency":"PEN","hiredOn":"2025-02-05","terminatedOn":null,"active":true},
+    {"id":5,"fullName":"Pedro Ramos Ccori","dni":"45678905","position":"Técnico de campo","monthlySalary":3400,"currency":"PEN","hiredOn":"2025-06-12","terminatedOn":"2026-09-30","active":false}
   ]
 }

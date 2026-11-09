@@ -50,6 +50,7 @@ require('./routes/iam')(server, context);
 require('./routes/projects')(server, context);
 require('./routes/billing')(server, context);
 require('./routes/expenses')(server, context);
+require('./routes/staff')(server, context);
 require('./routes/accounting')(server, context);
 require('./routes/treasury')(server, context);
 

@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { maxTwoDecimals } from './expense-form';
+import { maxTwoDecimals } from './amount-validators';
 
 const errorsOf = (value: number | string | null) => new FormControl(value, maxTwoDecimals).errors;
 

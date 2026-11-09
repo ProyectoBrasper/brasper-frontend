@@ -27,4 +27,6 @@ export const AREA_ROLES = {
   operationsWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_ENGINEER],
   /** Issue / void invoices, register collections and scheduled collections. */
   billingWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
+  /** Hire, update and terminate employees; create, pay and deactivate fixed costs (management only reads). */
+  staffWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
 } as const satisfies Record<string, readonly Role[]>;
