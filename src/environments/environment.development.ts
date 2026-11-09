@@ -10,6 +10,7 @@ export const environment = {
   platformProviderClientsEndpointPath: '/clients',
   platformProviderProjectsEndpointPath: '/projects',
   platformProviderInvoicesEndpointPath: '/invoices',
+  platformProviderScheduledCollectionsEndpointPath: '/scheduled-collections',
   platformProviderTaxParametersEndpointPath: '/tax-parameters',
   platformProviderBankAccountsEndpointPath: '/bank-accounts',
 };

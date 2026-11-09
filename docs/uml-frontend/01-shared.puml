@@ -32,6 +32,26 @@ package "app" {
         +next(): Period
         +previous(): Period
       }
+
+      class CashFlowWeek <<ValueObject>> {
+        - #year: number
+        - #month: number
+        - #number: number
+        +year: number
+        +month: number
+        +number: number
+        +period: Period
+        +{static} from(date: Date): CashFlowWeek
+        +{static} weeksOf(period: Period): CashFlowWeek[]
+        +{static} exists(period: Period, number: number): boolean
+        +startDate(): Date
+        +endDate(): Date
+      }
+      note right of CashFlowWeek
+        Igual que el backend: semana 1 = del día 1 al primer domingo;
+        luego lunes a domingo recortado al mes (máximo 6 semanas).
+      end note
+      CashFlowWeek --> Period : belongs to
     }
 
     package "infrastructure" {
@@ -98,6 +118,7 @@ package "app" {
         }
         class PeriodSelector <<Component>> {
           +period: ModelSignal<Period>
+          +label(): string
           +onPrevious(): void
           +onNext(): void
         }
@@ -109,6 +130,7 @@ package "app" {
         }
         class StatusChip <<Component>> {
           +status: InputSignal<string>
+          +labelPrefix: InputSignal<string>
           +color: Signal<string>
           +icon: Signal<string>
         }

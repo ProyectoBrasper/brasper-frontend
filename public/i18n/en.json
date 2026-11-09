@@ -300,5 +300,33 @@
     "NET_DEPOSIT": "Net deposit",
     "DETRACTION_DEPOSIT": "Detraction deposit",
     "RETENTION_CERTIFICATE": "Withholding certificate"
+  },
+  "period": {
+    "label": "Period",
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+  "scheduleStatus": {
+    "SCHEDULED": "Scheduled",
+    "RESCHEDULED": "Rescheduled",
+    "REALIZED": "Realized",
+    "CANCELLED": "Cancelled"
+  },
+  "collections": {
+    "subtitle": "Collections expected per week of the month",
+    "schedule": "Schedule collection",
+    "reschedule": "Reschedule",
+    "cancel": "Cancel collection",
+    "week": "Week",
+    "weekNumber": "Week {{number}}",
+    "invoice": "Invoice",
+    "expectedAmount": "Expected amount",
+    "expectedOn": "Expected date",
+    "newDate": "New expected date",
+    "weekOf": "Falls in week {{number}}: {{from}} to {{to}}",
+    "totalExpected": "Total expected this month",
+    "empty": "There are no scheduled collections this month.",
+    "cancelTitle": "Cancel collection",
+    "cancelMessage": "The week {{week}} collection ({{project}}) will be cancelled and can no longer change. Continue?"
   }
 }

@@ -4,6 +4,8 @@ import { IamStore } from '../../iam/application/iam.store';
 import { Role } from '../../iam/domain/model/role';
 import { InvoicePayment, InvoicePaymentType } from '../domain/model/invoice-payment.entity';
 import { InvoiceStatus } from '../domain/model/invoice-status';
+import { ScheduledCollection, ScheduleStatus } from '../domain/model/scheduled-collection.entity';
+import { Period } from '../../shared/domain/model/period';
 import { BillingApi } from '../infrastructure/billing-api';
 import { invoiceFixture } from '../testing/invoice-fixtures';
 import { BillingStore } from './billing.store';
@@ -91,6 +93,30 @@ describe('BillingStore', () => {
     store.voidInvoice(8);
     expect(store.getInvoiceById(8)?.isVoided()).toBe(true);
     expect(store.totalOutstanding()).toBe(633368 - 118000);
+  });
+
+  it('loads a month of scheduled collections by week and totals the open ones', () => {
+    const collection = (id: number, week: number, amount: number, status: ScheduleStatus) =>
+      new ScheduledCollection({ id, projectId: 1, expectedAmount: amount, currency: 'PEN', year: 2026, month: 11, week, status, invoiceId: null, notes: '' });
+    Object.assign(api, {
+      getScheduledCollections: vi.fn().mockReturnValue(
+        of([
+          collection(6, 4, 259600, ScheduleStatus.SCHEDULED),
+          collection(3, 2, 64608, ScheduleStatus.SCHEDULED),
+          collection(9, 3, 1000, ScheduleStatus.CANCELLED),
+        ]),
+      ),
+      rescheduleCollection: vi.fn().mockReturnValue(of(collection(3, 3, 64608, ScheduleStatus.RESCHEDULED))),
+    });
+    const store = createStore();
+    store.loadScheduledCollections(new Period(2026, 11));
+
+    expect(store.scheduledCollections().map((c) => c.week)).toEqual([2, 3, 4]);
+    expect(store.expectedCollectionsTotal()).toBe(324208);
+
+    store.rescheduleCollection(3, '2026-11-12');
+    const calls = (api as unknown as Record<string, ReturnType<typeof vi.fn>>)['getScheduledCollections'].mock.calls;
+    expect(calls).toEqual([[2026, 11], [2026, 11]]);
   });
 
   it('lets only administration and accounting write', () => {

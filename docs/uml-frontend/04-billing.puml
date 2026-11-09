@@ -133,6 +133,7 @@ package "app" {
         - #id: number
         - #projectId: number
         - #expectedAmount: number
+        - #currency: string
         - #year: number
         - #month: number
         - #week: number
@@ -142,12 +143,15 @@ package "app" {
         +id: number
         +projectId: number
         +expectedAmount: number
+        +currency: string
         +year: number
         +month: number
         +week: number
         +status: ScheduleStatus
         +invoiceId: number | null
         +notes: string
+        +cashFlowWeek: CashFlowWeek
+        +isOpen(): boolean
       }
       ScheduledCollection ..|> app.shared.domain.model.BaseEntity : implements
 
@@ -158,6 +162,12 @@ package "app" {
         CANCELLED
       }
       ScheduledCollection --> ScheduleStatus : has
+      ScheduledCollection ..> app.shared.domain.model.CashFlowWeek : falls in
+      note right of ScheduledCollection
+        El backend guarda año/mes/semana (semana de flujo de caja, 1..6) a partir de expectedOn.
+        Reprogramar: solo cambia la fecha (status RESCHEDULED). Realizada o cancelada: 409.
+        invoiceId solo llega cuando el cobro se realiza (markAsRealized aún no se usa en el backend).
+      end note
 
       class InvoiceAmountsCalculator <<DomainService>> {
         +preview(taxableBase: number, hasRetention: boolean, hasDetraction: boolean, rates: TaxRates): InvoiceAmountsPreview
@@ -217,12 +227,20 @@ package "app" {
         +id: number
         +projectId: number
         +expectedAmount: number
+        +currency: string
         +year: number
         +month: number
         +week: number
         +status: string
         +invoiceId: number | null
         +notes: string
+      }
+      class ScheduleCollectionRequest {
+        +projectId: number
+        +expectedAmount: number
+        +currency: string
+        +expectedOn: string
+        +notes: string | null
       }
       class InvoicesResponse <<Response>> {
       }
@@ -264,7 +282,15 @@ package "app" {
       end note
       class ScheduledCollectionsApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<ScheduledCollection[]>
+        +schedule(request: ScheduleCollectionRequest): Observable<ScheduledCollection>
+        +reschedule(id: number, expectedOn: string): Observable<ScheduledCollection>
+        +cancel(id: number): Observable<ScheduledCollection>
       }
+      note right of ScheduledCollectionsApiEndpoint
+        GET /scheduled-collections?year=&month= (obligatorios, 400).
+        POST /scheduled-collections; POST /{id}/reschedule {expectedOn}; POST /{id}/cancel.
+        Solo PEN (422), proyecto inexistente (404), monto > 0 (400).
+      end note
 
       class BillingApi {
         -invoicesEndpoint: InvoicesApiEndpoint
@@ -277,8 +303,9 @@ package "app" {
         +getPayments(invoiceId: number): Observable<InvoicePayment[]>
         +registerPayment(invoiceId: number, payment: InvoicePayment, currency: string): Observable<InvoicePayment>
         +getScheduledCollections(year: number, month: number): Observable<ScheduledCollection[]>
-        +scheduleCollection(collection: ScheduledCollection): Observable<ScheduledCollection>
-        +updateScheduledCollection(collection: ScheduledCollection): Observable<ScheduledCollection>
+        +scheduleCollection(request: ScheduleCollectionRequest): Observable<ScheduledCollection>
+        +rescheduleCollection(id: number, expectedOn: string): Observable<ScheduledCollection>
+        +cancelScheduledCollection(id: number): Observable<ScheduledCollection>
       }
 
       InvoiceResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -292,7 +319,8 @@ package "app" {
       ScheduledCollectionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       InvoicesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       InvoicePaymentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      ScheduledCollectionsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ScheduledCollectionsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      ScheduledCollectionsApiEndpoint ..> ScheduleCollectionRequest : sends
       BillingApi --|> app.shared.infrastructure.BaseApi : extends
       BillingApi --> InvoicesApiEndpoint : delegates to
       BillingApi --> InvoicePaymentsApiEndpoint : delegates to
@@ -315,6 +343,7 @@ package "app" {
         +totalOutstanding: Signal<number>
         +payments: Signal<InvoicePayment[]>
         +scheduledCollections: Signal<ScheduledCollection[]>
+        +expectedCollectionsTotal: Signal<number>
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +canWrite: Signal<boolean>
@@ -324,9 +353,10 @@ package "app" {
         +issueInvoice(command: IssueInvoiceCommand, navigateTo: string[]): void
         +voidInvoice(id: number): void
         +registerPayment(invoiceId: number, payment: InvoicePayment): void
-        +loadScheduledCollections(year: number, month: number): void
-        +scheduleCollection(collection: ScheduledCollection): void
-        +rescheduleCollection(collection: ScheduledCollection): void
+        +loadScheduledCollections(period: Period): void
+        +scheduleCollection(request: ScheduleCollectionRequest): void
+        +rescheduleCollection(id: number, expectedOn: string): void
+        +cancelScheduledCollection(id: number): void
         +getInvoiceById(id: number): Invoice | undefined
       }
       BillingStore --> BillingApi : uses
@@ -359,9 +389,11 @@ package "app" {
         class ScheduledCollectionDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<ScheduledCollectionDialog>
-          -projectsStore: ProjectsStore
-          +data: {collection: ScheduledCollection | null}
+          +data: {collection: ScheduledCollection | null, projects: Project[], defaultDate: Date}
+          +isReschedule: boolean
+          +projects: Project[]
           +collectionForm: FormGroup
+          +week: Signal<CashFlowWeek | null>
           +onSave(): void
           +onCancel(): void
         }
@@ -402,12 +434,15 @@ package "app" {
         }
         class ScheduledCollectionList <<Component>> {
           -billingStore: BillingStore
+          -projectsStore: ProjectsStore
           -dialog: MatDialog
           +period: WritableSignal<Period>
-          +displayedColumns: string[]
-          +dataSource: Signal<MatTableDataSource<ScheduledCollection>>
-          +onAdd(): void
+          +collections: Signal<ScheduledCollection[]>
+          +total: Signal<number>
+          +columns: Signal<string[]>
+          +onSchedule(): void
           +onReschedule(collection: ScheduledCollection): void
+          +onCancelCollection(collection: ScheduledCollection): void
         }
       }
 
@@ -426,7 +461,10 @@ package "app" {
       RegisterPaymentDialog --> app.treasury.application.TreasuryStore : reads bank accounts
       ScheduledCollectionList --> ScheduledCollectionDialog : opens
       ScheduledCollectionList --> app.shared.presentation.components.PeriodSelector : contains
-      ScheduledCollectionDialog --> app.projects.application.ProjectsStore : reads projects
+      ScheduledCollectionList --> app.projects.application.ProjectsStore : reads projects
+      ScheduledCollectionList --> app.shared.presentation.components.ConfirmDialog : opens
+      ScheduledCollectionList --> app.shared.presentation.components.StatusChip : contains
+      ScheduledCollectionDialog ..> app.shared.domain.model.CashFlowWeek : shows week
       InvoiceList --> app.shared.presentation.components.StatusChip : contains
     }
   }

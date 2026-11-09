@@ -1,0 +1,43 @@
+table {
+  min-width: 960px;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.sub {
+  display: block;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.project {
+  min-width: 240px;
+  white-space: normal;
+}
+
+.notes {
+  max-width: 260px;
+  white-space: normal;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.muted {
+  color: var(--mat-sys-outline);
+  text-decoration: line-through;
+}
+
+td.mat-mdc-footer-cell {
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container);
+}
+
+.danger {
+  color: var(--mat-sys-error);
+  --mat-menu-item-icon-color: var(--mat-sys-error);
+}
+
+.hidden {
+  display: none;
+}

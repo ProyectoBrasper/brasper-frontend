@@ -178,10 +178,87 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
       })
       .write();
     // Treasury reacts to the payment event: the deposit enters the account (no cash for certificates).
+    // (Scheduled collections are not marked as realized: the backend does not do it yet either.)
     if (account) {
       const balanceC = Math.round(account.currentBalance * 100) + amountC;
       db.get('bank-accounts').find({ id: account.id }).assign({ currentBalance: balanceC / 100 }).write();
     }
     res.status(201).json(paymentResource(payment));
   });
+
+  // ---------- Scheduled collections (same rules and messages as the backend) ----------
+  const collections = () => db.get('scheduled-collections');
+  const findCollection = (req) => collections().find({ id: Number(req.params.id) }).value();
+  const isOpen = (c) => c.status === 'SCHEDULED' || c.status === 'RESCHEDULED';
+  const CLOSED = 'No se puede cambiar un cobro realizado o cancelado.';
+
+  server.get('/api/v1/scheduled-collections', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'year y month son obligatorios.');
+    }
+    res.json(collections().filter({ year, month }).sortBy(['week', 'id']).value());
+  });
+
+  server.post('/api/v1/scheduled-collections', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const amount = Number(body.expectedAmount);
+    const week = cashFlowWeek(body.expectedOn);
+    if (!(amount > 0) || !week || !['PEN', 'USD'].includes(body.currency)) {
+      return problem(res, 400, 'Bad Request', 'Datos de cobro programado no válidos.');
+    }
+    if (body.currency !== 'PEN') {
+      return problem(res, 422, 'Unprocessable Entity', 'Por ahora las facturas y los cobros programados solo pueden ser en PEN.');
+    }
+    if (!db.get('projects').find({ id: Number(body.projectId) }).value()) {
+      return problem(res, 404, 'Not Found', 'Proyecto no encontrado.');
+    }
+    const collection = {
+      id: nextId('scheduled-collections'),
+      projectId: Number(body.projectId),
+      expectedAmount: Math.round(amount * 100) / 100,
+      currency: 'PEN',
+      ...week,
+      status: 'SCHEDULED',
+      invoiceId: null,
+      notes: typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim().slice(0, 500) : null,
+    };
+    collections().push(collection).write();
+    res.status(201).json(collection);
+  });
+
+  server.post('/api/v1/scheduled-collections/:id/reschedule', requireRoles(...WRITERS), (req, res) => {
+    const collection = findCollection(req);
+    if (!collection) return problem(res, 404, 'Not Found', 'Cobro programado no encontrado.');
+    const week = cashFlowWeek(req.body?.expectedOn);
+    if (!week) return problem(res, 400, 'Bad Request', 'La fecha esperada no es válida.');
+    if (!isOpen(collection)) return problem(res, 409, 'Conflict', CLOSED);
+    collections().find({ id: collection.id }).assign({ ...week, status: 'RESCHEDULED' }).write();
+    res.json(findCollection(req));
+  });
+
+  server.post('/api/v1/scheduled-collections/:id/cancel', requireRoles(...WRITERS), (req, res) => {
+    const collection = findCollection(req);
+    if (!collection) return problem(res, 404, 'Not Found', 'Cobro programado no encontrado.');
+    if (!isOpen(collection)) return problem(res, 409, 'Conflict', CLOSED);
+    collections().find({ id: collection.id }).assign({ status: 'CANCELLED' }).write();
+    res.json(findCollection(req));
+  });
 };
+
+/**
+ * Backend CashFlowWeek.from(date): week 1 runs from the 1st to the first Sunday, then Monday to Sunday.
+ * Returns { year, month, week } for a yyyy-MM-dd date, or null if the date is invalid.
+ */
+function cashFlowWeek(isoDate) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
+  if (!match) return null;
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1) return null;
+  const firstDay = new Date(Date.UTC(year, month - 1, 1));
+  const firstSunday = 1 + ((7 - firstDay.getUTCDay()) % 7);
+  const week = day <= firstSunday ? 1 : 2 + Math.floor((day - firstSunday - 1) / 7);
+  return { year, month, week };
+}
