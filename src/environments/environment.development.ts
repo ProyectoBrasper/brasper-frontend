@@ -13,4 +13,6 @@ export const environment = {
   platformProviderScheduledCollectionsEndpointPath: '/scheduled-collections',
   platformProviderTaxParametersEndpointPath: '/tax-parameters',
   platformProviderBankAccountsEndpointPath: '/bank-accounts',
+  platformProviderSuppliersEndpointPath: '/suppliers',
+  platformProviderExpensesEndpointPath: '/expenses',
 };

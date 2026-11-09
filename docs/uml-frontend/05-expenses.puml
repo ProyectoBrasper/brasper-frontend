@@ -75,6 +75,7 @@ package "app" {
         - #taxableBase: number
         - #igv: number
         - #total: number
+        - #currency: string
         - #paymentMethod: PaymentMethod
         - #bankAccountId: number | null
         - #partnerId: number | null
@@ -91,12 +92,15 @@ package "app" {
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +paymentMethod: PaymentMethod
         +bankAccountId: number | null
         +partnerId: number | null
         +paymentStatus: PaymentStatus
         +annulled: boolean
         +isDirectCost(): boolean
+        +generatesTaxCredit(): boolean
+        +isActive(): boolean
       }
       Expense ..|> app.shared.domain.model.BaseEntity : implements
       Supplier "0..1" <-- "*" Expense : references supplierId
@@ -149,11 +153,33 @@ package "app" {
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +paymentMethod: string
         +bankAccountId: number | null
         +partnerId: number | null
         +paymentStatus: string
         +annulled: boolean
+      }
+      class RegisterExpenseRequest <<Request>> {
+        +spentOn: string
+        +projectId: number | null
+        +supplierId: number | null
+        +category: string
+        +description: string | null
+        +voucherType: string
+        +voucherNumber: string | null
+        +amount: number
+        +amountIncludesIgv: boolean
+        +currency: string
+        +paymentMethod: string
+        +bankAccountId: number | null
+        +partnerId: number | null
+        +paid: boolean
+      }
+      class CorrectExpenseRequest <<Request>> {
+        +projectId: number | null
+        +category: string
+        +description: string | null
       }
       class SuppliersResponse <<Response>> {
       }
@@ -172,11 +198,12 @@ package "app" {
       }
 
       class SuppliersApiEndpoint {
+        +update(supplier: Supplier, id: number): Observable<Supplier>
       }
       class ExpensesApiEndpoint {
+        +register(request: RegisterExpenseRequest): Observable<Expense>
+        +correct(id: number, request: CorrectExpenseRequest): Observable<Expense>
         +annul(id: number): Observable<Expense>
-        +getByProjectId(projectId: number): Observable<Expense[]>
-        +getByPeriod(year: number, month: number): Observable<Expense[]>
       }
 
       class ExpensesApi {
@@ -188,10 +215,9 @@ package "app" {
         +updateSupplier(supplier: Supplier): Observable<Supplier>
         +getExpenses(): Observable<Expense[]>
         +getExpenseById(id: number): Observable<Expense>
-        +registerExpense(expense: Expense): Observable<Expense>
-        +updateExpense(expense: Expense): Observable<Expense>
+        +registerExpense(request: RegisterExpenseRequest): Observable<Expense>
+        +correctExpense(id: number, request: CorrectExpenseRequest): Observable<Expense>
         +annulExpense(id: number): Observable<Expense>
-        +getExpensesByProject(projectId: number): Observable<Expense[]>
       }
 
       SupplierResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -226,8 +252,8 @@ package "app" {
         +loadExpenses(): void
         +createSupplier(supplier: Supplier): void
         +updateSupplier(supplier: Supplier): void
-        +registerExpense(expense: Expense): void
-        +updateExpense(expense: Expense): void
+        +registerExpense(request: RegisterExpenseRequest): void
+        +correctExpense(id: number, request: CorrectExpenseRequest): void
         +annulExpense(id: number): void
         +getSupplierById(id: number): Supplier | undefined
         +getExpenseById(id: number): Expense | undefined
@@ -269,13 +295,14 @@ package "app" {
           +dataSource: Signal<MatTableDataSource<Expense>>
           +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
-          +projectFilter: WritableSignal<number | null>
-          +categoryFilter: WritableSignal<CostCategory | null>
-          +getProjectCode(projectId: number | null): string
-          +getSupplierName(supplierId: number | null): string
-          +onEdit(id: number): void
-          +onAnnul(id: number): void
-          +onAdd(): void
+          +projectFilter: WritableSignal<number>
+          +categoryFilter: WritableSignal<CostCategory | "ALL">
+          +filtered: Signal<Expense[]>
+          +total: Signal<number>
+          +projectCode(projectId: number | null): string
+          +supplierName(supplierId: number | null): string
+          +statusOf(expense: Expense): string
+          +onAnnul(expense: Expense): void
         }
         class ExpenseForm <<Component>> {
           -formBuilder: FormBuilder
@@ -315,12 +342,17 @@ package "app" {
 }
 
 note bottom
-  ExpenseForm: validadores condicionales según paymentMethod
-  (BANK_ACCOUNT -> bankAccountId requerido; PARTNER_CONTRIBUTION -> partnerId requerido).
-  Si voucherType = INVOICE se separa IGV 18% (base + IGV); si no, igv = 0.
+  ExpenseForm: validadores condicionales según paymentMethod (BANK_ACCOUNT y PETTY_CASH -> bankAccountId
+  requerido y sin socio; PARTNER_CONTRIBUTION -> partnerId requerido y sin cuenta). Con comprobante
+  distinto de INVOICE el backend no separa IGV; con INVOICE separa 18 % ("monto incluye IGV" o base).
+  Solo PEN por ahora (USD -> 422). Un número de comprobante es obligatorio salvo NO_VOUCHER.
   projectId vacío = gasto general (no es costo directo de proyecto).
-  Un gasto no se elimina: se anula (onAnnul).
-  json-server: /suppliers, /expenses?projectId=&spentOn_gte=&spentOn_lte=;
-  annul = PATCH /expenses/{id} {annulled: true}.
+  Al editar solo se corrigen categoría, proyecto y descripción (PUT /expenses/{id}); monto, comprobante
+  y pago no cambian: anular y volver a registrar.
+  Un gasto no se elimina: se anula (POST /expenses/{id}/annul). Un gasto anulado no se puede corregir.
+  Proveedor: solo se edita razón social y teléfono (RUC y tipo no cambian); empresa exige RUC.
+  Lectura: cualquier usuario con sesión. Escritura: ADMIN, ACCOUNTING, ENGINEER (MANAGEMENT solo lee).
+  Cuentas bancarias y socios los leen solo ADMIN, ACCOUNTING y MANAGEMENT: un ENGINEER no puede
+  elegirlos, así que no puede registrar un gasto (brecha del backend).
 end note
 @enduml

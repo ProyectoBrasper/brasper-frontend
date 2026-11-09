@@ -328,5 +328,32 @@
     "empty": "There are no scheduled collections this month.",
     "cancelTitle": "Cancel collection",
     "cancelMessage": "The week {{week}} collection ({{project}}) will be cancelled and can no longer change. Continue?"
+  },
+  "voucherType": {
+    "INVOICE": "Invoice",
+    "SALES_RECEIPT": "Sales receipt",
+    "FEE_RECEIPT": "Fee receipt",
+    "NO_VOUCHER": "No voucher"
+  },
+  "expenses": {
+    "subtitle": "Project costs and general expenses",
+    "project": "Project",
+    "allProjects": "All projects",
+    "general": "General",
+    "category": "Category",
+    "allCategories": "All categories",
+    "spentOn": "Date",
+    "supplier": "Supplier",
+    "description": "Description",
+    "voucher": "Voucher",
+    "taxableBase": "Base",
+    "igv": "IGV",
+    "total": "Total",
+    "status": "Status",
+    "empty": "No expenses match these filters.",
+    "totalActive": "Total (excluding annulled)",
+    "annul": "Annul expense",
+    "annulTitle": "Annul expense",
+    "annulMessage": "\"{{description}}\" for {{total}} will be annulled. It stays on record as annulled and no longer counts in totals. This cannot be undone."
   }
 }

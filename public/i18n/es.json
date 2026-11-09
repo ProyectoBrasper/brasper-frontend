@@ -328,5 +328,32 @@
     "empty": "No hay cobranzas programadas en este mes.",
     "cancelTitle": "Cancelar cobranza",
     "cancelMessage": "La cobranza de la semana {{week}} ({{project}}) quedará cancelada y ya no se podrá cambiar. ¿Deseas continuar?"
+  },
+  "voucherType": {
+    "INVOICE": "Factura",
+    "SALES_RECEIPT": "Boleta",
+    "FEE_RECEIPT": "Recibo por honorarios",
+    "NO_VOUCHER": "Sin comprobante"
+  },
+  "expenses": {
+    "subtitle": "Costos de proyectos y gastos generales",
+    "project": "Proyecto",
+    "allProjects": "Todos los proyectos",
+    "general": "General",
+    "category": "Categoría",
+    "allCategories": "Todas las categorías",
+    "spentOn": "Fecha",
+    "supplier": "Proveedor",
+    "description": "Descripción",
+    "voucher": "Comprobante",
+    "taxableBase": "Base",
+    "igv": "IGV",
+    "total": "Total",
+    "status": "Estado",
+    "empty": "No hay gastos con estos filtros.",
+    "totalActive": "Total (sin anulados)",
+    "annul": "Anular gasto",
+    "annulTitle": "Anular gasto",
+    "annulMessage": "Se anulará «{{description}}» por {{total}}. El gasto queda registrado como anulado y ya no suma en los totales. Esta acción no se puede deshacer."
   }
 }
