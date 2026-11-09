@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
@@ -11,6 +12,7 @@ import { ExpensesApi } from '../infrastructure/expenses-api';
 export class ExpensesStore {
   private readonly expensesApi = inject(ExpensesApi);
   private readonly iamStore = inject(IamStore);
+  private readonly router = inject(Router);
 
   private readonly expensesSignal = signal<Expense[]>([]);
   private readonly suppliersSignal = signal<Supplier[]>([]);
@@ -37,6 +39,22 @@ export class ExpensesStore {
     this.run(this.expensesApi.getSuppliers(), 'Failed to load suppliers', (suppliers) =>
       this.suppliersSignal.set(suppliers),
     );
+  }
+
+  /** Creates a supplier and navigates to `navigateTo` when the API accepts it. */
+  createSupplier(supplier: Supplier, navigateTo: string[]): void {
+    this.run(this.expensesApi.createSupplier(supplier), 'Failed to create supplier', (created) => {
+      this.suppliersSignal.update((suppliers) => [...suppliers, created]);
+      void this.router.navigate(navigateTo);
+    });
+  }
+
+  /** Updates the name and phone of a supplier (RUC and type do not change). */
+  updateSupplier(supplier: Supplier, navigateTo: string[]): void {
+    this.run(this.expensesApi.updateSupplier(supplier), 'Failed to update supplier', (updated) => {
+      this.suppliersSignal.update((suppliers) => suppliers.map((s) => (s.id === updated.id ? updated : s)));
+      void this.router.navigate(navigateTo);
+    });
   }
 
   /** Annuls an expense (it is never deleted); the backend answers with the annulled expense. */
