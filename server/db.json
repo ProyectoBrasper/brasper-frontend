@@ -139,5 +139,28 @@
     {"id":3,"fullName":"Diego Flores Quispe","dni":"43456783","position":"Asistente administrativo","monthlySalary":3200,"currency":"PEN","hiredOn":"2025-08-10","terminatedOn":null,"active":true},
     {"id":4,"fullName":"Rosa Díaz Campos","dni":"44567894","position":"Técnica electricista","monthlySalary":3800,"currency":"PEN","hiredOn":"2025-02-05","terminatedOn":null,"active":true},
     {"id":5,"fullName":"Pedro Ramos Ccori","dni":"45678905","position":"Técnico de campo","monthlySalary":3400,"currency":"PEN","hiredOn":"2025-06-12","terminatedOn":"2026-09-30","active":false}
+  ],
+  "fixed-costs": [
+    {"id":1,"code":"CF-001","concept":"Sueldo — Carla Mendoza","type":"SALARY","monthlyAmount":8500,"currency":"PEN","employeeId":1,"expectedWeeks":[4],"active":true},
+    {"id":2,"code":"CF-002","concept":"Sueldo — Jorge Torres","type":"SALARY","monthlyAmount":7200,"currency":"PEN","employeeId":2,"expectedWeeks":[4],"active":true},
+    {"id":3,"code":"CF-003","concept":"Sueldo — Diego Flores","type":"SALARY","monthlyAmount":3200,"currency":"PEN","employeeId":3,"expectedWeeks":[4],"active":true},
+    {"id":4,"code":"CF-004","concept":"Sueldo — Rosa Díaz","type":"SALARY","monthlyAmount":3800,"currency":"PEN","employeeId":4,"expectedWeeks":[4],"active":true},
+    {"id":5,"code":"CF-005","concept":"Servicio contable externo","type":"ACCOUNTING","monthlyAmount":3500,"currency":"PEN","employeeId":null,"expectedWeeks":[1],"active":true},
+    {"id":6,"code":"CF-006","concept":"Seguro SCTR","type":"SCTR_INSURANCE","monthlyAmount":1150,"currency":"PEN","employeeId":null,"expectedWeeks":[2],"active":true},
+    {"id":7,"code":"CF-007","concept":"Alquiler de oficina","type":"OFFICE_RENT","monthlyAmount":4800,"currency":"PEN","employeeId":null,"expectedWeeks":[1],"active":true},
+    {"id":8,"code":"CF-008","concept":"Hosting y software","type":"HOSTING","monthlyAmount":420,"currency":"PEN","employeeId":null,"expectedWeeks":[2],"active":true},
+    {"id":9,"code":"CF-009","concept":"Comisiones bancarias","type":"BANK_FEES","monthlyAmount":180,"currency":"PEN","employeeId":null,"expectedWeeks":[4],"active":true},
+    {"id":10,"code":"CF-010","concept":"ITF","type":"ITF","monthlyAmount":260,"currency":"PEN","employeeId":null,"expectedWeeks":[4],"active":true},
+    {"id":11,"code":"CF-011","concept":"Sueldo — Pedro Ramos","type":"SALARY","monthlyAmount":3400,"currency":"PEN","employeeId":5,"expectedWeeks":[4],"active":false}
+  ],
+  "fixed-cost-payments": [
+    {"id":1,"fixedCostId":1,"paidOn":"2026-10-31","year":2026,"month":10,"amount":8500,"currency":"PEN","bankAccountId":1,"notes":"Sueldos octubre"},
+    {"id":2,"fixedCostId":2,"paidOn":"2026-10-31","year":2026,"month":10,"amount":7200,"currency":"PEN","bankAccountId":1,"notes":"Sueldos octubre"},
+    {"id":3,"fixedCostId":3,"paidOn":"2026-10-31","year":2026,"month":10,"amount":3200,"currency":"PEN","bankAccountId":1,"notes":"Sueldos octubre"},
+    {"id":4,"fixedCostId":4,"paidOn":"2026-10-31","year":2026,"month":10,"amount":3800,"currency":"PEN","bankAccountId":1,"notes":"Sueldos octubre"},
+    {"id":5,"fixedCostId":5,"paidOn":"2026-10-02","year":2026,"month":10,"amount":3500,"currency":"PEN","bankAccountId":1,"notes":null},
+    {"id":6,"fixedCostId":6,"paidOn":"2026-10-09","year":2026,"month":10,"amount":1150,"currency":"PEN","bankAccountId":1,"notes":null},
+    {"id":7,"fixedCostId":7,"paidOn":"2026-10-02","year":2026,"month":10,"amount":4800,"currency":"PEN","bankAccountId":1,"notes":null},
+    {"id":8,"fixedCostId":8,"paidOn":"2026-10-09","year":2026,"month":10,"amount":420,"currency":"PEN","bankAccountId":2,"notes":null}
   ]
 }

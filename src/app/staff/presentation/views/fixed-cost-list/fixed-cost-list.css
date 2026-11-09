@@ -1,0 +1,91 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.summary-label {
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.summary-value {
+  font: 700 22px/28px var(--brasper-font-brand);
+  white-space: nowrap;
+}
+
+.paid {
+  color: var(--brasper-success);
+}
+
+.pending {
+  color: var(--brasper-warning);
+  font-weight: 600;
+}
+
+table {
+  min-width: 1180px;
+}
+
+.concept {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag {
+  padding: 1px 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-sm);
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.center {
+  text-align: center;
+}
+
+tr.inactive td {
+  color: var(--mat-sys-outline);
+}
+
+.inactive-tag {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-outline);
+}
+
+/* Up to three icon buttons: pay, edit and deactivate */
+.actions-col {
+  width: 152px;
+  white-space: nowrap;
+}
+
+@media (max-width: 899px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+}
