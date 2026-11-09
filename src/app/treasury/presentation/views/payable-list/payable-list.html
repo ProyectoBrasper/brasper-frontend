@@ -2,7 +2,14 @@
   [title]="'nav.payables' | translate"
   [subtitle]="'payables.subtitle' | translate"
   [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.payables' | translate }]"
-/>
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/treasury/payables/new">
+      <mat-icon>add</mat-icon>
+      {{ 'payables.new' | translate }}
+    </a>
+  }
+</app-page-header>
 
 <section class="top">
   <article class="summary-card">

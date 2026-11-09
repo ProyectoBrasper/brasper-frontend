@@ -1,12 +1,13 @@
 // Treasury fake routes. Reads are for finance roles only (backend #120); writes are ADMIN and ACCOUNTING. Same
-// rules, order of checks and Spanish messages as the backend (messages_es.properties). Creating payables,
-// loans and partner writes come with their screens.
+// rules, order of checks and Spanish messages as the backend (messages_es.properties). Loans and partner
+// writes come with their screens.
 const { weekExists } = require('./cash-flow-week');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
 const BANKS = ['BCP', 'BBVA', 'BANCO_DE_LA_NACION', 'CASH'];
 const ACCOUNT_TYPES = ['CHECKING', 'DETRACTIONS', 'PETTY_CASH'];
+const PAYABLE_TYPES = ['SUPPLIER', 'TECHNICIAN', 'ACCOUNTING', 'SELF_DETRACTION', 'TAX', 'OTHER'];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Stored record → BankAccountResource (the backend does not return `openedOn`). */
@@ -209,7 +210,46 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     payables().find({ id: record.id }).assign({ year, month, week }).write();
     res.json(payableResource(findPayable(record.id)));
   });
-  // Creating a payable by hand comes with its form; anything else stays behind the finance roles.
+  // A payable by hand. Same order as the backend: @Valid fields (400), then the week (the controller builds the
+  // CashFlowWeek: 400 if it does not exist), then the service rule (only PEN: 422). It starts pending.
+  server.post('/api/v1/payables', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const concept = typeof body.concept === 'string' ? body.concept.trim() : '';
+    const { year, month, week } = body;
+    if (!concept || concept.length > 500) {
+      return problem(res, 400, 'Bad Request', 'El concepto es obligatorio (hasta 500 caracteres).');
+    }
+    if (!PAYABLE_TYPES.includes(body.type)) return problem(res, 400, 'Bad Request', 'Tipo de pago pendiente no válido.');
+    if (!validAmount(body.totalAmount)) return problem(res, 400, 'Bad Request', 'El monto total debe ser mayor a 0, con hasta 2 decimales.');
+    if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if (!Number.isInteger(year) || year < 1 || !Number.isInteger(month) || month < 1 || month > 12
+      || !Number.isInteger(week) || week < 1 || week > 6) {
+      return problem(res, 400, 'Bad Request', 'La semana no es válida.');
+    }
+    if (!weekExists(year, month, week)) {
+      return problem(res, 400, 'Bad Request', `No existe la semana ${week} en ${year}-${String(month).padStart(2, '0')}.`);
+    }
+    if (body.currency !== 'PEN') {
+      return problem(res, 422, 'Unprocessable Entity', 'Por ahora los importes solo pueden ser en PEN.');
+    }
+    const payable = {
+      id: nextId('payables'),
+      concept,
+      type: body.type,
+      totalAmount: body.totalAmount,
+      currency: body.currency,
+      paidAmount: 0,
+      supplierId: body.supplierId == null ? null : Number(body.supplierId),
+      projectId: body.projectId == null ? null : Number(body.projectId),
+      expenseId: body.expenseId == null ? null : Number(body.expenseId),
+      year,
+      month,
+      week,
+    };
+    payables().push(payable).write();
+    res.status(201).json(payableResource(payable));
+  });
+  // Anything else on /payables stays behind the finance roles.
   server.use('/api/v1/payables', requireRoles(...READERS));
 
   // Partners: same read roles. Registering partners and their contributions come with the partners screen.

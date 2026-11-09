@@ -11,7 +11,7 @@ import { OpenBankAccountCommand } from '../domain/model/open-bank-account.comman
 import { movementTotals, sortMovements } from '../domain/services/movement-figures';
 import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
 import { PaymentStatus } from '../../shared/domain/model/payment-status';
-import { RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
+import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
 import { Payable } from '../domain/model/payable.entity';
 import { countByStatus, outstandingBalance } from '../domain/services/payable-figures';
 import { Partner } from '../domain/model/partner.entity';
@@ -118,6 +118,14 @@ export class TreasuryStore {
 
   loadPayables(): void {
     this.run(this.treasuryApi.getPayables(), 'Failed to load payables', (payables) => this.payablesSignal.set(payables));
+  }
+
+  /** Registers a payable by hand and navigates to `navigateTo` when the API accepts it. */
+  createPayable(command: CreatePayableCommand, navigateTo: string[]): void {
+    this.run(this.treasuryApi.createPayable(command), 'Failed to create payable', (payable) => {
+      this.payablesSignal.update((payables) => [...payables, payable]);
+      void this.router.navigate(navigateTo);
+    });
   }
 
   /**

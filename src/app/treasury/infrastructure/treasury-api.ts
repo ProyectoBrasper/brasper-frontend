@@ -11,7 +11,7 @@ import { BankAccountsApiEndpoint } from './bank-accounts-api-endpoint';
 import { PartnersApiEndpoint } from './partners-api-endpoint';
 import { PayablesApiEndpoint } from './payables-api-endpoint';
 import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
-import { RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
+import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
 import { Payable } from '../domain/model/payable.entity';
 
 /**
@@ -51,6 +51,10 @@ export class TreasuryApi extends BaseApi {
 
   getPayables(): Observable<Payable[]> {
     return this.payablesEndpoint.getAll();
+  }
+
+  createPayable(command: CreatePayableCommand): Observable<Payable> {
+    return this.payablesEndpoint.createPayable(command);
   }
 
   payPayable(id: number, command: RegisterPayablePaymentCommand): Observable<Payable> {

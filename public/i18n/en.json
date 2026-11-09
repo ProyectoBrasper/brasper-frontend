@@ -600,6 +600,20 @@
     "weekRange": "Week {{number}}: {{from}} to {{to}}",
     "newDate": "New date",
     "fallsIn": "Falls in week {{number}}: {{from}} to {{to}}",
-    "exceedsBalance": "It cannot exceed the balance ({{balance}})."
+    "exceedsBalance": "It cannot exceed the balance ({{balance}}).",
+    "new": "New payable",
+    "formSubtitle": "An obligation to pay in a week of the month",
+    "data": "Details",
+    "totalAmount": "Total amount",
+    "supplierOptional": "Supplier (optional)",
+    "projectOptional": "Project (optional)",
+    "noSupplier": "No supplier",
+    "noProject": "No project",
+    "expectedWeek": "Expected payment week",
+    "year": "Year",
+    "month": "Month",
+    "weekOption": "Week {{number}} · {{from}} to {{to}}",
+    "cashFlowNote": "It is used to project the cash flow.",
+    "doubleCostNotice": "If it is a purchase with a voucher, register it in Expenses as pending: its payable is created by itself. Registering it here too would book the cost twice in Accounting."
   }
 }

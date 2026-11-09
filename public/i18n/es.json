@@ -600,6 +600,20 @@
     "weekRange": "Semana {{number}}: del {{from}} al {{to}}",
     "newDate": "Nueva fecha",
     "fallsIn": "Cae en la semana {{number}}: del {{from}} al {{to}}",
-    "exceedsBalance": "No puede superar el saldo ({{balance}})."
+    "exceedsBalance": "No puede superar el saldo ({{balance}}).",
+    "new": "Nueva cuenta por pagar",
+    "formSubtitle": "Obligación a pagar en una semana del mes",
+    "data": "Datos",
+    "totalAmount": "Monto total",
+    "supplierOptional": "Proveedor (opcional)",
+    "projectOptional": "Proyecto (opcional)",
+    "noSupplier": "Sin proveedor",
+    "noProject": "Sin proyecto",
+    "expectedWeek": "Semana esperada de pago",
+    "year": "Año",
+    "month": "Mes",
+    "weekOption": "Semana {{number}} · {{from}} al {{to}}",
+    "cashFlowNote": "Se usa para proyectar el flujo de caja.",
+    "doubleCostNotice": "Si es una compra con comprobante, regístrala en Gastos como pendiente: su cuenta por pagar se crea sola. Registrarla también aquí contaría el costo dos veces en Contabilidad."
   }
 }

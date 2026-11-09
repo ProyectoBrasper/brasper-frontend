@@ -8,7 +8,7 @@ import { BaseResource } from '../../shared/infrastructure/base-resource';
 import { BaseResponse } from '../../shared/infrastructure/base-response';
 import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
 import { PaymentStatus } from '../../shared/domain/model/payment-status';
-import { RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
+import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
 import { Payable, PayableType } from '../domain/model/payable.entity';
 
 /** Backend `PayableResource`. */
@@ -31,6 +31,20 @@ export interface PayableResource extends BaseResource {
 /** Envelope for a payable collection (the API returns a plain array). */
 export interface PayablesResponse extends BaseResponse {
   payables: PayableResource[];
+}
+
+/** Body of `POST /payables` (backend `CreatePayableResource`). `expenseId` is always null from the UI. */
+export interface CreatePayableRequest {
+  concept: string;
+  type: string;
+  totalAmount: number;
+  currency: string;
+  supplierId: number | null;
+  projectId: number | null;
+  expenseId: null;
+  year: number;
+  month: number;
+  week: number;
 }
 
 /** Body of `POST /payables/{id}/payments` (backend `RegisterPayablePaymentResource`). */
@@ -94,8 +108,8 @@ export class PayableAssembler implements BaseAssembler<Payable, PayableResource,
 
 /**
  * Client for `/payables` (admin, accounting and management read; admin and accounting write): list (oldest
- * first), get, `POST /{id}/payments` pays and `PUT /{id}/schedule` moves it to another cash-flow week. Creating
- * one by hand comes with its form.
+ * first), get, `POST` creates one by hand, `POST /{id}/payments` pays and `PUT /{id}/schedule` moves it to
+ * another cash-flow week.
  */
 export class PayablesApiEndpoint extends BaseApiEndpoint<Payable, PayableResource, PayablesResponse, PayableAssembler> {
   constructor(http: HttpClient) {
@@ -103,6 +117,26 @@ export class PayablesApiEndpoint extends BaseApiEndpoint<Payable, PayableResourc
       http,
       `${environment.platformProviderApiBaseUrl}${environment.platformProviderPayablesEndpointPath}`,
       new PayableAssembler(),
+    );
+  }
+
+  /** `POST /payables`: it starts pending in the chosen cash-flow week. */
+  createPayable(command: CreatePayableCommand): Observable<Payable> {
+    const request: CreatePayableRequest = {
+      concept: command.concept.trim(),
+      type: command.type,
+      totalAmount: command.totalAmount,
+      currency: command.currency,
+      supplierId: command.supplierId,
+      projectId: command.projectId,
+      expenseId: null,
+      year: command.week.year,
+      month: command.week.month,
+      week: command.week.number,
+    };
+    return this.http.post<PayableResource>(this.endpointUrl, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to create payable')),
     );
   }
 

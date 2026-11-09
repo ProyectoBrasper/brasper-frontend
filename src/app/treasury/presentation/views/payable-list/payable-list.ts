@@ -9,6 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ExpensesStore } from '../../../../expenses/application/expenses.store';
 import { ProjectsStore } from '../../../../projects/application/projects.store';
@@ -30,13 +31,14 @@ const AMOUNT_COLUMNS = ['totalAmount', 'paidAmount', 'balance'] as const;
 
 /**
  * What the company owes (`/treasury/payables`) with the outstanding balance and a status filter. Admin and
- * accounting pay (the account is required) and reschedule unpaid payables; management only reads. Creating one
- * by hand comes with its form (next PR); pending expenses create theirs by themselves.
+ * accounting register payables by hand, pay them (the account is required) and reschedule unpaid ones;
+ * management only reads. Pending expenses create their payables by themselves.
  */
 @Component({
   selector: 'app-payable-list',
   imports: [
     DatePipe,
+    RouterLink,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
