@@ -201,8 +201,8 @@ package "app" {
         +update(supplier: Supplier, id: number): Observable<Supplier>
       }
       class ExpensesApiEndpoint {
-        +register(request: RegisterExpenseRequest): Observable<Expense>
-        +correct(id: number, request: CorrectExpenseRequest): Observable<Expense>
+        +register(command: RegisterExpenseCommand): Observable<Expense>
+        +correct(id: number, command: CorrectExpenseCommand): Observable<Expense>
         +annul(id: number): Observable<Expense>
       }
 
@@ -215,8 +215,8 @@ package "app" {
         +updateSupplier(supplier: Supplier): Observable<Supplier>
         +getExpenses(): Observable<Expense[]>
         +getExpenseById(id: number): Observable<Expense>
-        +registerExpense(request: RegisterExpenseRequest): Observable<Expense>
-        +correctExpense(id: number, request: CorrectExpenseRequest): Observable<Expense>
+        +registerExpense(command: RegisterExpenseCommand): Observable<Expense>
+        +correctExpense(id: number, command: CorrectExpenseCommand): Observable<Expense>
         +annulExpense(id: number): Observable<Expense>
       }
 
@@ -236,6 +236,14 @@ package "app" {
     }
 
     package "application" {
+      class ExpenseAmountsCalculator <<DomainService>> {
+        +preview(amount: number, voucherType: VoucherType, amountIncludesIgv: boolean, rates: TaxRates): ExpenseAmountsPreview
+      }
+      class RegisterExpenseCommand <<Command>>
+      class CorrectExpenseCommand <<Command>>
+      ExpensesApiEndpoint ..> RegisterExpenseCommand : maps to RegisterExpenseRequest
+      ExpensesApiEndpoint ..> CorrectExpenseCommand : maps to CorrectExpenseRequest
+
       class ExpensesStore <<Store>> {
         -expensesApi: ExpensesApi
         -suppliersSignal: WritableSignal<Supplier[]>
@@ -245,15 +253,17 @@ package "app" {
         +suppliers: Signal<Supplier[]>
         +expenses: Signal<Expense[]>
         +activeExpenses: Signal<Expense[]>
-        +totalByCategory: Signal<Record<CostCategory, number>>
+        +canWrite: Signal<boolean>
+        +canChoosePayment: Signal<boolean>
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +loadSuppliers(): void
         +loadExpenses(): void
+        +loadExpense(id: number): void
         +createSupplier(supplier: Supplier): void
         +updateSupplier(supplier: Supplier): void
-        +registerExpense(request: RegisterExpenseRequest): void
-        +correctExpense(id: number, request: CorrectExpenseRequest): void
+        +registerExpense(command: RegisterExpenseCommand, navigateTo: string[]): void
+        +correctExpense(id: number, command: CorrectExpenseCommand, navigateTo: string[]): void
         +annulExpense(id: number): void
         +getSupplierById(id: number): Supplier | undefined
         +getExpenseById(id: number): Expense | undefined
@@ -314,13 +324,15 @@ package "app" {
           +expenseForm: FormGroup
           +projects: Signal<Project[]>
           +suppliers: Signal<Supplier[]>
-          +bankAccounts: Signal<BankAccount[]>
+          +accounts: Signal<BankAccount[]>
           +partners: Signal<Partner[]>
+          +preview: Signal<ExpenseAmountsPreview>
+          +blocked: Signal<boolean>
           +categories: CostCategory[]
           +voucherTypes: VoucherType[]
           +paymentMethods: PaymentMethod[]
           +isEdit: boolean
-          +onPaymentMethodChange(method: PaymentMethod): void
+          +accountLabel(account: BankAccount): string
           +onSubmit(): void
           +onCancel(): void
         }

@@ -3,11 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
 import { Expense } from '../domain/model/expense.entity';
+import { CorrectExpenseCommand, RegisterExpenseCommand } from '../domain/model/register-expense.command';
 import { Supplier } from '../domain/model/supplier.entity';
 import { ExpensesApiEndpoint } from './expenses-api-endpoint';
 import { SuppliersApiEndpoint } from './suppliers-api-endpoint';
 
-/** Expenses context facade (expense list and suppliers; register and correct follow). */
+/** Expenses context facade: expenses (list, register, correct, annul) and suppliers. */
 @Injectable({ providedIn: 'root' })
 export class ExpensesApi extends BaseApi {
   private readonly http = inject(HttpClient);
@@ -16,6 +17,18 @@ export class ExpensesApi extends BaseApi {
 
   getExpenses(): Observable<Expense[]> {
     return this.expensesEndpoint.getAll();
+  }
+
+  getExpenseById(id: number): Observable<Expense> {
+    return this.expensesEndpoint.getById(id);
+  }
+
+  registerExpense(command: RegisterExpenseCommand): Observable<Expense> {
+    return this.expensesEndpoint.register(command);
+  }
+
+  correctExpense(id: number, command: CorrectExpenseCommand): Observable<Expense> {
+    return this.expensesEndpoint.correct(id, command);
   }
 
   annulExpense(id: number): Observable<Expense> {

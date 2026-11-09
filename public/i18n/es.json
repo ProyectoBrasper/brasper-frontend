@@ -72,7 +72,8 @@
     "pattern": "El formato no es válido.",
     "username": "Usa de 3 a 50 caracteres: minúsculas, números, punto, guion o guion bajo.",
     "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número.",
-    "matDatepickerParse": "Usa el formato dd/mm/aaaa."
+    "matDatepickerParse": "Usa el formato dd/mm/aaaa.",
+    "decimals": "Usa hasta 2 decimales."
   },
   "common": {
     "home": "Inicio",
@@ -354,7 +355,40 @@
     "totalActive": "Total (sin anulados)",
     "annul": "Anular gasto",
     "annulTitle": "Anular gasto",
-    "annulMessage": "Se anulará «{{description}}» por {{total}}. El gasto queda registrado como anulado y ya no suma en los totales. Esta acción no se puede deshacer."
+    "annulMessage": "Se anulará «{{description}}» por {{total}}. El gasto queda registrado como anulado y ya no suma en los totales. Esta acción no se puede deshacer.",
+    "new": "Registrar gasto",
+    "edit": "Editar gasto",
+    "register": "Registrar gasto",
+    "newSubtitle": "Registra un costo de proyecto o un gasto general",
+    "editSubtitle": "Solo se pueden corregir la categoría, el proyecto y la descripción",
+    "expenseData": "Datos del gasto",
+    "noSupplier": "Sin proveedor",
+    "generalExpense": "Gasto general (sin proyecto)",
+    "projectHint": "Vacío = gasto general, no es costo directo",
+    "fixedData": "Datos que no se pueden cambiar",
+    "fixedNote": "Para corregir el monto, el comprobante o el pago, anula el gasto y vuelve a registrarlo.",
+    "paymentMethod": "Medio de pago",
+    "paymentStatus": "Estado de pago",
+    "voucherAndAmount": "Comprobante y monto",
+    "voucherType": "Tipo de comprobante",
+    "voucherNumber": "N° de comprobante",
+    "noVoucherHint": "Un gasto sin comprobante no lleva número",
+    "amount": "Monto (base imponible)",
+    "amountWithIgv": "Monto (total con IGV)",
+    "amountIncludesIgv": "El monto incluye IGV",
+    "amountIncludesIgvHint": "Se separa la base del IGV a partir del total.",
+    "onlyInvoiceHint": "Solo una factura da crédito fiscal y separa IGV.",
+    "payment": "Pago",
+    "account": "Cuenta",
+    "partner": "Socio",
+    "paid": "Ya está pagado",
+    "paidHint": "Si no, queda una cuenta por pagar en Tesorería.",
+    "amountsPreview": "Vista previa de montos",
+    "previewNote": "Cálculo referencial con las tasas vigentes desde el {{date}}. El monto oficial lo calcula el sistema al registrar.",
+    "previewNoteStandard": "Cálculo referencial con IGV de 18 %. El monto oficial lo calcula el sistema al registrar.",
+    "previewNoteNoIgv": "Sin factura no hay IGV: el total es la base.",
+    "previewNoteEdit": "Montos ya registrados; no se pueden cambiar.",
+    "noPaymentAccess": "Registrar un gasto requiere elegir la cuenta o el socio que pagó, y tu rol no puede consultarlos. Pide a Administración o Contabilidad que lo registre."
   },
   "supplierType": {
     "COMPANY": "Empresa",
@@ -375,5 +409,10 @@
     "fixedLocked": "No se puede cambiar",
     "phone": "Teléfono",
     "empty": "Aún no hay proveedores registrados."
+  },
+  "paymentMethod": {
+    "BANK_ACCOUNT": "Cuenta bancaria",
+    "PETTY_CASH": "Caja chica",
+    "PARTNER_CONTRIBUTION": "Aporte de socio"
   }
 }

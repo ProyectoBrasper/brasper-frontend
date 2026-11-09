@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Expense } from '../domain/model/expense.entity';
+import { CorrectExpenseCommand, RegisterExpenseCommand } from '../domain/model/register-expense.command';
 import { Supplier } from '../domain/model/supplier.entity';
 import { ExpensesApi } from '../infrastructure/expenses-api';
 
-/** Expenses context state: expenses and suppliers (register, correct and supplier edits follow). */
+/** Expenses context state: expenses (register, correct, annul) and suppliers. */
 @Injectable({ providedIn: 'root' })
 export class ExpensesStore {
   private readonly expensesApi = inject(ExpensesApi);
@@ -28,6 +29,11 @@ export class ExpensesStore {
   readonly error = this.errorSignal.asReadonly();
   /** Management only reads; admin, accounting and engineers write (backend rule). */
   readonly canWrite = computed(() => this.iamStore.hasAnyRole(...AREA_ROLES.operationsWrite));
+  /**
+   * Registering needs a bank account or a partner, and the backend only lets finance roles read them
+   * (backend #120): an engineer can correct and annul expenses but cannot choose how a new one was paid.
+   */
+  readonly canChoosePayment = computed(() => this.iamStore.hasAnyRole(...AREA_ROLES.finance));
 
   loadExpenses(): void {
     this.run(this.expensesApi.getExpenses(), 'Failed to load expenses', (expenses) =>
@@ -57,6 +63,27 @@ export class ExpensesStore {
     });
   }
 
+  /** Loads one expense fresh from the API (the edit form may be opened directly by URL). */
+  loadExpense(id: number): void {
+    this.run(this.expensesApi.getExpenseById(id), 'Failed to load expense', (expense) => this.upsertExpense(expense));
+  }
+
+  /** Registers an expense (the backend calculates the amounts) and navigates when the API accepts it. */
+  registerExpense(command: RegisterExpenseCommand, navigateTo: string[]): void {
+    this.run(this.expensesApi.registerExpense(command), 'Failed to register expense', (expense) => {
+      this.upsertExpense(expense);
+      void this.router.navigate(navigateTo);
+    });
+  }
+
+  /** Corrects the category, project and description; amounts, voucher and payment never change. */
+  correctExpense(id: number, command: CorrectExpenseCommand, navigateTo: string[]): void {
+    this.run(this.expensesApi.correctExpense(id, command), 'Failed to correct expense', (expense) => {
+      this.upsertExpense(expense);
+      void this.router.navigate(navigateTo);
+    });
+  }
+
   /** Annuls an expense (it is never deleted); the backend answers with the annulled expense. */
   annulExpense(id: number): void {
     this.run(this.expensesApi.annulExpense(id), 'Failed to annul expense', (annulled) =>
@@ -70,6 +97,14 @@ export class ExpensesStore {
 
   getSupplierById(id: number | null): Supplier | undefined {
     return id === null ? undefined : this.suppliersSignal().find((supplier) => supplier.id === id);
+  }
+
+  private upsertExpense(expense: Expense): void {
+    this.expensesSignal.update((expenses) =>
+      expenses.some((e) => e.id === expense.id)
+        ? expenses.map((e) => (e.id === expense.id ? expense : e))
+        : [...expenses, expense],
+    );
   }
 
   clearError(): void {
