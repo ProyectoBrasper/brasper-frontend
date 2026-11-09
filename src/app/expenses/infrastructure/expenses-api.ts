@@ -7,7 +7,7 @@ import { Supplier } from '../domain/model/supplier.entity';
 import { ExpensesApiEndpoint } from './expenses-api-endpoint';
 import { SuppliersApiEndpoint } from './suppliers-api-endpoint';
 
-/** Expenses context facade (expense list for now; register, correct and suppliers follow). */
+/** Expenses context facade (expense list and suppliers; register and correct follow). */
 @Injectable({ providedIn: 'root' })
 export class ExpensesApi extends BaseApi {
   private readonly http = inject(HttpClient);
@@ -24,5 +24,13 @@ export class ExpensesApi extends BaseApi {
 
   getSuppliers(): Observable<Supplier[]> {
     return this.suppliersEndpoint.getAll();
+  }
+
+  createSupplier(supplier: Supplier): Observable<Supplier> {
+    return this.suppliersEndpoint.create(supplier);
+  }
+
+  updateSupplier(supplier: Supplier): Observable<Supplier> {
+    return this.suppliersEndpoint.update(supplier, supplier.id);
   }
 }

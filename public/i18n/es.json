@@ -355,5 +355,25 @@
     "annul": "Anular gasto",
     "annulTitle": "Anular gasto",
     "annulMessage": "Se anulará «{{description}}» por {{total}}. El gasto queda registrado como anulado y ya no suma en los totales. Esta acción no se puede deshacer."
+  },
+  "supplierType": {
+    "COMPANY": "Empresa",
+    "NATURAL_PERSON": "Persona natural"
+  },
+  "suppliers": {
+    "subtitle": "Empresas y personas a las que se les compra",
+    "new": "Nuevo proveedor",
+    "edit": "Editar proveedor",
+    "create": "Crear proveedor",
+    "formSubtitle": "Registra un proveedor para asociarlo a tus gastos",
+    "data": "Datos del proveedor",
+    "businessName": "Razón social",
+    "type": "Tipo",
+    "ruc": "RUC",
+    "rucRequired": "11 dígitos; obligatorio para una empresa",
+    "rucOptional": "11 dígitos; opcional para una persona natural",
+    "fixedLocked": "No se puede cambiar",
+    "phone": "Teléfono",
+    "empty": "Aún no hay proveedores registrados."
   }
 }

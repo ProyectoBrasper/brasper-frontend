@@ -355,5 +355,25 @@
     "annul": "Annul expense",
     "annulTitle": "Annul expense",
     "annulMessage": "\"{{description}}\" for {{total}} will be annulled. It stays on record as annulled and no longer counts in totals. This cannot be undone."
+  },
+  "supplierType": {
+    "COMPANY": "Company",
+    "NATURAL_PERSON": "Natural person"
+  },
+  "suppliers": {
+    "subtitle": "Companies and people the company buys from",
+    "new": "New supplier",
+    "edit": "Edit supplier",
+    "create": "Create supplier",
+    "formSubtitle": "Register a supplier to link it to your expenses",
+    "data": "Supplier details",
+    "businessName": "Business name",
+    "type": "Type",
+    "ruc": "RUC",
+    "rucRequired": "11 digits; required for a company",
+    "rucOptional": "11 digits; optional for a natural person",
+    "fixedLocked": "Cannot be changed",
+    "phone": "Phone",
+    "empty": "No suppliers registered yet."
   }
 }
