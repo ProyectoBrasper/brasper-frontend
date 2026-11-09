@@ -1,0 +1,103 @@
+<app-page-header
+  [title]="(isEdit() ? 'fixedCosts.edit' : 'fixedCosts.new') | translate"
+  [subtitle]="isEdit() ? fixedCost()?.code ?? '' : ('fixedCosts.formSubtitle' | translate)"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.fixedCosts' | translate, link: '/staff/fixed-costs' },
+    { label: (isEdit() ? 'common.edit' : 'common.new') | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="fixedCostForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'fixedCosts.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+  @if (inactive()) {
+    <div class="page-notice" role="status">
+      <mat-icon>lock</mat-icon>
+      <span>{{ 'fixedCosts.inactiveNotice' | translate }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'fixedCosts.code' | translate }}</mat-label>
+      <input matInput class="mono" formControlName="code" maxlength="30" />
+      <mat-hint>{{ (isEdit() ? 'fixedCosts.locked' : 'fixedCosts.codeHint') | translate }}</mat-hint>
+      @if (isInvalidControl(fixedCostForm, 'code')) {
+        <mat-error>{{ errorMessageForControl(fixedCostForm, 'code') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'fixedCosts.type' | translate }}</mat-label>
+      <mat-select formControlName="type">
+        @for (type of types; track type) {
+          <mat-option [value]="type">{{ 'fixedCostType.' + type | translate }}</mat-option>
+        }
+      </mat-select>
+      @if (isEdit()) {
+        <mat-hint>{{ 'fixedCosts.locked' | translate }}</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'fixedCosts.concept' | translate }}</mat-label>
+      <input matInput formControlName="concept" />
+      @if (isInvalidControl(fixedCostForm, 'concept')) {
+        <mat-error>{{ errorMessageForControl(fixedCostForm, 'concept') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'fixedCosts.employee' | translate }}</mat-label>
+      <mat-select formControlName="employeeId">
+        <mat-option [value]="null">{{ 'fixedCosts.noEmployee' | translate }}</mat-option>
+        @for (employee of employees(); track employee.id) {
+          <mat-option [value]="employee.id">{{ employee.fullName }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>{{ (isEdit() ? 'fixedCosts.locked' : 'fixedCosts.employeeHint') | translate }}</mat-hint>
+      @if (isInvalidControl(fixedCostForm, 'employeeId')) {
+        <mat-error>{{ 'fixedCosts.employeeRequired' | translate }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'fixedCosts.monthlyAmount' | translate }}</mat-label>
+      <span matTextPrefix>S/&nbsp;</span>
+      <input matInput class="amount" formControlName="monthlyAmount" type="number" min="0" step="0.01" />
+      @if (isInvalidControl(fixedCostForm, 'monthlyAmount')) {
+        <mat-error>{{ errorMessageForControl(fixedCostForm, 'monthlyAmount') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="weeks">
+    <span class="weeks-label" id="weeks-label">{{ 'fixedCosts.expectedWeeks' | translate }}</span>
+    <mat-button-toggle-group
+      formControlName="expectedWeeks"
+      multiple
+      hideMultipleSelectionIndicator
+      aria-labelledby="weeks-label"
+      aria-describedby="weeks-hint"
+    >
+      @for (week of weeks; track week) {
+        <mat-button-toggle [value]="week">{{ week }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <span class="weeks-hint" id="weeks-hint">{{ 'fixedCosts.expectedWeeksHint' | translate }}</span>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading() || inactive()">
+      {{ (isEdit() ? 'common.saveChanges' : 'fixedCosts.create') | translate }}
+    </button>
+  </div>
+</form>

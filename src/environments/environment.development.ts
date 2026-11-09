@@ -17,4 +17,5 @@ export const environment = {
   platformProviderSuppliersEndpointPath: '/suppliers',
   platformProviderExpensesEndpointPath: '/expenses',
   platformProviderEmployeesEndpointPath: '/employees',
+  platformProviderFixedCostsEndpointPath: '/fixed-costs',
 };
