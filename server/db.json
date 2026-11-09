@@ -188,5 +188,13 @@
     {"id":22,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":7200,"concept":"Sueldo — Jorge Torres (CF-002)","source":"FIXED_COST_PAYMENT","sourceId":2},
     {"id":23,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":3200,"concept":"Sueldo — Diego Flores (CF-003)","source":"FIXED_COST_PAYMENT","sourceId":3},
     {"id":24,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":3800,"concept":"Sueldo — Rosa Díaz (CF-004)","source":"FIXED_COST_PAYMENT","sourceId":4}
+  ],
+  "payables": [
+    {"id":1,"concept":"Saldo factura Electro Andes (F010-8841)","type":"SUPPLIER","totalAmount":70800,"currency":"PEN","paidAmount":42300,"supplierId":2,"projectId":2,"expenseId":2,"year":2026,"month":11,"week":2},
+    {"id":2,"concept":"Honorarios técnico instalador","type":"TECHNICIAN","totalAmount":12000,"currency":"PEN","paidAmount":0,"supplierId":3,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":1},
+    {"id":3,"concept":"Gastos legales","type":"OTHER","totalAmount":2800,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":1},
+    {"id":4,"concept":"Detracción propia F001-00000053","type":"SELF_DETRACTION","totalAmount":35400,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":3},
+    {"id":5,"concept":"IGV y renta octubre 2026","type":"TAX","totalAmount":25150,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":3},
+    {"id":6,"concept":"Servicio contable setiembre","type":"ACCOUNTING","totalAmount":3500,"currency":"PEN","paidAmount":3500,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":10,"week":1}
   ]
 }

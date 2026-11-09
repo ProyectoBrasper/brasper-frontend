@@ -108,28 +108,32 @@ package "app" {
         - #concept: string
         - #type: PayableType
         - #totalAmount: number
+        - #currency: string
         - #paidAmount: number
         - #balance: number
         - #supplierId: number | null
         - #projectId: number | null
         - #expenseId: number | null
-        - #year: number | null
-        - #month: number | null
-        - #week: number | null
+        - #year: number
+        - #month: number
+        - #week: number
         - #status: PaymentStatus
         +id: number
         +concept: string
         +type: PayableType
         +totalAmount: number
+        +currency: string
         +paidAmount: number
         +balance: number
         +supplierId: number | null
         +projectId: number | null
         +expenseId: number | null
-        +year: number | null
-        +month: number | null
-        +week: number | null
+        +year: number
+        +month: number
+        +week: number
         +status: PaymentStatus
+        +isPaid(): boolean
+        +cashFlowWeek(): CashFlowWeek
       }
       Payable ..|> app.shared.domain.model.BaseEntity : implements
 
@@ -149,20 +153,15 @@ package "app" {
       Payable --> PayableType : has
       Payable --> PaymentStatus : has
 
-      class PayablePayment <<Entity>> {
-        - #id: number
-        - #payableId: number
-        - #paidOn: string
-        - #amount: number
-        - #bankAccountId: number
-        +id: number
-        +payableId: number
+      class RegisterPayablePaymentCommand <<Command>> {
         +paidOn: string
         +amount: number
         +bankAccountId: number
       }
-      PayablePayment ..|> app.shared.domain.model.BaseEntity : implements
-      Payable "1" <-- "*" PayablePayment : references payableId
+      note right of RegisterPayablePaymentCommand
+        El backend no expone los pagos de una cuenta por pagar:
+        solo paidAmount y balance en PayableResource.
+      end note
 
       class Loan <<Entity>> {
         - #id: number
@@ -286,22 +285,16 @@ package "app" {
         +concept: string
         +type: string
         +totalAmount: number
+        +currency: string
         +paidAmount: number
         +balance: number
         +supplierId: number | null
         +projectId: number | null
         +expenseId: number | null
-        +year: number | null
-        +month: number | null
-        +week: number | null
+        +year: number
+        +month: number
+        +week: number
         +status: string
-      }
-      class PayablePaymentResource <<Resource>> {
-        +id: number
-        +payableId: number
-        +paidOn: string
-        +amount: number
-        +bankAccountId: number
       }
       class LoanResource <<Resource>> {
         +id: number
@@ -344,8 +337,6 @@ package "app" {
       }
       class PayablesResponse <<Response>> {
       }
-      class PayablePaymentsResponse <<Response>> {
-      }
       class LoansResponse <<Response>> {
       }
       class LoanInstallmentsResponse <<Response>> {
@@ -367,11 +358,6 @@ package "app" {
         +toEntitiesFromResponse(response: PayablesResponse): Payable[]
         +toEntityFromResource(resource: PayableResource): Payable
         +toResourceFromEntity(entity: Payable): PayableResource
-      }
-      class PayablePaymentAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: PayablePaymentsResponse): PayablePayment[]
-        +toEntityFromResource(resource: PayablePaymentResource): PayablePayment
-        +toResourceFromEntity(entity: PayablePayment): PayablePaymentResource
       }
       class LoanAssembler <<Assembler>> {
         +toEntitiesFromResponse(response: LoansResponse): Loan[]
@@ -413,10 +399,8 @@ package "app" {
         +transfer(command: TransferFundsCommand): Observable<BankAccount>
       }
       class PayablesApiEndpoint {
-        +getPending(): Observable<Payable[]>
-      }
-      class PayablePaymentsApiEndpoint {
-        +register(payableId: number, payment: PayablePayment): Observable<PayablePayment>
+        +pay(id: number, command: RegisterPayablePaymentCommand): Observable<Payable>
+        +reschedule(id: number, week: CashFlowWeek): Observable<Payable>
       }
       class LoansApiEndpoint {
       }
@@ -435,7 +419,6 @@ package "app" {
       class TreasuryApi {
         -bankAccountsEndpoint: BankAccountsApiEndpoint
         -payablesEndpoint: PayablesApiEndpoint
-        -payablePaymentsEndpoint: PayablePaymentsApiEndpoint
         -loansEndpoint: LoansApiEndpoint
         -loanInstallmentsEndpoint: LoanInstallmentsApiEndpoint
         -partnersEndpoint: PartnersApiEndpoint
@@ -448,8 +431,8 @@ package "app" {
         +transferFunds(command: TransferFundsCommand): Observable<BankAccount>
         +getPayables(): Observable<Payable[]>
         +createPayable(payable: Payable): Observable<Payable>
-        +updatePayable(payable: Payable): Observable<Payable>
-        +registerPayablePayment(payableId: number, payment: PayablePayment): Observable<PayablePayment>
+        +payPayable(id: number, command: RegisterPayablePaymentCommand): Observable<Payable>
+        +reschedulePayable(id: number, week: CashFlowWeek): Observable<Payable>
         +getLoans(): Observable<Loan[]>
         +getLoanById(id: number): Observable<Loan>
         +registerLoan(loan: Loan): Observable<Loan>
@@ -465,28 +448,24 @@ package "app" {
       BankAccountResource ..|> app.shared.infrastructure.BaseResource : implements
       CashMovementResource ..|> app.shared.infrastructure.BaseResource : implements
       PayableResource ..|> app.shared.infrastructure.BaseResource : implements
-      PayablePaymentResource ..|> app.shared.infrastructure.BaseResource : implements
       LoanResource ..|> app.shared.infrastructure.BaseResource : implements
       LoanInstallmentResource ..|> app.shared.infrastructure.BaseResource : implements
       PartnerResource ..|> app.shared.infrastructure.BaseResource : implements
       PartnerContributionResource ..|> app.shared.infrastructure.BaseResource : implements
       BankAccountsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PayablesResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      PayablePaymentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       LoansResponse ..|> app.shared.infrastructure.BaseResponse : implements
       LoanInstallmentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnersResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnerContributionsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       BankAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PayableAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      PayablePaymentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       LoanAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       LoanInstallmentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerContributionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       BankAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PayablesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      PayablePaymentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       LoansApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       LoanInstallmentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PartnersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
@@ -494,7 +473,6 @@ package "app" {
       TreasuryApi --|> app.shared.infrastructure.BaseApi : extends
       TreasuryApi --> BankAccountsApiEndpoint : delegates to
       TreasuryApi --> PayablesApiEndpoint : delegates to
-      TreasuryApi --> PayablePaymentsApiEndpoint : delegates to
       TreasuryApi --> LoansApiEndpoint : delegates to
       TreasuryApi --> LoanInstallmentsApiEndpoint : delegates to
       TreasuryApi --> PartnersApiEndpoint : delegates to
@@ -502,7 +480,6 @@ package "app" {
       BankAccountsApiEndpoint --> BankAccountAssembler : uses
       BankAccountsApiEndpoint --> CashMovementAssembler : uses
       PayablesApiEndpoint --> PayableAssembler : uses
-      PayablePaymentsApiEndpoint --> PayablePaymentAssembler : uses
       LoansApiEndpoint --> LoanAssembler : uses
       LoanInstallmentsApiEndpoint --> LoanInstallmentAssembler : uses
       PartnersApiEndpoint --> PartnerAssembler : uses
@@ -529,7 +506,7 @@ package "app" {
         +movements: Signal<CashMovement[]>
         +movementTotals: Signal<{inflows: number, outflows: number}>
         +payables: Signal<Payable[]>
-        +pendingPayables: Signal<Payable[]>
+        +outstandingPayables: Signal<number>
         +loans: Signal<Loan[]>
         +installments: Signal<LoanInstallment[]>
         +partners: Signal<Partner[]>
@@ -544,7 +521,9 @@ package "app" {
         +transferFunds(command: TransferFundsCommand): void
         +loadPayables(): void
         +createPayable(payable: Payable): void
-        +registerPayablePayment(payableId: number, payment: PayablePayment): void
+        +payPayable(id: number, command: RegisterPayablePaymentCommand): void
+        +reschedulePayable(id: number, week: CashFlowWeek): void
+        +countPayablesByStatus(status: PaymentStatus | null): number
         +loadLoans(): void
         +loadLoanDetail(loanId: number): void
         +registerLoan(loan: Loan): void
@@ -588,8 +567,17 @@ package "app" {
         class RegisterPayablePaymentDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<RegisterPayablePaymentDialog>
-          +data: {payable: Payable, accounts: BankAccount[]}
+          +data: {payable: Payable, bankAccounts: BankAccount[]}
+          +accounts: BankAccount[]
           +paymentForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class ReschedulePayableDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<ReschedulePayableDialog>
+          +payable: Payable
+          +week: Signal<CashFlowWeek | null>
           +onSave(): void
           +onCancel(): void
         }
@@ -656,15 +644,18 @@ package "app" {
         }
         class PayableList <<Component>> {
           -treasuryStore: TreasuryStore
+          -expensesStore: ExpensesStore
+          -projectsStore: ProjectsStore
           -dialog: MatDialog
-          -router: Router
-          +displayedColumns: string[]
+          +displayedColumns: Signal<string[]>
           +dataSource: Signal<MatTableDataSource<Payable>>
           +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
+          +outstanding: Signal<number>
           +statusFilter: WritableSignal<PaymentStatus | null>
+          +weekLabel(payable: Payable): string
           +onRegisterPayment(payable: Payable): void
-          +onAdd(): void
+          +onReschedule(payable: Payable): void
         }
         class PayableForm <<Component>> {
           -formBuilder: FormBuilder
@@ -731,6 +722,7 @@ package "app" {
       BankAccountDetail --> RegisterAdjustmentDialog : opens
       BankAccountDetail --> app.shared.presentation.components.PeriodSelector : contains
       PayableList --> RegisterPayablePaymentDialog : opens
+      PayableList --> ReschedulePayableDialog : opens
       LoanDetail --> ScheduleInstallmentDialog : opens
       LoanDetail --> PayInstallmentDialog : opens
       PartnerList --> RegisterContributionDialog : opens
@@ -756,6 +748,11 @@ note bottom
   el backend responde con la cuenta de origen, así que tras transferir se releen todos los saldos.
   Ajuste (POST /bank-accounts/{id}/adjustments): única forma de corregir un saldo; el tipo no tiene valor
   por defecto. Ojo: los movimientos automáticos llegan con concepto en inglés desde el backend.
+  Cuentas por pagar: GET /payables (más antigua primero); pagar POST /payables/{id}/payments exige cuenta y
+  no más que el saldo (409); genera la salida de caja y, si salda la de un gasto, marca el gasto pagado.
+  Reprogramar PUT /payables/{id}/schedule {year, month, week 1..6} (se elige una fecha y se muestra su semana).
+  Un gasto pendiente crea su cuenta por pagar ("Expense <id>", sin proveedor); anularlo la borra si no tiene
+  pagos, y si los tiene el backend responde 409. PaymentStatus vive en shared (Gastos y Tesorería).
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

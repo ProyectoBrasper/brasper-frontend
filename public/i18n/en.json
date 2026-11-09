@@ -559,5 +559,47 @@
     "TAX_PAYMENT": "Tax return",
     "TRANSFER": "Transfer",
     "ADJUSTMENT": "Adjustment"
+  },
+  "payableType": {
+    "SUPPLIER": "Supplier",
+    "TECHNICIAN": "Technician",
+    "ACCOUNTING": "Accounting",
+    "SELF_DETRACTION": "Self detraction",
+    "TAX": "Tax",
+    "OTHER": "Other"
+  },
+  "payableStatus": {
+    "PENDING": "Pending",
+    "PARTIALLY_PAID": "Partially paid",
+    "PAID": "Paid"
+  },
+  "payables": {
+    "subtitle": "Pending obligations by week",
+    "outstanding": "Balance to pay",
+    "filterByStatus": "Filter by status",
+    "all": "All",
+    "concept": "Concept",
+    "type": "Type",
+    "counterpart": "Supplier / project",
+    "week": "Week",
+    "weekShort": "{{month}} · wk. {{number}}",
+    "total": "Total",
+    "paid": "Paid",
+    "balance": "Balance",
+    "status": "Status",
+    "empty": "No payables with this status.",
+    "registerPayment": "Register payment",
+    "registerPaymentFor": "Register payment of {{concept}}",
+    "paidOn": "Payment date",
+    "amount": "Amount",
+    "account": "Paying account",
+    "accountHint": "Required: the payment leaves this account.",
+    "reschedule": "Reschedule",
+    "rescheduleFor": "Reschedule {{concept}}",
+    "currentWeek": "Current week",
+    "weekRange": "Week {{number}}: {{from}} to {{to}}",
+    "newDate": "New date",
+    "fallsIn": "Falls in week {{number}}: {{from}} to {{to}}",
+    "exceedsBalance": "It cannot exceed the balance ({{balance}})."
   }
 }
