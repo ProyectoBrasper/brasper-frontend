@@ -46,7 +46,6 @@ package "app" {
         +currency: string
         +openingBalance: number
         +currentBalance: number
-        +displayName(): string
       }
       BankAccount ..|> app.shared.domain.model.BaseEntity : implements
 
@@ -388,10 +387,19 @@ package "app" {
       }
 
       note top of BankAccountsApiEndpoint
-        Implementado por ahora solo getAll() (lo usa Billing para registrar cobros);
-        el resto de Tesorería llega con sus pantallas.
+        Implementado: getAll() (Billing, Expenses y Staff eligen cuenta) y open(command).
+        Movimientos, transferencias y ajustes llegan con el detalle de cuenta.
       end note
+      class OpenBankAccountRequest <<Request>> {
+        +bank: string
+        +accountNumber: string
+        +type: string
+        +currency: string
+        +openingBalance: number
+        +openedOn: string
+      }
       class BankAccountsApiEndpoint {
+        +open(command: OpenBankAccountCommand): Observable<BankAccount>
         +transferFunds(transfer: FundsTransfer): Observable<void>
       }
       class CashMovementsApiEndpoint {
@@ -427,7 +435,7 @@ package "app" {
         -partnersEndpoint: PartnersApiEndpoint
         -partnerContributionsEndpoint: PartnerContributionsApiEndpoint
         +getBankAccounts(): Observable<BankAccount[]>
-        +openBankAccount(account: BankAccount): Observable<BankAccount>
+        +openBankAccount(command: OpenBankAccountCommand): Observable<BankAccount>
         +getMovements(bankAccountId: number, year: number, month: number): Observable<CashMovement[]>
         +transferFunds(transfer: FundsTransfer): Observable<void>
         +getPayables(): Observable<Payable[]>
@@ -511,7 +519,8 @@ package "app" {
         -loadingSignal: WritableSignal<boolean>
         -errorSignal: WritableSignal<string | null>
         +bankAccounts: Signal<BankAccount[]>
-        +totalCashBalance: Signal<number>
+        +totalBalance: Signal<number>
+        +canWrite: Signal<boolean>
         +movements: Signal<CashMovement[]>
         +payables: Signal<Payable[]>
         +pendingPayables: Signal<Payable[]>
@@ -522,7 +531,7 @@ package "app" {
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +loadBankAccounts(): void
-        +openBankAccount(account: BankAccount): void
+        +openBankAccount(command: OpenBankAccountCommand, navigateTo: string[]): void
         +loadMovements(bankAccountId: number, year: number, month: number): void
         +transferFunds(transfer: FundsTransfer): void
         +loadPayables(): void
@@ -598,10 +607,11 @@ package "app" {
           -dialog: MatDialog
           -router: Router
           +accounts: Signal<BankAccount[]>
-          +totalCashBalance: Signal<number>
-          +onView(id: number): void
+          +totalBalance: Signal<number>
+          +canWrite: Signal<boolean>
+          +tone(account: BankAccount): string
+          +icon(account: BankAccount): string
           +onTransfer(): void
-          +onAdd(): void
         }
         class BankAccountForm <<Component>> {
           -formBuilder: FormBuilder
@@ -609,7 +619,7 @@ package "app" {
           -router: Router
           +accountForm: FormGroup
           +banks: Bank[]
-          +accountTypes: AccountType[]
+          +types: AccountType[]
           +onSubmit(): void
           +onCancel(): void
         }
@@ -712,9 +722,11 @@ note bottom
   El saldo de cada cuenta (currentBalance) lo calcula el backend a partir de los movimientos;
   la UI nunca lo edita a mano (en el Excel se tipeaba). TreasuryStore expone bankAccounts
   y partners como lectura para billing, expenses y staff (selección de cuenta / socio).
-  TransferFundsDialog valida cuentas distintas y misma moneda.
-  json-server (colecciones planas + routes.json): /bank-accounts, /cash-movements?bankAccountId=,
-  /payables, /payable-payments?payableId=, /loans, /loan-installments?loanId=, /partners,
-  /partner-contributions?partnerId=; con fake API la transferencia = 2 POST a /cash-movements.
+  Abrir cuenta (POST /bank-accounts): número único 1 a 50 (409), saldo inicial >= 0, fecha de apertura
+  obligatoria (el backend la pide aunque no la devuelve) y solo PEN por ahora (USD -> 422).
+  Lectura: ADMIN, ACCOUNTING, MANAGEMENT. Escritura: ADMIN, ACCOUNTING (AREA_ROLES.treasuryWrite).
+  El backend no impide saldos negativos; la UI los marca en rojo.
+  TransferFundsDialog valida cuentas distintas y misma moneda (POST /bank-accounts/transfers).
+  json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

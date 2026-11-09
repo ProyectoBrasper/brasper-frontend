@@ -4,7 +4,20 @@ import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { BaseResource } from '../../shared/infrastructure/base-resource';
 import { BaseResponse } from '../../shared/infrastructure/base-response';
+import { Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { BankAccount, BankAccountType } from '../domain/model/bank-account.entity';
+import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
+
+/** Body of `POST /bank-accounts` (backend `OpenBankAccountResource`). */
+export interface OpenBankAccountRequest {
+  bank: string;
+  accountNumber: string;
+  type: string;
+  currency: string;
+  openingBalance: number;
+  openedOn: string;
+}
 
 /** Backend `BankAccountResource`. */
 export interface BankAccountResource extends BaseResource {
@@ -53,8 +66,8 @@ export class BankAccountAssembler implements BaseAssembler<BankAccount, BankAcco
 }
 
 /**
- * Client for `/bank-accounts` (read by any signed-in user). Transfers, adjustments and movements
- * come with the treasury screens.
+ * Client for `/bank-accounts`: admin, accounting and management read; admin and accounting open accounts.
+ * Movements, transfers and adjustments come with the account detail.
  */
 export class BankAccountsApiEndpoint extends BaseApiEndpoint<
   BankAccount,
@@ -67,6 +80,22 @@ export class BankAccountsApiEndpoint extends BaseApiEndpoint<
       http,
       `${environment.platformProviderApiBaseUrl}${environment.platformProviderBankAccountsEndpointPath}`,
       new BankAccountAssembler(),
+    );
+  }
+
+  /** `POST /bank-accounts` (admin and accounting): the backend answers with the account and its balance. */
+  open(command: OpenBankAccountCommand): Observable<BankAccount> {
+    const request: OpenBankAccountRequest = {
+      bank: command.bank,
+      accountNumber: command.accountNumber.trim(),
+      type: command.type,
+      currency: command.currency,
+      openingBalance: command.openingBalance,
+      openedOn: command.openedOn,
+    };
+    return this.http.post<BankAccountResource>(this.endpointUrl, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to open bank account')),
     );
   }
 }

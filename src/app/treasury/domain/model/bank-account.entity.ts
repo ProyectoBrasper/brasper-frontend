@@ -7,6 +7,18 @@ export enum BankAccountType {
   PETTY_CASH = 'PETTY_CASH',
 }
 
+export const BANK_ACCOUNT_TYPES: readonly BankAccountType[] = Object.values(BankAccountType);
+
+/** Banks (backend `Bank`); CASH is the petty cash box. */
+export enum Bank {
+  BCP = 'BCP',
+  BBVA = 'BBVA',
+  BANCO_DE_LA_NACION = 'BANCO_DE_LA_NACION',
+  CASH = 'CASH',
+}
+
+export const BANKS: readonly Bank[] = Object.values(Bank);
+
 /**
  * Company bank account or petty cash (backend `BankAccountResource`). `bank` is the backend `Bank`
  * enum (BCP, BBVA, BANCO_DE_LA_NACION, CASH).

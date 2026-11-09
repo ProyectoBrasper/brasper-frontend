@@ -1,0 +1,64 @@
+<app-page-header
+  [title]="'nav.bankAccounts' | translate"
+  [subtitle]="'bankAccounts.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.bankAccounts' | translate }]"
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/treasury/bank-accounts/new">
+      <mat-icon>add</mat-icon>
+      {{ 'bankAccounts.open' | translate }}
+    </a>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="total-card">
+  <span class="total-label">{{ 'bankAccounts.totalBalance' | translate }}</span>
+  <span class="total-value amount">{{ totalBalance() | money }}</span>
+  <span class="total-hint">{{ 'bankAccounts.accountsCount' | translate: { count: penCount() } }}</span>
+</section>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<section class="accounts">
+  @for (account of accounts(); track account.id) {
+    <article class="account-card">
+      <header class="account-head">
+        <span class="account-icon" [class.cash]="account.type === 'PETTY_CASH'" aria-hidden="true">
+          <mat-icon>{{ icon(account) }}</mat-icon>
+        </span>
+        <div class="account-name">
+          <h2>{{ 'bank.' + account.bank | translate }}</h2>
+          <span class="mono account-number">{{ account.accountNumber }} · {{ account.currency }}</span>
+        </div>
+        <span [class]="'type-tag ' + tone(account)">{{ 'accountType.' + account.type | translate }}</span>
+      </header>
+      <div class="account-balance">
+        <span class="balance-label">{{ 'bankAccounts.currentBalance' | translate }}</span>
+        <span class="balance-value amount" [class.negative]="account.currentBalance < 0">
+          {{ account.currentBalance | money: account.currency }}
+        </span>
+        <span class="opening mono">
+          {{ 'bankAccounts.openingBalance' | translate }}: {{ account.openingBalance | money: account.currency }}
+        </span>
+      </div>
+    </article>
+  } @empty {
+    @if (!loading()) {
+      <p class="empty">{{ 'bankAccounts.empty' | translate }}</p>
+    }
+  }
+</section>
+
+<p class="note">
+  <mat-icon>info</mat-icon>
+  {{ 'bankAccounts.balanceNote' | translate }}
+</p>

@@ -29,4 +29,6 @@ export const AREA_ROLES = {
   billingWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
   /** Hire, update and terminate employees; create, pay and deactivate fixed costs (management only reads). */
   staffWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
+  /** Open accounts, move funds, pay payables and loans, register partners (management only reads). */
+  treasuryWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
 } as const satisfies Record<string, readonly Role[]>;

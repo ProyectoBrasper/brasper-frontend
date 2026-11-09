@@ -494,5 +494,30 @@
     "deactivateFor": "Desactivar {{code}}",
     "deactivateTitle": "Desactivar costo fijo",
     "deactivateMessage": "{{code}} · {{concept}} dejará de contar en el total mensual y ya no se podrá pagar ni editar. Esta acción no se puede deshacer."
+  },
+  "accountType": {
+    "CHECKING": "Cuenta corriente",
+    "DETRACTIONS": "Detracciones",
+    "PETTY_CASH": "Caja chica"
+  },
+  "bankAccounts": {
+    "subtitle": "Saldos de bancos y caja",
+    "open": "Abrir cuenta",
+    "formSubtitle": "Registra una cuenta bancaria o caja",
+    "data": "Datos de la cuenta",
+    "totalBalance": "Saldo total de caja",
+    "accountsCount": "{{count}} cuentas · PEN",
+    "currentBalance": "Saldo actual",
+    "openingBalance": "Saldo inicial",
+    "bank": "Banco",
+    "type": "Tipo de cuenta",
+    "accountNumber": "Número de cuenta",
+    "accountNumberHint": "Único; en caja chica puede ser un nombre, como \"Caja chica\"",
+    "currency": "Moneda",
+    "currencyHint": "Por ahora solo soles (PEN)",
+    "openedOn": "Fecha de apertura",
+    "empty": "Aún no hay cuentas registradas.",
+    "balanceNote": "Los saldos se calculan a partir de los movimientos registrados.",
+    "balanceFormNote": "El saldo actual se calcula con los movimientos; no se edita manualmente."
   }
 }
