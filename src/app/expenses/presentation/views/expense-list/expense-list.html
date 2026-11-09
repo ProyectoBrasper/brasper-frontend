@@ -1,0 +1,156 @@
+<app-page-header
+  [title]="'nav.expenses' | translate"
+  [subtitle]="'expenses.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.expenses' | translate }]"
+>
+  @if (canRegister()) {
+    <a mat-flat-button routerLink="/expenses/new">
+      <mat-icon>add</mat-icon>
+      {{ 'expenses.register' | translate }}
+    </a>
+  }
+</app-page-header>
+
+<section class="filters">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>{{ 'expenses.project' | translate }}</mat-label>
+    <mat-select [value]="projectFilter()" (selectionChange)="projectFilter.set($event.value)">
+      <mat-option [value]="allProjects">{{ 'expenses.allProjects' | translate }}</mat-option>
+      <mat-option [value]="generalProject">{{ 'expenses.general' | translate }}</mat-option>
+      @for (project of projects(); track project.id) {
+        <mat-option [value]="project.id">{{ project.code }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>{{ 'expenses.category' | translate }}</mat-label>
+    <mat-select [value]="categoryFilter()" (selectionChange)="categoryFilter.set($event.value)">
+      <mat-option [value]="allCategories">{{ 'expenses.allCategories' | translate }}</mat-option>
+      @for (category of categories; track category) {
+        <mat-option [value]="category">{{ 'costCategory.' + category | translate }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</section>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table" [dataSource]="dataSource()" matSort matSortActive="spentOn" matSortDirection="desc">
+      <ng-container matColumnDef="spentOn">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.spentOn' | translate }}</th>
+        <td mat-cell *matCellDef="let expense">{{ expense.spentOn | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="project">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.project' | translate }}</th>
+        <td mat-cell *matCellDef="let expense">
+          @if (expense.isDirectCost()) {
+            <span class="mono project">{{ projectCode(expense.projectId) }}</span>
+          } @else {
+            <span class="tag">{{ 'expenses.general' | translate }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="supplier">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.supplier' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="supplier" [title]="supplierName(expense.supplierId)">
+          {{ supplierName(expense.supplierId) || '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.category' | translate }}</th>
+        <td mat-cell *matCellDef="let expense">
+          <span class="tag">{{ 'costCategory.' + expense.category | translate }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.description' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="description" [title]="expense.description">
+          {{ expense.description || '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="voucher">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.voucher' | translate }}</th>
+        <td mat-cell *matCellDef="let expense">
+          {{ 'voucherType.' + expense.voucherType | translate }}
+          @if (expense.voucherNumber) {
+            <span class="mono voucher-number">{{ expense.voucherNumber }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="taxableBase">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'expenses.taxableBase' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="amount">{{ expense.taxableBase | money: expense.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="igv">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'expenses.igv' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="amount">{{ expense.igv | money: expense.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'expenses.total' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="amount strong">{{ expense.total | money: expense.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'expenses.status' | translate }}</th>
+        <td mat-cell *matCellDef="let expense"><app-status-chip [status]="statusOf(expense)" /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">{{ 'common.actions' | translate }}</th>
+        <td mat-cell *matCellDef="let expense" class="actions-col">
+          @if (expense.isActive()) {
+            <a
+              mat-icon-button
+              [routerLink]="['/expenses', expense.id, 'edit']"
+              [matTooltip]="'common.edit' | translate"
+              [attr.aria-label]="'expenses.edit' | translate"
+            >
+              <mat-icon>edit</mat-icon>
+            </a>
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onAnnul(expense)"
+              [matTooltip]="'expenses.annul' | translate"
+              [attr.aria-label]="'expenses.annul' | translate"
+            >
+              <mat-icon>block</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let expense; columns: displayedColumns()" [class.annulled]="expense.annulled"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns().length">
+          {{ (loading() ? 'common.loading' : 'expenses.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div class="total-bar">
+    <span>{{ 'expenses.totalActive' | translate }}</span>
+    <span class="total-value amount">{{ total() | money }}</span>
+  </div>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" />
+</section>
