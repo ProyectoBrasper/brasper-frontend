@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { COST_CATEGORIES, CostCategory } from '../../../../projects/domain/model/cost-category';
 import { ProjectsStore } from '../../../../projects/application/projects.store';
@@ -32,12 +33,13 @@ export const sumAmounts = (amounts: readonly number[]): number =>
 
 /**
  * Expenses with project and category filters. Annulled expenses stay listed (struck through) and are
- * left out of the total. Annulling is admin, accounting and engineer; the form comes in the next PR.
+ * left out of the total. Correcting and annulling: admin, accounting and engineer; registering: admin and accounting.
  */
 @Component({
   selector: 'app-expense-list',
   imports: [
     DatePipe,
+    RouterLink,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
@@ -64,6 +66,8 @@ export class ExpenseList implements OnInit {
   readonly loading = computed(() => this.expensesStore.loading() || this.projectsStore.loading());
   readonly error = computed(() => this.expensesStore.error() ?? this.projectsStore.error());
   readonly canWrite = this.expensesStore.canWrite;
+  /** Registering needs accounts and partners, which only finance roles can read. */
+  readonly canRegister = computed(() => this.expensesStore.canWrite() && this.expensesStore.canChoosePayment());
   readonly projects = this.projectsStore.projects;
   readonly categories = COST_CATEGORIES;
   readonly allProjects = ALL_PROJECTS;
