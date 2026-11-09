@@ -12,7 +12,7 @@ import { statusColor, statusIcon } from './status-color';
   template: `
     <span [class]="'chip ' + color()">
       <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
-      {{ 'status.' + status() | translate }}
+      {{ labelPrefix() + status() | translate }}
     </span>
   `,
   styles: `
@@ -40,6 +40,8 @@ import { statusColor, statusIcon } from './status-color';
 })
 export class StatusChip {
   readonly status = input.required<string>();
+  /** i18n prefix of the label (e.g. `scheduleStatus.` for feminine "Programada"). */
+  readonly labelPrefix = input<string>('status.');
   readonly color = computed(() => statusColor(this.status()));
   readonly icon = computed(() => statusIcon(this.status()));
 }

@@ -300,5 +300,33 @@
     "NET_DEPOSIT": "Depósito neto",
     "DETRACTION_DEPOSIT": "Depósito de detracción",
     "RETENTION_CERTIFICATE": "Certificado de retención"
+  },
+  "period": {
+    "label": "Período",
+    "previous": "Mes anterior",
+    "next": "Mes siguiente"
+  },
+  "scheduleStatus": {
+    "SCHEDULED": "Programada",
+    "RESCHEDULED": "Reprogramada",
+    "REALIZED": "Realizada",
+    "CANCELLED": "Cancelada"
+  },
+  "collections": {
+    "subtitle": "Cobros esperados por semana del mes",
+    "schedule": "Programar cobranza",
+    "reschedule": "Reprogramar",
+    "cancel": "Cancelar cobranza",
+    "week": "Semana",
+    "weekNumber": "Semana {{number}}",
+    "invoice": "Factura",
+    "expectedAmount": "Monto esperado",
+    "expectedOn": "Fecha esperada",
+    "newDate": "Nueva fecha esperada",
+    "weekOf": "Cae en la semana {{number}}: del {{from}} al {{to}}",
+    "totalExpected": "Total esperado del mes",
+    "empty": "No hay cobranzas programadas en este mes.",
+    "cancelTitle": "Cancelar cobranza",
+    "cancelMessage": "La cobranza de la semana {{week}} ({{project}}) quedará cancelada y ya no se podrá cambiar. ¿Deseas continuar?"
   }
 }

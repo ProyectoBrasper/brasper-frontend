@@ -5,10 +5,15 @@ import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Invoice } from '../domain/model/invoice.entity';
 import { InvoiceStatus } from '../domain/model/invoice-status';
+import { Period } from '../../shared/domain/model/period';
 import { InvoicePayment } from '../domain/model/invoice-payment.entity';
+import { ScheduledCollection } from '../domain/model/scheduled-collection.entity';
+import { ScheduleCollectionRequest } from '../infrastructure/scheduled-collections-api-endpoint';
 import { IssueInvoiceCommand } from '../domain/model/issue-invoice.command';
 import { BillingApi } from '../infrastructure/billing-api';
 
+const sortByWeek = (collections: ScheduledCollection[]) =>
+  [...collections].sort((a, b) => a.week - b.week || a.id - b.id);
 const sortByDate = (payments: InvoicePayment[]) =>
   [...payments].sort((a, b) => a.receivedOn.localeCompare(b.receivedOn) || a.id - b.id);
 
@@ -23,6 +28,9 @@ export class BillingStore {
 
   private readonly invoicesSignal = signal<Invoice[]>([]);
   private readonly paymentsSignal = signal<InvoicePayment[]>([]);
+  private readonly scheduledCollectionsSignal = signal<ScheduledCollection[]>([]);
+  /** Month currently shown in the scheduled collections list (to reload it after changes). */
+  private collectionsPeriod: Period | null = null;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
@@ -30,6 +38,17 @@ export class BillingStore {
   readonly invoices = this.invoicesSignal.asReadonly();
   /** Payments of the invoice opened in the detail, in date order. */
   readonly payments = this.paymentsSignal.asReadonly();
+  /** Scheduled collections of the loaded month, by week. */
+  readonly scheduledCollections = this.scheduledCollectionsSignal.asReadonly();
+  /** Still expected in the month: sum of the open (scheduled / rescheduled) collections. */
+  readonly expectedCollectionsTotal = computed(
+    () =>
+      Math.round(
+        this.scheduledCollectionsSignal()
+          .filter((c) => c.isOpen())
+          .reduce((sum, c) => sum + c.expectedAmount, 0) * 100,
+      ) / 100,
+  );
   /** Invoices with something left to collect (not voided, outstanding balance > 0). */
   readonly pendingInvoices = computed(() => this.invoicesSignal().filter((invoice) => invoice.isCollectable()));
   /** Accounts receivable: sum of the outstanding balances of non-voided invoices. */
@@ -78,8 +97,46 @@ export class BillingStore {
     this.run(this.billingApi.voidInvoice(id), 'Failed to void invoice', (invoice) => this.upsertInvoice(invoice));
   }
 
+  /** Loads the scheduled collections of a month (the backend requires year and month). */
+  loadScheduledCollections(period: Period): void {
+    this.collectionsPeriod = period;
+    this.run(
+      this.billingApi.getScheduledCollections(period.year, period.month),
+      'Failed to load scheduled collections',
+      (collections) => this.scheduledCollectionsSignal.set(sortByWeek(collections)),
+    );
+  }
+
+  /** Schedules a collection; the backend derives the week from `expectedOn`. Reloads the shown month. */
+  scheduleCollection(request: ScheduleCollectionRequest): void {
+    this.run(this.billingApi.scheduleCollection(request), 'Failed to schedule collection', () =>
+      this.reloadCollections(),
+    );
+  }
+
+  /** Moves an open collection to the week of `expectedOn` (it may leave the shown month). */
+  rescheduleCollection(id: number, expectedOn: string): void {
+    this.run(this.billingApi.rescheduleCollection(id, expectedOn), 'Failed to reschedule collection', () =>
+      this.reloadCollections(),
+    );
+  }
+
+  cancelScheduledCollection(id: number): void {
+    this.run(this.billingApi.cancelScheduledCollection(id), 'Failed to cancel collection', (cancelled) =>
+      this.scheduledCollectionsSignal.update((collections) =>
+        collections.map((c) => (c.id === cancelled.id ? cancelled : c)),
+      ),
+    );
+  }
+
   getInvoiceById(id: number): Invoice | undefined {
     return this.invoicesSignal().find((invoice) => invoice.id === id);
+  }
+
+  private reloadCollections(): void {
+    if (this.collectionsPeriod) {
+      this.loadScheduledCollections(this.collectionsPeriod);
+    }
   }
 
   private refreshInvoice(id: number): void {

@@ -104,5 +104,13 @@
     {"id":2,"bank":"BBVA","accountNumber":"0011-0234-0200123456","type":"CHECKING","currency":"PEN","openingBalance":150000,"currentBalance":96200},
     {"id":3,"bank":"BANCO_DE_LA_NACION","accountNumber":"00-045-123456","type":"DETRACTIONS","currency":"PEN","openingBalance":40000,"currentBalance":76200},
     {"id":4,"bank":"CASH","accountNumber":"Caja chica","type":"PETTY_CASH","currency":"PEN","openingBalance":6000,"currentBalance":3500}
+  ],
+  "scheduled-collections": [
+    {"id":1,"projectId":2,"expectedAmount":60000,"currency":"PEN","year":2026,"month":10,"week":2,"status":"REALIZED","invoiceId":4,"notes":null},
+    {"id":2,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":10,"week":4,"status":"RESCHEDULED","invoiceId":null,"notes":null},
+    {"id":3,"projectId":2,"expectedAmount":64608,"currency":"PEN","year":2026,"month":11,"week":2,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":4,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":11,"week":3,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":5,"projectId":2,"expectedAmount":118000,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":6,"projectId":4,"expectedAmount":259600,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null}
   ]
 }
