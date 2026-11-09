@@ -153,6 +153,15 @@ package "app" {
       Payable --> PayableType : has
       Payable --> PaymentStatus : has
 
+      class CreatePayableCommand <<Command>> {
+        +concept: string
+        +type: PayableType
+        +totalAmount: number
+        +currency: string
+        +supplierId: number | null
+        +projectId: number | null
+        +week: CashFlowWeek
+      }
       class RegisterPayablePaymentCommand <<Command>> {
         +paidOn: string
         +amount: number
@@ -399,6 +408,7 @@ package "app" {
         +transfer(command: TransferFundsCommand): Observable<BankAccount>
       }
       class PayablesApiEndpoint {
+        +createPayable(command: CreatePayableCommand): Observable<Payable>
         +pay(id: number, command: RegisterPayablePaymentCommand): Observable<Payable>
         +reschedule(id: number, week: CashFlowWeek): Observable<Payable>
       }
@@ -430,7 +440,7 @@ package "app" {
         +registerAdjustment(bankAccountId: number, command: RegisterAdjustmentCommand): Observable<BankAccount>
         +transferFunds(command: TransferFundsCommand): Observable<BankAccount>
         +getPayables(): Observable<Payable[]>
-        +createPayable(payable: Payable): Observable<Payable>
+        +createPayable(command: CreatePayableCommand): Observable<Payable>
         +payPayable(id: number, command: RegisterPayablePaymentCommand): Observable<Payable>
         +reschedulePayable(id: number, week: CashFlowWeek): Observable<Payable>
         +getLoans(): Observable<Loan[]>
@@ -520,7 +530,7 @@ package "app" {
         +registerAdjustment(bankAccountId: number, command: RegisterAdjustmentCommand): void
         +transferFunds(command: TransferFundsCommand): void
         +loadPayables(): void
-        +createPayable(payable: Payable): void
+        +createPayable(command: CreatePayableCommand, navigateTo: string[]): void
         +payPayable(id: number, command: RegisterPayablePaymentCommand): void
         +reschedulePayable(id: number, week: CashFlowWeek): void
         +countPayablesByStatus(status: PaymentStatus | null): number
@@ -660,9 +670,14 @@ package "app" {
         class PayableForm <<Component>> {
           -formBuilder: FormBuilder
           -treasuryStore: TreasuryStore
+          -expensesStore: ExpensesStore
+          -projectsStore: ProjectsStore
           -router: Router
           +payableForm: FormGroup
-          +payableTypes: PayableType[]
+          +types: PayableType[]
+          +years: number[]
+          +months: number[]
+          +weeks: Signal<CashFlowWeek[]>
           +onSubmit(): void
           +onCancel(): void
         }
@@ -753,6 +768,9 @@ note bottom
   Reprogramar PUT /payables/{id}/schedule {year, month, week 1..6} (se elige una fecha y se muestra su semana).
   Un gasto pendiente crea su cuenta por pagar ("Expense <id>", sin proveedor); anularlo la borra si no tiene
   pagos, y si los tiene el backend responde 409. PaymentStatus vive en shared (Gastos y Tesorería).
+  Nueva cuenta por pagar (POST /payables): semana como año, mes y semana del mes (las opciones salen del mes,
+  con sus fechas). Contabilidad registra su costo salvo TAX y SELF_DETRACTION: una compra con comprobante va
+  en Gastos como pendiente (crea su cuenta por pagar sola); el formulario lo avisa y nunca envía expenseId.
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

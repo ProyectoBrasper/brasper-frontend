@@ -5,6 +5,7 @@ import { AREA_ROLES } from '../../iam/domain/model/role';
 const bankAccountList = () => import('./views/bank-account-list/bank-account-list').then((m) => m.BankAccountList);
 const bankAccountForm = () => import('./views/bank-account-form/bank-account-form').then((m) => m.BankAccountForm);
 const payableList = () => import('./views/payable-list/payable-list').then((m) => m.PayableList);
+const payableForm = () => import('./views/payable-form/payable-form').then((m) => m.PayableForm);
 const bankAccountDetail = () =>
   import('./views/bank-account-detail/bank-account-detail').then((m) => m.BankAccountDetail);
 
@@ -21,4 +22,5 @@ export const treasuryRoutes: Routes = [
   // After `new`, so it is not taken as an id.
   { path: 'bank-accounts/:id', loadComponent: bankAccountDetail, title: 'Brasper' },
   { path: 'payables', loadComponent: payableList, title: 'Brasper' },
+  { path: 'payables/new', loadComponent: payableForm, title: 'Brasper', ...canWrite },
 ];

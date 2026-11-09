@@ -64,6 +64,29 @@ describe('TreasuryStore — payables', () => {
     expect(api['getBankAccounts']).not.toHaveBeenCalled();
   });
 
+  it('adds the payable created by hand to the balance and navigates to the list', () => {
+    api['createPayable'] = vi.fn().mockReturnValue(
+      of(payableFixture({ id: 7, totalAmount: 9600, paidAmount: 0, balance: 9600, status: PaymentStatus.PENDING, expenseId: null })),
+    );
+    const store = createStore();
+    const router = TestBed.inject(Router);
+    store.createPayable(
+      {
+        concept: 'Alquiler de grúa para montaje',
+        type: payableFixture().type,
+        totalAmount: 9600,
+        currency: 'PEN',
+        supplierId: 1,
+        projectId: 1,
+        week: new CashFlowWeek(2026, 11, 4),
+      },
+      ['/treasury/payables'],
+    );
+    expect(store.outstandingPayables()).toBe(113450);
+    expect(store.countPayablesByStatus(null)).toBe(7);
+    expect(router.navigate).toHaveBeenCalledWith(['/treasury/payables']);
+  });
+
   it('moves a payable to another week', () => {
     api['reschedulePayable'].mockReturnValue(of(payableFixture({ id: 2, week: 4 })));
     const store = createStore();
