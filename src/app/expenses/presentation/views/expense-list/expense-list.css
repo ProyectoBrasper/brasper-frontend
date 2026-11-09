@@ -74,3 +74,8 @@ tr.annulled td app-status-chip {
     width: 100%;
   }
 }
+
+/* Two icon buttons: edit and annul */
+.actions-col {
+  width: 112px;
+}
