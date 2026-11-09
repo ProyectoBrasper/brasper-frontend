@@ -218,7 +218,8 @@
     "progressHint": "Máximo {{max}} % (lo que falta para llegar a 100 %)",
     "willComplete": "Con este avance el proyecto llega a 100 % y pasará a Completado.",
     "addEstimate": "Agregar estimación",
-    "editEstimate": "Editar estimación"
+    "editEstimate": "Editar estimación",
+    "currencyHint": "Por ahora solo soles (PEN)"
   },
   "costCategory": {
     "MATERIALS": "Materiales",

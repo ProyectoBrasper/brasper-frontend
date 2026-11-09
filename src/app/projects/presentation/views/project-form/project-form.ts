@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { fromIsoDate, toIsoDate } from '../../../../shared/domain/model/iso-date';
+import { SUPPORTED_CURRENCIES } from '../../../../shared/domain/model/money';
 import { toFraction, toPercent } from '../../../../shared/domain/model/percentage';
 import { BaseForm } from '../../../../shared/presentation/base-form';
 import { PageHeader } from '../../../../shared/presentation/components/page-header/page-header';
@@ -17,8 +18,6 @@ import { ProjectsStore } from '../../../application/projects.store';
 import { PROJECT_CODE_PATTERN, Project } from '../../../domain/model/project.entity';
 import { ProjectStatus } from '../../../domain/model/project-status';
 
-/** Currencies accepted by the backend (`Currency`). */
-const CURRENCIES = ['PEN', 'USD'] as const;
 
 /** Case-insensitive project code check (it is upper-cased on save, like the backend). */
 const projectCodeValidator = (control: AbstractControl): ValidationErrors | null =>
@@ -56,7 +55,8 @@ export class ProjectForm extends BaseForm implements OnInit {
   /** Route parameter (`:id`), bound by `withComponentInputBinding`. */
   readonly id = input<string>();
 
-  readonly currencies = CURRENCIES;
+  /** Only PEN for now (backend `Currency.isSupported()`); the select is shown locked. */
+  readonly currencies = SUPPORTED_CURRENCIES;
   readonly projectId = computed(() => (this.id() ? Number(this.id()) : null));
   readonly isEdit = computed(() => this.projectId() !== null);
   readonly project = computed(() => {
@@ -77,7 +77,10 @@ export class ProjectForm extends BaseForm implements OnInit {
     name: this.formBuilder.nonNullable.control('', [Validators.required, Validators.maxLength(200)]),
     description: this.formBuilder.nonNullable.control('', Validators.maxLength(1000)),
     clientId: this.formBuilder.control<number | null>(null, Validators.required),
-    currency: this.formBuilder.nonNullable.control<string>('PEN', Validators.required),
+    currency: this.formBuilder.nonNullable.control<string>(
+      { value: SUPPORTED_CURRENCIES[0], disabled: SUPPORTED_CURRENCIES.length === 1 },
+      Validators.required,
+    ),
     budget: this.formBuilder.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
     participation: this.formBuilder.control<number | null>(100, [
       Validators.required,

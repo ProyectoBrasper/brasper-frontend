@@ -21,6 +21,8 @@ export const AREA_ROLES = {
   reports: [Role.ROLE_ADMIN, Role.ROLE_MANAGEMENT, Role.ROLE_ACCOUNTING],
   staff: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_MANAGEMENT],
   users: [Role.ROLE_ADMIN],
+  /** Billing (invoices, payments, scheduled collections) and Treasury reads (backend #120). */
+  finance: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_MANAGEMENT],
   /** Create / edit clients, projects, suppliers and expenses (management only reads). */
   operationsWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING, Role.ROLE_ENGINEER],
   /** Issue / void invoices, register collections and scheduled collections. */
