@@ -9,16 +9,21 @@ import { OpenBankAccountCommand } from '../domain/model/open-bank-account.comman
 import { Partner } from '../domain/model/partner.entity';
 import { BankAccountsApiEndpoint } from './bank-accounts-api-endpoint';
 import { PartnersApiEndpoint } from './partners-api-endpoint';
+import { PayablesApiEndpoint } from './payables-api-endpoint';
+import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
+import { RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
+import { Payable } from '../domain/model/payable.entity';
 
 /**
- * Treasury context facade: bank accounts (open, movements, adjustments, transfers) and partners. Payables,
- * loans and contributions come with their screens.
+ * Treasury context facade: bank accounts (open, movements, adjustments, transfers), payables (pay, reschedule)
+ * and partners. Loans and contributions come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryApi extends BaseApi {
   private readonly http = inject(HttpClient);
   private readonly bankAccountsEndpoint = new BankAccountsApiEndpoint(this.http);
   private readonly partnersEndpoint = new PartnersApiEndpoint(this.http);
+  private readonly payablesEndpoint = new PayablesApiEndpoint(this.http);
 
   getBankAccounts(): Observable<BankAccount[]> {
     return this.bankAccountsEndpoint.getAll();
@@ -42,6 +47,18 @@ export class TreasuryApi extends BaseApi {
 
   transferFunds(command: TransferFundsCommand): Observable<BankAccount> {
     return this.bankAccountsEndpoint.transfer(command);
+  }
+
+  getPayables(): Observable<Payable[]> {
+    return this.payablesEndpoint.getAll();
+  }
+
+  payPayable(id: number, command: RegisterPayablePaymentCommand): Observable<Payable> {
+    return this.payablesEndpoint.pay(id, command);
+  }
+
+  reschedulePayable(id: number, week: CashFlowWeek): Observable<Payable> {
+    return this.payablesEndpoint.reschedule(id, week);
   }
 
   getPartners(): Observable<Partner[]> {

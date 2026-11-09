@@ -559,5 +559,47 @@
     "TAX_PAYMENT": "Declaración",
     "TRANSFER": "Transferencia",
     "ADJUSTMENT": "Ajuste"
+  },
+  "payableType": {
+    "SUPPLIER": "Proveedor",
+    "TECHNICIAN": "Técnico",
+    "ACCOUNTING": "Contabilidad",
+    "SELF_DETRACTION": "Autodetracción",
+    "TAX": "Impuesto",
+    "OTHER": "Otro"
+  },
+  "payableStatus": {
+    "PENDING": "Pendiente",
+    "PARTIALLY_PAID": "Pago parcial",
+    "PAID": "Pagada"
+  },
+  "payables": {
+    "subtitle": "Obligaciones pendientes por semana",
+    "outstanding": "Saldo por pagar",
+    "filterByStatus": "Filtrar por estado",
+    "all": "Todas",
+    "concept": "Concepto",
+    "type": "Tipo",
+    "counterpart": "Proveedor / proyecto",
+    "week": "Semana",
+    "weekShort": "{{month}} · sem. {{number}}",
+    "total": "Total",
+    "paid": "Pagado",
+    "balance": "Saldo",
+    "status": "Estado",
+    "empty": "No hay cuentas por pagar con este estado.",
+    "registerPayment": "Registrar pago",
+    "registerPaymentFor": "Registrar pago de {{concept}}",
+    "paidOn": "Fecha de pago",
+    "amount": "Monto",
+    "account": "Cuenta de pago",
+    "accountHint": "Obligatoria: el pago sale de esta cuenta.",
+    "reschedule": "Reprogramar",
+    "rescheduleFor": "Reprogramar {{concept}}",
+    "currentWeek": "Semana actual",
+    "weekRange": "Semana {{number}}: del {{from}} al {{to}}",
+    "newDate": "Nueva fecha",
+    "fallsIn": "Cae en la semana {{number}}: del {{from}} al {{to}}",
+    "exceedsBalance": "No puede superar el saldo ({{balance}})."
   }
 }

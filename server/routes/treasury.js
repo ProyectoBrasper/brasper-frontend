@@ -1,6 +1,8 @@
 // Treasury fake routes. Reads are for finance roles only (backend #120); writes are ADMIN and ACCOUNTING. Same
-// rules, order of checks and Spanish messages as the backend (messages_es.properties). Payables, loans and
-// partner writes come with their screens.
+// rules, order of checks and Spanish messages as the backend (messages_es.properties). Creating payables,
+// loans and partner writes come with their screens.
+const { weekExists } = require('./cash-flow-week');
+
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
 const BANKS = ['BCP', 'BBVA', 'BANCO_DE_LA_NACION', 'CASH'];
@@ -132,6 +134,83 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
 
   // Anything else on /bank-accounts falls through to json-server: keep it behind the finance roles.
   server.use('/api/v1/bank-accounts', requireRoles(...READERS));
+
+  // ---------- Payables ----------
+  const payables = () => db.get('payables');
+  const findPayable = (id) => payables().find({ id: Number(id) }).value();
+  const PAYABLE_NOT_FOUND = 'Pago pendiente no encontrado.';
+  const PAYABLE_PAID = 'El pago pendiente ya está pagado.';
+  /** Stored record (with paidAmount) → PayableResource; balance and status like the backend `Payable`. */
+  const payableResource = (record) => {
+    const totalC = Math.round(record.totalAmount * 100);
+    const paidC = Math.round(record.paidAmount * 100);
+    const status = paidC === 0 ? 'PENDING' : paidC < totalC ? 'PARTIALLY_PAID' : 'PAID';
+    return { ...record, paidAmount: paidC / 100, balance: (totalC - paidC) / 100, status };
+  };
+
+  // GET /payables?status= (optional), oldest first.
+  server.get('/api/v1/payables', requireRoles(...READERS), (req, res) => {
+    const { status } = req.query;
+    if (status !== undefined && !['PENDING', 'PARTIALLY_PAID', 'PAID'].includes(status)) {
+      return problem(res, 400, 'Bad Request', 'Estado no válido.');
+    }
+    res.json(payables().sortBy('id').value().map(payableResource).filter((p) => !status || p.status === status));
+  });
+
+  server.get('/api/v1/payables/:id', requireRoles(...READERS), (req, res) => {
+    const payable = findPayable(req.params.id);
+    if (!payable) return problem(res, 404, 'Not Found', PAYABLE_NOT_FOUND);
+    res.json(payableResource(payable));
+  });
+
+  // Payment: same order as PayableCommandService. It posts the outflow (with the backend concept, in English)
+  // and, when it settles the payable of an expense, marks the expense as paid.
+  server.post('/api/v1/payables/:id/payments', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.paidOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de pago no es válida.');
+    if (!validAmount(body.amount)) return problem(res, 400, 'Bad Request', 'El monto del pago debe ser positivo.');
+    if (body.bankAccountId == null) return problem(res, 400, 'Bad Request', 'Indica la cuenta de pago.');
+    const record = findPayable(req.params.id);
+    if (!record) return problem(res, 404, 'Not Found', PAYABLE_NOT_FOUND);
+    const payable = payableResource(record);
+    if (payable.status === 'PAID') return problem(res, 409, 'Conflict', PAYABLE_PAID);
+    const account = findAccount(body.bankAccountId);
+    if (!account) return problem(res, 404, 'Not Found', 'No se encontró la cuenta bancaria del pago.');
+    if (account.currency !== payable.currency) {
+      return problem(res, 400, 'Bad Request', 'La moneda del pago debe coincidir con la del pago pendiente y la cuenta.');
+    }
+    if (Math.round(body.amount * 100) > Math.round(payable.balance * 100)) {
+      return problem(res, 409, 'Conflict', 'El pago supera el saldo del pago pendiente.');
+    }
+    const paidAmount = (Math.round(record.paidAmount * 100) + Math.round(body.amount * 100)) / 100;
+    payables().find({ id: record.id }).assign({ paidAmount }).write();
+    postMovement(account, body.paidOn, 'OUTFLOW', body.amount, `Payable payment: ${record.concept}`, 'PAYABLE_PAYMENT', null);
+    const saved = payableResource(findPayable(record.id));
+    if (saved.status === 'PAID' && saved.expenseId != null) {
+      const expense = db.get('expenses').find({ id: saved.expenseId }).value();
+      if (expense && !expense.annulled) {
+        db.get('expenses').find({ id: expense.id }).assign({ paymentStatus: 'PAID' }).write();
+      }
+    }
+    res.status(201).json(saved);
+  });
+
+  // PUT /payables/:id/schedule {year, month, week}: a week that does not exist in the month is a 400.
+  server.put('/api/v1/payables/:id/schedule', requireRoles(...WRITERS), (req, res) => {
+    const { year, month, week } = req.body ?? {};
+    if (!Number.isInteger(year) || year < 1 || !Number.isInteger(month) || month < 1 || month > 12
+      || !Number.isInteger(week) || week < 1 || week > 6) {
+      return problem(res, 400, 'Bad Request', 'La semana no es válida.');
+    }
+    if (!weekExists(year, month, week)) return problem(res, 400, 'Bad Request', `No existe la semana ${week} en ${year}-${String(month).padStart(2, '0')}.`);
+    const record = findPayable(req.params.id);
+    if (!record) return problem(res, 404, 'Not Found', PAYABLE_NOT_FOUND);
+    if (payableResource(record).status === 'PAID') return problem(res, 409, 'Conflict', PAYABLE_PAID);
+    payables().find({ id: record.id }).assign({ year, month, week }).write();
+    res.json(payableResource(findPayable(record.id)));
+  });
+  // Creating a payable by hand comes with its form; anything else stays behind the finance roles.
+  server.use('/api/v1/payables', requireRoles(...READERS));
 
   // Partners: same read roles. Registering partners and their contributions come with the partners screen.
   server.get('/api/v1/partners/:id', requireRoles(...READERS), (req, res, next) => {

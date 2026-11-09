@@ -1,6 +1,7 @@
 // Expenses fake routes. Any signed-in user reads; writes need ADMIN, ACCOUNTING or ENGINEER (management is
 // read-only), like the backend. Messages mirror the backend's.
 const { taxParametersAt } = require('./accounting');
+const { weekOf } = require('./cash-flow-week');
 
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_ENGINEER'];
 const CATEGORIES = ['MATERIALS', 'LABOR', 'TRAVEL_EXPENSES', 'OTHER'];
@@ -121,6 +122,28 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
       annulled: false,
     };
     expenses().push(expense).write();
+    // Like the backend ExpensePayablesEventHandler: a pending expense (not a partner contribution) is a debt, so
+    // Treasury keeps it as a payable in the week of the expense. The backend names it "Expense <id>", in English.
+    const payables = db.get('payables');
+    if (expense.paymentStatus === 'PENDING' && !partner && !payables.find({ expenseId: expense.id }).value()) {
+      const { year, month, week } = weekOf(expense.spentOn);
+      payables
+        .push({
+          id: nextId('payables'),
+          concept: `Expense ${expense.id}`,
+          type: 'SUPPLIER',
+          totalAmount: expense.total,
+          currency: expense.currency,
+          paidAmount: 0,
+          supplierId: null,
+          projectId: expense.projectId,
+          expenseId: expense.id,
+          year,
+          month,
+          week,
+        })
+        .write();
+    }
     res.status(201).json(expense);
   });
 
@@ -153,6 +176,16 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     const expense = expenses().find({ id: Number(req.params.id) }).value();
     if (!expense) return problem(res, 404, 'Not Found', 'Gasto no encontrado.');
     if (expense.annulled) return problem(res, 409, 'Conflict', 'El gasto está anulado y no se puede modificar.');
+    // Like the backend: an unpaid expense owes nothing once annulled, so its payable goes away; if that payable
+    // already has payments the backend refuses (IllegalStateException → 409, with its English message).
+    if (expense.paymentStatus !== 'PAID') {
+      const payable = db.get('payables').find({ expenseId: expense.id }).value();
+      if (payable && payable.paidAmount > 0) {
+        return problem(res, 409, 'Conflict',
+          'La operación no está permitida en el estado actual: The payable of this expense already has payments');
+      }
+      if (payable) db.get('payables').remove({ id: payable.id }).write();
+    }
     expenses().find({ id: expense.id }).assign({ annulled: true }).write();
     res.json(expenses().find({ id: expense.id }).value());
   });

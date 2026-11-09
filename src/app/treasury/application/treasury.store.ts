@@ -9,12 +9,17 @@ import { RegisterAdjustmentCommand, TransferFundsCommand } from '../domain/model
 import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
 import { movementTotals, sortMovements } from '../domain/services/movement-figures';
+import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
+import { PaymentStatus } from '../../shared/domain/model/payment-status';
+import { RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
+import { Payable } from '../domain/model/payable.entity';
+import { countByStatus, outstandingBalance } from '../domain/services/payable-figures';
 import { Partner } from '../domain/model/partner.entity';
 import { TreasuryApi } from '../infrastructure/treasury-api';
 
 /**
- * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements
- * and partners. Payables, loans and contributions come with their screens.
+ * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements,
+ * payables and partners. Loans and contributions come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryStore {
@@ -25,6 +30,7 @@ export class TreasuryStore {
   private readonly bankAccountsSignal = signal<BankAccount[]>([]);
   private readonly partnersSignal = signal<Partner[]>([]);
   private readonly movementsSignal = signal<CashMovement[]>([]);
+  private readonly payablesSignal = signal<Payable[]>([]);
   /** Account and month whose movements are shown (to drop late answers and reload after changes). */
   private movementsKey: { bankAccountId: number; period: Period } | null = null;
   /** Requests in flight; several can run at once. */
@@ -37,6 +43,10 @@ export class TreasuryStore {
   readonly movements = this.movementsSignal.asReadonly();
   /** Inflows and outflows of the shown movements. */
   readonly movementTotals = computed(() => movementTotals(this.movementsSignal()));
+  /** Payables, oldest first (as the backend returns them). */
+  readonly payables = this.payablesSignal.asReadonly();
+  /** What the company still owes: sum of the balances of the unpaid payables. */
+  readonly outstandingPayables = computed(() => outstandingBalance(this.payablesSignal()));
   /** Cash of the company in PEN: sum of the current balances of the PEN accounts (in cents, no drift). */
   readonly totalBalance = computed(
     () =>
@@ -104,6 +114,32 @@ export class TreasuryStore {
       this.loadBankAccounts();
       this.reloadMovementsOf(command.fromAccountId, command.toAccountId);
     });
+  }
+
+  loadPayables(): void {
+    this.run(this.treasuryApi.getPayables(), 'Failed to load payables', (payables) => this.payablesSignal.set(payables));
+  }
+
+  /**
+   * Pays a payable. The backend answers with its new paid amount, balance and status, and moves the cash of the
+   * chosen account, so the balances are re-read.
+   */
+  payPayable(id: number, command: RegisterPayablePaymentCommand): void {
+    this.run(this.treasuryApi.payPayable(id, command), 'Failed to pay payable', (payable) => {
+      this.payablesSignal.update((payables) => payables.map((p) => (p.id === payable.id ? payable : p)));
+      this.loadBankAccounts();
+    });
+  }
+
+  /** Moves an unpaid payable to another cash-flow week. */
+  reschedulePayable(id: number, week: CashFlowWeek): void {
+    this.run(this.treasuryApi.reschedulePayable(id, week), 'Failed to reschedule payable', (payable) =>
+      this.payablesSignal.update((payables) => payables.map((p) => (p.id === payable.id ? payable : p))),
+    );
+  }
+
+  countPayablesByStatus(status: PaymentStatus | null): number {
+    return countByStatus(this.payablesSignal(), status);
   }
 
   loadPartners(): void {

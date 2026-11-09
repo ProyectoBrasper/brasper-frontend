@@ -1,6 +1,2 @@
-/** Whether an obligation has been settled (backend `PaymentStatus`). */
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PARTIALLY_PAID = 'PARTIALLY_PAID',
-  PAID = 'PAID',
-}
+/** The payment status is shared by Expenses and Treasury (backend `shared` package). */
+export { PaymentStatus } from '../../../shared/domain/model/payment-status';
