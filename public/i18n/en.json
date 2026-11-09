@@ -494,5 +494,30 @@
     "deactivateFor": "Deactivate {{code}}",
     "deactivateTitle": "Deactivate fixed cost",
     "deactivateMessage": "{{code}} · {{concept}} will no longer count in the monthly total and can no longer be paid or edited. This cannot be undone."
+  },
+  "accountType": {
+    "CHECKING": "Checking account",
+    "DETRACTIONS": "Detractions",
+    "PETTY_CASH": "Petty cash"
+  },
+  "bankAccounts": {
+    "subtitle": "Bank and cash balances",
+    "open": "Open account",
+    "formSubtitle": "Register a bank account or petty cash",
+    "data": "Account details",
+    "totalBalance": "Total cash balance",
+    "accountsCount": "{{count}} accounts · PEN",
+    "currentBalance": "Current balance",
+    "openingBalance": "Opening balance",
+    "bank": "Bank",
+    "type": "Account type",
+    "accountNumber": "Account number",
+    "accountNumberHint": "Unique; for petty cash it can be a name, like \"Petty cash\"",
+    "currency": "Currency",
+    "currencyHint": "Only soles (PEN) for now",
+    "openedOn": "Opening date",
+    "empty": "No accounts registered yet.",
+    "balanceNote": "Balances are calculated from the registered movements.",
+    "balanceFormNote": "The current balance comes from the movements; it is never edited by hand."
   }
 }

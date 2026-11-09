@@ -1,0 +1,84 @@
+<app-page-header
+  [title]="'bankAccounts.open' | translate"
+  [subtitle]="'bankAccounts.formSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.bankAccounts' | translate, link: '/treasury/bank-accounts' },
+    { label: 'bankAccounts.open' | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="accountForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'bankAccounts.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'bankAccounts.bank' | translate }}</mat-label>
+      <mat-select formControlName="bank">
+        @for (bank of banks; track bank) {
+          <mat-option [value]="bank">{{ 'bank.' + bank | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'bankAccounts.type' | translate }}</mat-label>
+      <mat-select formControlName="type">
+        @for (type of types; track type) {
+          <mat-option [value]="type">{{ 'accountType.' + type | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'bankAccounts.accountNumber' | translate }}</mat-label>
+      <input matInput class="mono" formControlName="accountNumber" maxlength="50" />
+      <mat-hint>{{ 'bankAccounts.accountNumberHint' | translate }}</mat-hint>
+      @if (isInvalidControl(accountForm, 'accountNumber')) {
+        <mat-error>{{ errorMessageForControl(accountForm, 'accountNumber') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'bankAccounts.currency' | translate }}</mat-label>
+      <input matInput formControlName="currency" />
+      <mat-hint>{{ 'bankAccounts.currencyHint' | translate }}</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'bankAccounts.openingBalance' | translate }}</mat-label>
+      <span matTextPrefix>S/&nbsp;</span>
+      <input matInput class="amount" formControlName="openingBalance" type="number" min="0" step="0.01" />
+      @if (isInvalidControl(accountForm, 'openingBalance')) {
+        <mat-error>{{ errorMessageForControl(accountForm, 'openingBalance') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'bankAccounts.openedOn' | translate }}</mat-label>
+      <input matInput formControlName="openedOn" [matDatepicker]="openedOnPicker" placeholder="dd/mm/aaaa" />
+      <mat-datepicker-toggle matIconSuffix [for]="openedOnPicker" />
+      <mat-datepicker #openedOnPicker />
+      @if (isInvalidControl(accountForm, 'openedOn')) {
+        <mat-error>{{ errorMessageForControl(accountForm, 'openedOn') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <p class="info">
+    <mat-icon>info</mat-icon>
+    {{ 'bankAccounts.balanceFormNote' | translate }}
+  </p>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading()">{{ 'bankAccounts.open' | translate }}</button>
+  </div>
+</form>

@@ -1,0 +1,155 @@
+.total-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border-radius: var(--brasper-radius-xl);
+  background: linear-gradient(120deg, var(--brasper-sidebar), var(--brasper-sidebar-active));
+  color: #fff;
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.total-label {
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brasper-sidebar-text);
+}
+
+.total-value {
+  font: 700 32px/40px var(--brasper-font-brand);
+}
+
+.total-hint {
+  font: var(--mat-sys-body-medium);
+  color: var(--brasper-sidebar-text);
+}
+
+.accounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.account-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.account-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-primary);
+}
+
+.account-icon.cash {
+  background: var(--brasper-neutral-container);
+  color: var(--brasper-neutral);
+}
+
+.account-name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-name h2 {
+  margin: 0;
+  font: 600 18px/24px var(--brasper-font-brand);
+}
+
+.account-number {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.type-tag {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.type-tag.info { background: var(--brasper-info-container); color: var(--brasper-info); }
+.type-tag.warning { background: var(--brasper-warning-container); color: var(--brasper-warning); }
+.type-tag.neutral { background: var(--brasper-neutral-container); color: var(--brasper-neutral); }
+
+.account-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balance-label {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.balance-value {
+  font: 700 26px/32px var(--brasper-font-brand);
+}
+
+.balance-value.negative {
+  color: var(--brasper-danger);
+}
+
+.opening {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.empty {
+  grid-column: 1 / -1;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+@media (max-width: 899px) {
+  .accounts {
+    grid-template-columns: 1fr;
+  }
+}
