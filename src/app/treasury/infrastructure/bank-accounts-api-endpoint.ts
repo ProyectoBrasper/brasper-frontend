@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
@@ -7,7 +7,15 @@ import { BaseResponse } from '../../shared/infrastructure/base-response';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { BankAccount, BankAccountType } from '../domain/model/bank-account.entity';
+import { RegisterAdjustmentCommand, TransferFundsCommand } from '../domain/model/cash-movement.commands';
+import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
+import {
+  CashMovementAssembler,
+  CashMovementResource,
+  RegisterAdjustmentRequest,
+  TransferFundsRequest,
+} from './cash-movement-assembler';
 
 /** Body of `POST /bank-accounts` (backend `OpenBankAccountResource`). */
 export interface OpenBankAccountRequest {
@@ -66,8 +74,8 @@ export class BankAccountAssembler implements BaseAssembler<BankAccount, BankAcco
 }
 
 /**
- * Client for `/bank-accounts`: admin, accounting and management read; admin and accounting open accounts.
- * Movements, transfers and adjustments come with the account detail.
+ * Client for `/bank-accounts`: admin, accounting and management read; admin and accounting open accounts,
+ * register adjustments and transfer funds. Movements are read per month (`?year=&month=`, both required).
  */
 export class BankAccountsApiEndpoint extends BaseApiEndpoint<
   BankAccount,
@@ -75,6 +83,8 @@ export class BankAccountsApiEndpoint extends BaseApiEndpoint<
   BankAccountsResponse,
   BankAccountAssembler
 > {
+  private readonly movementAssembler = new CashMovementAssembler();
+
   constructor(http: HttpClient) {
     super(
       http,
@@ -96,6 +106,44 @@ export class BankAccountsApiEndpoint extends BaseApiEndpoint<
     return this.http.post<BankAccountResource>(this.endpointUrl, request).pipe(
       map((resource) => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Failed to open bank account')),
+    );
+  }
+
+  /** `GET /bank-accounts/{id}/movements?year=&month=`; 404 if the account does not exist. */
+  getMovements(id: number, year: number, month: number): Observable<CashMovement[]> {
+    const params = new HttpParams().set('year', year).set('month', month);
+    return this.http.get<CashMovementResource[]>(`${this.endpointUrl}/${id}/movements`, { params }).pipe(
+      map((resources) => resources.map((resource) => this.movementAssembler.toEntityFromResource(resource))),
+      catchError(this.handleError('Failed to fetch movements')),
+    );
+  }
+
+  /** `POST /bank-accounts/{id}/adjustments`: answers with the account and its new balance. */
+  adjust(id: number, command: RegisterAdjustmentCommand): Observable<BankAccount> {
+    const request: RegisterAdjustmentRequest = {
+      occurredOn: command.occurredOn,
+      direction: command.direction,
+      amount: command.amount,
+      concept: command.concept.trim() || null,
+    };
+    return this.http.post<BankAccountResource>(`${this.endpointUrl}/${id}/adjustments`, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to register adjustment')),
+    );
+  }
+
+  /** `POST /bank-accounts/transfers`: answers with the origin account (the destination changes too). */
+  transfer(command: TransferFundsCommand): Observable<BankAccount> {
+    const request: TransferFundsRequest = {
+      fromAccountId: command.fromAccountId,
+      toAccountId: command.toAccountId,
+      transferredOn: command.transferredOn,
+      amount: command.amount,
+      concept: command.concept.trim() || null,
+    };
+    return this.http.post<BankAccountResource>(`${this.endpointUrl}/transfers`, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to transfer funds')),
     );
   }
 }

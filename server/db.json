@@ -162,5 +162,31 @@
     {"id":6,"fixedCostId":6,"paidOn":"2026-10-09","year":2026,"month":10,"amount":1150,"currency":"PEN","bankAccountId":1,"notes":null},
     {"id":7,"fixedCostId":7,"paidOn":"2026-10-02","year":2026,"month":10,"amount":4800,"currency":"PEN","bankAccountId":1,"notes":null},
     {"id":8,"fixedCostId":8,"paidOn":"2026-10-09","year":2026,"month":10,"amount":420,"currency":"PEN","bankAccountId":2,"notes":null}
+  ],
+  "cash-movements": [
+    {"id":1,"bankAccountId":1,"occurredOn":"2026-04-28","direction":"INFLOW","amount":207680,"concept":"Cobro F001-00000031","source":"INVOICE_PAYMENT","sourceId":1},
+    {"id":2,"bankAccountId":3,"occurredOn":"2026-04-29","direction":"INFLOW","amount":28320,"concept":"Detracción F001-00000031","source":"INVOICE_PAYMENT","sourceId":2},
+    {"id":3,"bankAccountId":1,"occurredOn":"2026-07-05","direction":"INFLOW","amount":186912,"concept":"Cobro F001-00000038","source":"INVOICE_PAYMENT","sourceId":3},
+    {"id":4,"bankAccountId":3,"occurredOn":"2026-07-06","direction":"INFLOW","amount":25488,"concept":"Detracción F001-00000038","source":"INVOICE_PAYMENT","sourceId":4},
+    {"id":5,"bankAccountId":1,"occurredOn":"2026-09-02","direction":"INFLOW","amount":103840,"concept":"Cobro F001-00000044","source":"INVOICE_PAYMENT","sourceId":5},
+    {"id":6,"bankAccountId":3,"occurredOn":"2026-09-03","direction":"INFLOW","amount":14160,"concept":"Detracción F001-00000044","source":"INVOICE_PAYMENT","sourceId":6},
+    {"id":7,"bankAccountId":1,"occurredOn":"2026-10-02","direction":"OUTFLOW","amount":141600,"concept":"Pago estructuras metálicas — Aceros y Estructuras del Norte S.A.C.","source":"EXPENSE","sourceId":1},
+    {"id":8,"bankAccountId":1,"occurredOn":"2026-10-02","direction":"OUTFLOW","amount":3500,"concept":"Servicio contable externo (CF-005)","source":"FIXED_COST_PAYMENT","sourceId":5},
+    {"id":9,"bankAccountId":1,"occurredOn":"2026-10-02","direction":"OUTFLOW","amount":4800,"concept":"Alquiler de oficina (CF-007)","source":"FIXED_COST_PAYMENT","sourceId":7},
+    {"id":10,"bankAccountId":1,"occurredOn":"2026-10-06","direction":"INFLOW","amount":60000,"concept":"Cobro F001-00000047","source":"INVOICE_PAYMENT","sourceId":7},
+    {"id":11,"bankAccountId":3,"occurredOn":"2026-10-07","direction":"INFLOW","amount":16992,"concept":"Detracción F001-00000047","source":"INVOICE_PAYMENT","sourceId":8},
+    {"id":12,"bankAccountId":1,"occurredOn":"2026-10-09","direction":"OUTFLOW","amount":1150,"concept":"Seguro SCTR (CF-006)","source":"FIXED_COST_PAYMENT","sourceId":6},
+    {"id":13,"bankAccountId":2,"occurredOn":"2026-10-09","direction":"OUTFLOW","amount":420,"concept":"Hosting y software (CF-008)","source":"FIXED_COST_PAYMENT","sourceId":8},
+    {"id":14,"bankAccountId":1,"occurredOn":"2026-10-14","direction":"OUTFLOW","amount":22450,"concept":"Pago IGV y renta setiembre","source":"TAX_PAYMENT","sourceId":null},
+    {"id":15,"bankAccountId":3,"occurredOn":"2026-10-14","direction":"INFLOW","amount":21240,"concept":"Detracción F001-00000050","source":"INVOICE_PAYMENT","sourceId":9},
+    {"id":16,"bankAccountId":1,"occurredOn":"2026-10-15","direction":"OUTFLOW","amount":20000,"concept":"Pago parcial Electro Andes","source":"PAYABLE_PAYMENT","sourceId":1},
+    {"id":17,"bankAccountId":2,"occurredOn":"2026-10-15","direction":"OUTFLOW","amount":8000,"concept":"Pago honorarios instalador — Marco Antonio Huamán Ríos","source":"EXPENSE","sourceId":3},
+    {"id":18,"bankAccountId":4,"occurredOn":"2026-10-18","direction":"OUTFLOW","amount":1850,"concept":"Pago combustible y peajes — Grifo y Servicios El Cruce E.I.R.L.","source":"EXPENSE","sourceId":4},
+    {"id":19,"bankAccountId":2,"occurredOn":"2026-10-22","direction":"OUTFLOW","amount":29500,"concept":"Pago alquiler de sala de reuniones — Oficinas y Coworking Centro S.A.C.","source":"EXPENSE","sourceId":5},
+    {"id":20,"bankAccountId":2,"occurredOn":"2026-10-29","direction":"OUTFLOW","amount":22300,"concept":"Pago parcial Electro Andes","source":"PAYABLE_PAYMENT","sourceId":2},
+    {"id":21,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":8500,"concept":"Sueldo — Carla Mendoza (CF-001)","source":"FIXED_COST_PAYMENT","sourceId":1},
+    {"id":22,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":7200,"concept":"Sueldo — Jorge Torres (CF-002)","source":"FIXED_COST_PAYMENT","sourceId":2},
+    {"id":23,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":3200,"concept":"Sueldo — Diego Flores (CF-003)","source":"FIXED_COST_PAYMENT","sourceId":3},
+    {"id":24,"bankAccountId":1,"occurredOn":"2026-10-31","direction":"OUTFLOW","amount":3800,"concept":"Sueldo — Rosa Díaz (CF-004)","source":"FIXED_COST_PAYMENT","sourceId":4}
   ]
 }

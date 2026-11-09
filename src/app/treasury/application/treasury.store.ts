@@ -4,13 +4,17 @@ import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { BankAccount } from '../domain/model/bank-account.entity';
+import { Period } from '../../shared/domain/model/period';
+import { RegisterAdjustmentCommand, TransferFundsCommand } from '../domain/model/cash-movement.commands';
+import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
+import { movementTotals, sortMovements } from '../domain/services/movement-figures';
 import { Partner } from '../domain/model/partner.entity';
 import { TreasuryApi } from '../infrastructure/treasury-api';
 
 /**
- * Treasury context state: bank accounts (also read by Billing, Expenses and Staff) and partners.
- * Movements, payables, loans and contributions come with their screens.
+ * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements
+ * and partners. Payables, loans and contributions come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryStore {
@@ -20,12 +24,19 @@ export class TreasuryStore {
 
   private readonly bankAccountsSignal = signal<BankAccount[]>([]);
   private readonly partnersSignal = signal<Partner[]>([]);
+  private readonly movementsSignal = signal<CashMovement[]>([]);
+  /** Account and month whose movements are shown (to drop late answers and reload after changes). */
+  private movementsKey: { bankAccountId: number; period: Period } | null = null;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
 
   readonly bankAccounts = this.bankAccountsSignal.asReadonly();
   readonly partners = this.partnersSignal.asReadonly();
+  /** Movements of the shown account and month, in date order. */
+  readonly movements = this.movementsSignal.asReadonly();
+  /** Inflows and outflows of the shown movements. */
+  readonly movementTotals = computed(() => movementTotals(this.movementsSignal()));
   /** Cash of the company in PEN: sum of the current balances of the PEN accounts (in cents, no drift). */
   readonly totalBalance = computed(
     () =>
@@ -52,6 +63,49 @@ export class TreasuryStore {
     });
   }
 
+  /** Re-reads one account (the detail may be opened directly by URL, and balances change). */
+  loadBankAccount(id: number): void {
+    this.run(this.treasuryApi.getBankAccountById(id), 'Failed to load bank account', (account) =>
+      this.upsertAccount(account),
+    );
+  }
+
+  /** Loads the movements of one account in one month, in date order. */
+  loadMovements(bankAccountId: number, period: Period): void {
+    const key = { bankAccountId, period };
+    this.movementsKey = key;
+    this.movementsSignal.set([]);
+    this.run(
+      this.treasuryApi.getMovements(bankAccountId, period.year, period.month),
+      'Failed to load movements',
+      (movements) => {
+        // Ignore a late answer for an account or month the user already left.
+        if (this.movementsKey === key) {
+          this.movementsSignal.set(sortMovements(movements));
+        }
+      },
+    );
+  }
+
+  /** Registers an adjustment; the backend answers with the account and its new balance. */
+  registerAdjustment(bankAccountId: number, command: RegisterAdjustmentCommand): void {
+    this.run(this.treasuryApi.registerAdjustment(bankAccountId, command), 'Failed to register adjustment', (account) => {
+      this.upsertAccount(account);
+      this.reloadMovementsOf(bankAccountId);
+    });
+  }
+
+  /**
+   * Transfers between two accounts. The backend answers only with the origin, but the destination changed too,
+   * so every balance is re-read.
+   */
+  transferFunds(command: TransferFundsCommand): void {
+    this.run(this.treasuryApi.transferFunds(command), 'Failed to transfer funds', () => {
+      this.loadBankAccounts();
+      this.reloadMovementsOf(command.fromAccountId, command.toAccountId);
+    });
+  }
+
   loadPartners(): void {
     this.run(this.treasuryApi.getPartners(), 'Failed to load partners', (partners) =>
       this.partnersSignal.set(partners),
@@ -68,6 +122,22 @@ export class TreasuryStore {
 
   clearError(): void {
     this.errorSignal.set(null);
+  }
+
+  private upsertAccount(account: BankAccount): void {
+    this.bankAccountsSignal.update((accounts) =>
+      accounts.some((a) => a.id === account.id)
+        ? accounts.map((a) => (a.id === account.id ? account : a))
+        : [...accounts, account],
+    );
+  }
+
+  /** Reloads the shown movements if they belong to one of the given accounts. */
+  private reloadMovementsOf(...bankAccountIds: number[]): void {
+    const key = this.movementsKey;
+    if (key && bankAccountIds.includes(key.bankAccountId)) {
+      this.loadMovements(key.bankAccountId, key.period);
+    }
   }
 
   private run<T>(request: Observable<T>, fallback: string, onSuccess: (value: T) => void): void {

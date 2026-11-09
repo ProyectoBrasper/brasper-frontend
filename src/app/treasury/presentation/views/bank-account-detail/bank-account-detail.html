@@ -1,0 +1,106 @@
+@let current = account();
+<app-page-header
+  [title]="current ? ('bank.' + current.bank | translate) : ('nav.bankAccounts' | translate)"
+  [subtitle]="current ? current.accountNumber + ' · ' + current.currency + ' · ' + ('accountType.' + current.type | translate) : ''"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.bankAccounts' | translate, link: '/treasury/bank-accounts' },
+    { label: current ? ('bank.' + current.bank | translate) : '…' }
+  ]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (canWrite() && current) {
+    <button mat-stroked-button type="button" (click)="onAdjust(current)">
+      <mat-icon>tune</mat-icon>
+      {{ 'bankAccounts.adjustment' | translate }}
+    </button>
+    <button mat-flat-button type="button" (click)="onTransfer(current)">
+      <mat-icon>swap_horiz</mat-icon>
+      {{ 'bankAccounts.transfer' | translate }}
+    </button>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (current) {
+  <section class="summary">
+    <article class="summary-card">
+      <span class="summary-label">{{ 'bankAccounts.currentBalance' | translate }}</span>
+      <span class="summary-value amount primary" [class.negative]="current.currentBalance < 0">
+        {{ current.currentBalance | money: current.currency }}
+      </span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'bankAccounts.openingBalance' | translate }}</span>
+      <span class="summary-value amount">{{ current.openingBalance | money: current.currency }}</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'bankAccounts.periodInflows' | translate }}</span>
+      <span class="summary-value amount inflow">{{ totals().inflows | money: current.currency }}</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'bankAccounts.periodOutflows' | translate }}</span>
+      <span class="summary-value amount outflow">{{ totals().outflows | money: current.currency }}</span>
+    </article>
+  </section>
+}
+
+<section class="table-card">
+  <h2 class="table-title">{{ 'bankAccounts.movements' | translate }}</h2>
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table" [dataSource]="dataSource()">
+      <ng-container matColumnDef="occurredOn">
+        <th mat-header-cell *matHeaderCellDef>{{ 'bankAccounts.date' | translate }}</th>
+        <td mat-cell *matCellDef="let movement">{{ movement.occurredOn | date: 'dd/MM/yyyy' }}</td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="concept">
+        <th mat-header-cell *matHeaderCellDef>{{ 'bankAccounts.concept' | translate }}</th>
+        <td mat-cell *matCellDef="let movement" class="concept" [title]="movement.concept">{{ movement.concept || '—' }}</td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="source">
+        <th mat-header-cell *matHeaderCellDef>{{ 'bankAccounts.source' | translate }}</th>
+        <td mat-cell *matCellDef="let movement"><span class="tag">{{ 'movementSource.' + movement.source | translate }}</span></td>
+        <td mat-footer-cell *matFooterCellDef class="totals-label">{{ 'bankAccounts.periodTotals' | translate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="inflow">
+        <th mat-header-cell *matHeaderCellDef class="amount inflow">{{ 'bankAccounts.inflow' | translate }}</th>
+        <td mat-cell *matCellDef="let movement" class="amount inflow">
+          {{ movement.isInflow() ? (movement.amount | money: current?.currency) : '—' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="amount inflow strong">{{ totals().inflows | money: current?.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="outflow">
+        <th mat-header-cell *matHeaderCellDef class="amount outflow">{{ 'bankAccounts.outflow' | translate }}</th>
+        <td mat-cell *matCellDef="let movement" class="amount outflow">
+          {{ movement.isInflow() ? '—' : (movement.amount | money: current?.currency) }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="amount outflow strong">{{ totals().outflows | money: current?.currency }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let movement; columns: columns"></tr>
+      <tr mat-footer-row *matFooterRowDef="columns" class="totals-row"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="columns.length">
+          {{ (loading() ? 'common.loading' : 'bankAccounts.noMovements') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[20, 50]" [pageSize]="20" />
+</section>

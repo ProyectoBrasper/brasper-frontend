@@ -65,31 +65,43 @@ package "app" {
 
       class CashMovement <<Entity>> {
         - #id: number
-        - #bankAccountId: number
         - #occurredOn: string
         - #direction: MovementDirection
         - #amount: number
         - #concept: string
-        - #source: string
+        - #source: MovementSource
         - #sourceId: number | null
         +id: number
-        +bankAccountId: number
         +occurredOn: string
         +direction: MovementDirection
         +amount: number
         +concept: string
-        +source: string
+        +source: MovementSource
         +sourceId: number | null
-        +signedAmount(): number
+        +isInflow(): boolean
       }
       CashMovement ..|> app.shared.domain.model.BaseEntity : implements
-      BankAccount "1" <-- "*" CashMovement : references bankAccountId
+      BankAccount "1" *-- "*" CashMovement : movements of the month
 
       enum MovementDirection {
         INFLOW
         OUTFLOW
       }
+      enum MovementSource {
+        OPENING_BALANCE
+        INVOICE_PAYMENT
+        EXPENSE
+        FIXED_COST_PAYMENT
+        PAYABLE_PAYMENT
+        LOAN_DISBURSEMENT
+        LOAN_INSTALLMENT
+        PARTNER_CONTRIBUTION
+        TAX_PAYMENT
+        TRANSFER
+        ADJUSTMENT
+      }
       CashMovement --> MovementDirection : has
+      CashMovement --> MovementSource : has
 
       class Payable <<Entity>> {
         - #id: number
@@ -235,15 +247,16 @@ package "app" {
       PartnerContribution ..|> app.shared.domain.model.BaseEntity : implements
       Partner "1" <-- "*" PartnerContribution : references partnerId
 
-      class FundsTransfer {
-        - #fromAccountId: number
-        - #toAccountId: number
-        - #transferredOn: string
-        - #amount: number
-        - #concept: string
+      class TransferFundsCommand <<Command>> {
         +fromAccountId: number
         +toAccountId: number
         +transferredOn: string
+        +amount: number
+        +concept: string
+      }
+      class RegisterAdjustmentCommand <<Command>> {
+        +occurredOn: string
+        +direction: MovementDirection
         +amount: number
         +concept: string
       }
@@ -261,11 +274,10 @@ package "app" {
       }
       class CashMovementResource <<Resource>> {
         +id: number
-        +bankAccountId: number
         +occurredOn: string
         +direction: string
         +amount: number
-        +concept: string
+        +concept: string | null
         +source: string
         +sourceId: number | null
       }
@@ -330,8 +342,6 @@ package "app" {
       }
       class BankAccountsResponse <<Response>> {
       }
-      class CashMovementsResponse <<Response>> {
-      }
       class PayablesResponse <<Response>> {
       }
       class PayablePaymentsResponse <<Response>> {
@@ -351,9 +361,7 @@ package "app" {
         +toResourceFromEntity(entity: BankAccount): BankAccountResource
       }
       class CashMovementAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: CashMovementsResponse): CashMovement[]
         +toEntityFromResource(resource: CashMovementResource): CashMovement
-        +toResourceFromEntity(entity: CashMovement): CashMovementResource
       }
       class PayableAssembler <<Assembler>> {
         +toEntitiesFromResponse(response: PayablesResponse): Payable[]
@@ -387,8 +395,8 @@ package "app" {
       }
 
       note top of BankAccountsApiEndpoint
-        Implementado: getAll() (Billing, Expenses y Staff eligen cuenta) y open(command).
-        Movimientos, transferencias y ajustes llegan con el detalle de cuenta.
+        Implementado: getAll(), getById(), open(), getMovements(), adjust() y transfer(). Los movimientos,
+        ajustes y transferencias cuelgan de /bank-accounts, como en el backend (no hay endpoint aparte).
       end note
       class OpenBankAccountRequest <<Request>> {
         +bank: string
@@ -400,10 +408,9 @@ package "app" {
       }
       class BankAccountsApiEndpoint {
         +open(command: OpenBankAccountCommand): Observable<BankAccount>
-        +transferFunds(transfer: FundsTransfer): Observable<void>
-      }
-      class CashMovementsApiEndpoint {
-        +getByAccountAndPeriod(bankAccountId: number, year: number, month: number): Observable<CashMovement[]>
+        +getMovements(id: number, year: number, month: number): Observable<CashMovement[]>
+        +adjust(id: number, command: RegisterAdjustmentCommand): Observable<BankAccount>
+        +transfer(command: TransferFundsCommand): Observable<BankAccount>
       }
       class PayablesApiEndpoint {
         +getPending(): Observable<Payable[]>
@@ -427,7 +434,6 @@ package "app" {
 
       class TreasuryApi {
         -bankAccountsEndpoint: BankAccountsApiEndpoint
-        -cashMovementsEndpoint: CashMovementsApiEndpoint
         -payablesEndpoint: PayablesApiEndpoint
         -payablePaymentsEndpoint: PayablePaymentsApiEndpoint
         -loansEndpoint: LoansApiEndpoint
@@ -436,8 +442,10 @@ package "app" {
         -partnerContributionsEndpoint: PartnerContributionsApiEndpoint
         +getBankAccounts(): Observable<BankAccount[]>
         +openBankAccount(command: OpenBankAccountCommand): Observable<BankAccount>
+        +getBankAccountById(id: number): Observable<BankAccount>
         +getMovements(bankAccountId: number, year: number, month: number): Observable<CashMovement[]>
-        +transferFunds(transfer: FundsTransfer): Observable<void>
+        +registerAdjustment(bankAccountId: number, command: RegisterAdjustmentCommand): Observable<BankAccount>
+        +transferFunds(command: TransferFundsCommand): Observable<BankAccount>
         +getPayables(): Observable<Payable[]>
         +createPayable(payable: Payable): Observable<Payable>
         +updatePayable(payable: Payable): Observable<Payable>
@@ -463,7 +471,6 @@ package "app" {
       PartnerResource ..|> app.shared.infrastructure.BaseResource : implements
       PartnerContributionResource ..|> app.shared.infrastructure.BaseResource : implements
       BankAccountsResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      CashMovementsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PayablesResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PayablePaymentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       LoansResponse ..|> app.shared.infrastructure.BaseResponse : implements
@@ -471,7 +478,6 @@ package "app" {
       PartnersResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnerContributionsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       BankAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      CashMovementAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PayableAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PayablePaymentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       LoanAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
@@ -479,7 +485,6 @@ package "app" {
       PartnerAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerContributionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       BankAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      CashMovementsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PayablesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PayablePaymentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       LoansApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
@@ -488,7 +493,6 @@ package "app" {
       PartnerContributionsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       TreasuryApi --|> app.shared.infrastructure.BaseApi : extends
       TreasuryApi --> BankAccountsApiEndpoint : delegates to
-      TreasuryApi --> CashMovementsApiEndpoint : delegates to
       TreasuryApi --> PayablesApiEndpoint : delegates to
       TreasuryApi --> PayablePaymentsApiEndpoint : delegates to
       TreasuryApi --> LoansApiEndpoint : delegates to
@@ -496,14 +500,15 @@ package "app" {
       TreasuryApi --> PartnersApiEndpoint : delegates to
       TreasuryApi --> PartnerContributionsApiEndpoint : delegates to
       BankAccountsApiEndpoint --> BankAccountAssembler : uses
-      CashMovementsApiEndpoint --> CashMovementAssembler : uses
+      BankAccountsApiEndpoint --> CashMovementAssembler : uses
       PayablesApiEndpoint --> PayableAssembler : uses
       PayablePaymentsApiEndpoint --> PayablePaymentAssembler : uses
       LoansApiEndpoint --> LoanAssembler : uses
       LoanInstallmentsApiEndpoint --> LoanInstallmentAssembler : uses
       PartnersApiEndpoint --> PartnerAssembler : uses
       PartnerContributionsApiEndpoint --> PartnerContributionAssembler : uses
-      BankAccountsApiEndpoint ..> FundsTransfer : sends
+      BankAccountsApiEndpoint ..> TransferFundsCommand : sends
+      BankAccountsApiEndpoint ..> RegisterAdjustmentCommand : sends
     }
 
     package "application" {
@@ -522,6 +527,7 @@ package "app" {
         +totalBalance: Signal<number>
         +canWrite: Signal<boolean>
         +movements: Signal<CashMovement[]>
+        +movementTotals: Signal<{inflows: number, outflows: number}>
         +payables: Signal<Payable[]>
         +pendingPayables: Signal<Payable[]>
         +loans: Signal<Loan[]>
@@ -532,8 +538,10 @@ package "app" {
         +error: Signal<string | null>
         +loadBankAccounts(): void
         +openBankAccount(command: OpenBankAccountCommand, navigateTo: string[]): void
-        +loadMovements(bankAccountId: number, year: number, month: number): void
-        +transferFunds(transfer: FundsTransfer): void
+        +loadBankAccount(id: number): void
+        +loadMovements(bankAccountId: number, period: Period): void
+        +registerAdjustment(bankAccountId: number, command: RegisterAdjustmentCommand): void
+        +transferFunds(command: TransferFundsCommand): void
         +loadPayables(): void
         +createPayable(payable: Payable): void
         +registerPayablePayment(payableId: number, payment: PayablePayment): void
@@ -562,8 +570,18 @@ package "app" {
         class TransferFundsDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<TransferFundsDialog>
-          +data: {accounts: BankAccount[]}
+          +data: {accounts: BankAccount[], fromAccountId: number | null}
           +transferForm: FormGroup
+          +targets: Signal<BankAccount[]>
+          +leavesNegative: Signal<boolean>
+          +onSave(): void
+          +onCancel(): void
+        }
+        class RegisterAdjustmentDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterAdjustmentDialog>
+          +account: BankAccount
+          +adjustmentForm: FormGroup
           +onSave(): void
           +onCancel(): void
         }
@@ -625,13 +643,16 @@ package "app" {
         }
         class BankAccountDetail <<Component>> {
           -treasuryStore: TreasuryStore
-          -route: ActivatedRoute
+          -dialog: MatDialog
+          +id: InputSignal<string>
           +account: Signal<BankAccount | undefined>
           +period: WritableSignal<Period>
-          +displayedColumns: string[]
+          +totals: Signal<{inflows: number, outflows: number}>
+          +columns: string[]
           +dataSource: Signal<MatTableDataSource<CashMovement>>
           +paginator: Signal<MatPaginator>
-          +onPeriodChange(period: Period): void
+          +onAdjust(account: BankAccount): void
+          +onTransfer(account: BankAccount): void
         }
         class PayableList <<Component>> {
           -treasuryStore: TreasuryStore
@@ -706,6 +727,9 @@ package "app" {
       PayableForm --|> app.shared.presentation.BaseForm : extends
       LoanForm --|> app.shared.presentation.BaseForm : extends
       BankAccountList --> TransferFundsDialog : opens
+      BankAccountDetail --> TransferFundsDialog : opens
+      BankAccountDetail --> RegisterAdjustmentDialog : opens
+      BankAccountDetail --> app.shared.presentation.components.PeriodSelector : contains
       PayableList --> RegisterPayablePaymentDialog : opens
       LoanDetail --> ScheduleInstallmentDialog : opens
       LoanDetail --> PayInstallmentDialog : opens
@@ -726,7 +750,12 @@ note bottom
   obligatoria (el backend la pide aunque no la devuelve) y solo PEN por ahora (USD -> 422).
   Lectura: ADMIN, ACCOUNTING, MANAGEMENT. Escritura: ADMIN, ACCOUNTING (AREA_ROLES.treasuryWrite).
   El backend no impide saldos negativos; la UI los marca en rojo.
-  TransferFundsDialog valida cuentas distintas y misma moneda (POST /bank-accounts/transfers).
+  Movimientos por mes: GET /bank-accounts/{id}/movements?year=&month= (sin orden: la UI ordena por fecha).
+  El saldo inicial no es un movimiento; saldo actual = inicial + movimientos. No hay saldo por fila.
+  TransferFundsDialog solo ofrece destinos distintos y de la misma moneda (POST /bank-accounts/transfers);
+  el backend responde con la cuenta de origen, así que tras transferir se releen todos los saldos.
+  Ajuste (POST /bank-accounts/{id}/adjustments): única forma de corregir un saldo; el tipo no tiene valor
+  por defecto. Ojo: los movimientos automáticos llegan con concepto en inglés desde el backend.
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

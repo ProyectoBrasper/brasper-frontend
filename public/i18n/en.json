@@ -518,6 +518,46 @@
     "openedOn": "Opening date",
     "empty": "No accounts registered yet.",
     "balanceNote": "Balances are calculated from the registered movements.",
-    "balanceFormNote": "The current balance comes from the movements; it is never edited by hand."
+    "balanceFormNote": "The current balance comes from the movements; it is never edited by hand.",
+    "viewMovements": "View movements",
+    "transfer": "Transfer funds",
+    "fromAccount": "From account",
+    "toAccount": "To account",
+    "toAccountHint": "Another account in the same currency",
+    "available": "Available balance",
+    "negativeWarning": "The origin account will go below zero. The system allows it; check before confirming.",
+    "date": "Date",
+    "amount": "Amount",
+    "concept": "Concept",
+    "adjustment": "Register adjustment",
+    "registerAdjustment": "Register adjustment",
+    "direction": "Adjustment type",
+    "directionRequired": "Choose whether it is an inflow or an outflow.",
+    "adjustmentConceptHint": "Explain why: the adjustment stays in the account history.",
+    "movements": "Movements",
+    "periodInflows": "Inflows in the period",
+    "periodOutflows": "Outflows in the period",
+    "source": "Source",
+    "inflow": "Inflow",
+    "outflow": "Outflow",
+    "periodTotals": "Period totals",
+    "noMovements": "No movements in this period."
+  },
+  "movementDirection": {
+    "INFLOW": "Inflow",
+    "OUTFLOW": "Outflow"
+  },
+  "movementSource": {
+    "OPENING_BALANCE": "Opening balance",
+    "INVOICE_PAYMENT": "Invoice collection",
+    "EXPENSE": "Expense",
+    "FIXED_COST_PAYMENT": "Fixed cost",
+    "PAYABLE_PAYMENT": "Payable",
+    "LOAN_DISBURSEMENT": "Loan disbursement",
+    "LOAN_INSTALLMENT": "Loan installment",
+    "PARTNER_CONTRIBUTION": "Partner contribution",
+    "TAX_PAYMENT": "Tax return",
+    "TRANSFER": "Transfer",
+    "ADJUSTMENT": "Adjustment"
   }
 }
