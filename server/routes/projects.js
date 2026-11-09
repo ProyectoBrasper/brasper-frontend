@@ -96,6 +96,9 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     const error = invalidProject(body);
     if (error) return problem(res, 400, 'Bad Request', error);
     if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if (body.currency !== 'PEN') {
+      return problem(res, 422, 'Unprocessable Entity', 'Por ahora el presupuesto del proyecto solo puede ser en PEN.');
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(body.quotedOn ?? '')) {
       return problem(res, 400, 'Bad Request', 'La fecha de cotización no es válida.');
     }

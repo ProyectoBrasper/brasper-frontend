@@ -218,7 +218,8 @@
     "progressHint": "Up to {{max}} % (what is left to reach 100 %)",
     "willComplete": "This progress takes the project to 100 % and it will be completed.",
     "addEstimate": "Add estimate",
-    "editEstimate": "Edit estimate"
+    "editEstimate": "Edit estimate",
+    "currencyHint": "Only soles (PEN) for now"
   },
   "costCategory": {
     "MATERIALS": "Materials",

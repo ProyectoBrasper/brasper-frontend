@@ -36,6 +36,7 @@ export const routes: Routes = [
     title: 'Brasper',
   },
   { path: 'projects', loadChildren: projectsRoutes, canActivate: [authenticationGuard] },
-  { path: 'billing', loadChildren: billingRoutes, canActivate: [authenticationGuard] },
+  // Billing reads are for finance roles only (backend #120).
+  { path: 'billing', loadChildren: billingRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.finance } },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];

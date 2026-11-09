@@ -3,6 +3,8 @@
 const { taxParametersAt } = require('./accounting');
 
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
+// Billing reads are for finance roles only (backend #120).
+const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const STANDARD_RATES = { igv: 0.18, detraction: 0.12, retention: 0.03 };
 
 /** Stored record → InvoiceResource (drops the internal series / correlative / hasRetention / hasDetraction). */
@@ -44,6 +46,9 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
       return problem(res, 400, 'Bad Request', 'La base imponible debe ser mayor a 0, con hasta 2 decimales.');
     }
     if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if (body.currency !== 'PEN') {
+      return problem(res, 422, 'Unprocessable Entity', 'Por ahora las facturas y los cobros programados solo pueden ser en PEN.');
+    }
     if (body.selfDetraction && !body.hasDetraction) {
       return problem(res, 400, 'Bad Request', 'La autodetracción requiere detracción.');
     }
@@ -83,7 +88,7 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
   });
 
   // GET /invoices?status=&projectId=&year=&month= (year and month go together, like the backend).
-  server.get('/api/v1/invoices', requireRoles(), (req, res) => {
+  server.get('/api/v1/invoices', requireRoles(...READERS), (req, res) => {
     const { status, projectId, year, month } = req.query;
     if ((year === undefined) !== (month === undefined)) {
       return problem(res, 400, 'Bad Request', 'year y month deben enviarse juntos.');
@@ -98,7 +103,7 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     res.json(result.map(invoiceResource));
   });
 
-  server.get('/api/v1/invoices/:id', requireRoles(), (req, res) => {
+  server.get('/api/v1/invoices/:id', requireRoles(...READERS), (req, res) => {
     const invoice = invoices().find({ id: Number(req.params.id) }).value();
     if (!invoice) return problem(res, 404, 'Not Found', 'Factura no encontrada.');
     res.json(invoiceResource(invoice));
@@ -121,7 +126,7 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     res.json(invoiceResource(findInvoice(req)));
   });
 
-  server.get('/api/v1/invoices/:id/payments', requireRoles(), (req, res) => {
+  server.get('/api/v1/invoices/:id/payments', requireRoles(...READERS), (req, res) => {
     const invoice = findInvoice(req);
     if (!invoice) return problem(res, 404, 'Not Found', NOT_FOUND);
     res.json(paymentsOf(invoice.id).map(paymentResource));

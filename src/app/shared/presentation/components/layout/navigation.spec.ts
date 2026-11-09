@@ -12,18 +12,27 @@ describe('navigation', () => {
     expect(optionsFor(Role.ROLE_ADMIN)).toHaveLength(24);
   });
 
-  it('hides accounting, reports, staff and users from engineers', () => {
+  it('hides finance, accounting, reports, staff and users from engineers (backend permissions)', () => {
     const engineer = links(Role.ROLE_ENGINEER);
-    expect(engineer).toContain('/projects');
-    expect(engineer).toContain('/treasury/bank-accounts');
+    expect(engineer).toEqual([
+      '/dashboard',
+      '/projects',
+      '/projects/clients',
+      '/expenses',
+      '/expenses/suppliers',
+    ]);
+    expect(engineer.some((link) => link.startsWith('/billing'))).toBe(false);
+    expect(engineer.some((link) => link.startsWith('/treasury'))).toBe(false);
     expect(engineer.some((link) => link.startsWith('/accounting'))).toBe(false);
     expect(engineer.some((link) => link.startsWith('/reports'))).toBe(false);
     expect(engineer.some((link) => link.startsWith('/staff'))).toBe(false);
     expect(engineer).not.toContain('/users');
   });
 
-  it('lets accounting and management read accounting and reports but not users', () => {
+  it('lets accounting and management read finance, accounting and reports but not users', () => {
     for (const role of [Role.ROLE_ACCOUNTING, Role.ROLE_MANAGEMENT]) {
+      expect(links(role)).toContain('/billing/invoices');
+      expect(links(role)).toContain('/treasury/bank-accounts');
       expect(links(role)).toContain('/accounting/journal-entries');
       expect(links(role)).toContain('/reports/cash-flow');
       expect(links(role)).not.toContain('/users');

@@ -10,12 +10,24 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
   const isLastActiveAdmin = (user) =>
     user.role === 'ROLE_ADMIN' && users().filter({ role: 'ROLE_ADMIN', active: true }).size().value() === 1;
 
+  // Like the backend SignInThrottle (#121): 5 wrong passwords lock the username for 15 minutes (429).
+  const MAX_FAILURES = 5;
+  const LOCK_MS = 15 * 60 * 1000;
+  const attempts = new Map(); // username -> { failures, lockedUntil }
+
   server.post('/api/v1/auth/sign-in', (req, res) => {
     const { username, password } = req.body ?? {};
+    const state = attempts.get(username) ?? { failures: 0, lockedUntil: 0 };
+    if (state.lockedUntil > Date.now()) {
+      return problem(res, 429, 'Too Many Requests', 'Demasiados intentos fallidos de inicio de sesión. Inténtalo de nuevo en 15 minutos.');
+    }
     const user = users().find({ username }).value();
     if (!user || user.password !== password) {
+      const failures = state.failures + 1;
+      attempts.set(username, { failures, lockedUntil: failures >= MAX_FAILURES ? Date.now() + LOCK_MS : 0 });
       return problem(res, 401, 'Unauthorized', 'Usuario o contraseña incorrectos.');
     }
+    attempts.delete(username);
     if (!user.active) {
       return problem(res, 403, 'Forbidden', 'Este usuario está inactivo.');
     }

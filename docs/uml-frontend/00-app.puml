@@ -24,10 +24,10 @@ package "app" {
     +'dashboard' -> DashboardView [authenticationGuard]
     +'users' -> UserList [roleGuard: ROLE_ADMIN]
     +'projects/**' -> loadChildren(projectsRoutes) [authenticationGuard]
-    +'billing/**' -> loadChildren(billingRoutes) [authenticationGuard]
+    +'billing/**' -> loadChildren(billingRoutes) [roleGuard: ROLE_ADMIN, ROLE_ACCOUNTING, ROLE_MANAGEMENT]
     +'expenses/**' -> loadChildren(expensesRoutes) [authenticationGuard]
     +'staff/**' -> loadChildren(staffRoutes) [authenticationGuard]
-    +'treasury/**' -> loadChildren(treasuryRoutes) [authenticationGuard]
+    +'treasury/**' -> loadChildren(treasuryRoutes) [roleGuard: ROLE_ADMIN, ROLE_ACCOUNTING, ROLE_MANAGEMENT]
     +'accounting/**' -> loadChildren(accountingRoutes) [roleGuard: ROLE_ACCOUNTING, ROLE_ADMIN]
     +'reports/**' -> loadChildren(reportingRoutes) [roleGuard: ROLE_MANAGEMENT, ROLE_ADMIN]
     +'**' -> PageNotFound
@@ -192,6 +192,13 @@ note right of environment
     /tax-parameters, /fixed-assets, /reports/cash-flow,
     /reports/income-statement, /reports/balance-sheet,
     /reports/project-profitability, /reports/dashboard
+end note
+
+note top of routes
+  Permisos alineados con el backend (develop #120, #126):
+  - Lectura de Billing y Treasury: ADMIN, ACCOUNTING, MANAGEMENT (ENGINEER no ve esas opciones).
+  - Escritura de Billing y Treasury: ADMIN, ACCOUNTING. Projects/clientes/proveedores/gastos: ADMIN, ACCOUNTING, ENGINEER.
+  - Montos solo en PEN por ahora (Currency.isSupported); USD responde 422. Ver SUPPORTED_CURRENCIES.
 end note
 
 note bottom

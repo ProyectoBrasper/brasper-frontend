@@ -1,4 +1,10 @@
 /**
+ * Currencies the backend accepts for amounts (`Currency.isSupported()`): only PEN for now, because
+ * reports, IGV and balances sum PEN only. USD comes back when an exchange rate is stored per entry.
+ */
+export const SUPPORTED_CURRENCIES: readonly string[] = ['PEN'];
+
+/**
  * Immutable amount of money in a currency (ISO 4217 code, e.g. PEN, USD).
  * Amounts travel as plain numbers in the API; Money is used to display and calculate in the views.
  */
