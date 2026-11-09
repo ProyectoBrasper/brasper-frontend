@@ -73,7 +73,8 @@
     "username": "Usa de 3 a 50 caracteres: minúsculas, números, punto, guion o guion bajo.",
     "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número.",
     "matDatepickerParse": "Usa el formato dd/mm/aaaa.",
-    "decimals": "Usa hasta 2 decimales."
+    "decimals": "Usa hasta 2 decimales.",
+    "notBeforeHiring": "No puede ser anterior a la fecha de ingreso."
   },
   "common": {
     "home": "Inicio",
@@ -144,7 +145,8 @@
     "CANCELLED": "Cancelado",
     "VOIDED": "Anulada",
     "ANNULLED": "Anulado",
-    "OVERDUE": "Vencida"
+    "OVERDUE": "Vencida",
+    "TERMINATED": "Cesado"
   },
   "clients": {
     "subtitle": "Empresas a las que se cotizan y facturan proyectos",
@@ -414,5 +416,29 @@
     "BANK_ACCOUNT": "Cuenta bancaria",
     "PETTY_CASH": "Caja chica",
     "PARTNER_CONTRIBUTION": "Aporte de socio"
+  },
+  "employees": {
+    "subtitle": "Personal en planilla",
+    "new": "Nuevo empleado",
+    "edit": "Editar empleado",
+    "hire": "Registrar empleado",
+    "formSubtitle": "Registra a una persona en la planilla",
+    "data": "Datos del empleado",
+    "fullName": "Nombre completo",
+    "dni": "DNI",
+    "dniHint": "8 dígitos",
+    "position": "Cargo",
+    "monthlySalary": "Sueldo mensual",
+    "hiredOn": "Fecha de ingreso",
+    "status": "Estado",
+    "locked": "No se puede cambiar",
+    "empty": "Aún no hay empleados registrados.",
+    "terminate": "Dar de baja",
+    "terminateItem": "Dar de baja a {{name}}",
+    "terminateTitle": "Dar de baja",
+    "terminateMessage": "{{name}} dejará de estar activo desde la fecha que indiques (ingresó el {{hiredOn}}). La baja no se puede deshacer y ya no se podrá editar.",
+    "terminatedOn": "Fecha de baja",
+    "terminatedNotice": "Este empleado está dado de baja: ya no se puede editar.",
+    "dniFormat": "El DNI debe tener 8 dígitos."
   }
 }

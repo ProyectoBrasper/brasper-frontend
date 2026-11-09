@@ -12,6 +12,7 @@ const pageNotFound = () =>
   import('./shared/presentation/views/page-not-found/page-not-found').then((m) => m.PageNotFound);
 const projectsRoutes = () => import('./projects/presentation/projects.routes').then((m) => m.projectsRoutes);
 const expensesRoutes = () => import('./expenses/presentation/expenses.routes').then((m) => m.expensesRoutes);
+const staffRoutes = () => import('./staff/presentation/staff.routes').then((m) => m.staffRoutes);
 const billingRoutes = () => import('./billing/presentation/billing.routes').then((m) => m.billingRoutes);
 
 /**
@@ -41,5 +42,7 @@ export const routes: Routes = [
   { path: 'billing', loadChildren: billingRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.finance } },
   // Expenses and suppliers are read by any signed-in user (writes: admin, accounting, engineer).
   { path: 'expenses', loadChildren: expensesRoutes, canActivate: [authenticationGuard] },
+  // Salaries are sensitive: admin, accounting and management read (writes: admin and accounting).
+  { path: 'staff', loadChildren: staffRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.staff } },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];

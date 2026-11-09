@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, input, OnInit, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +17,7 @@ import { ProjectsStore } from '../../../../projects/application/projects.store';
 import { COST_CATEGORIES, CostCategory } from '../../../../projects/domain/model/cost-category';
 import { ProjectStatus } from '../../../../projects/domain/model/project-status';
 import { fromIsoDate, toIsoDate } from '../../../../shared/domain/model/iso-date';
+import { AMOUNT_VALIDATORS } from '../../../../shared/presentation/amount-validators';
 import { BaseForm } from '../../../../shared/presentation/base-form';
 import { PageHeader } from '../../../../shared/presentation/components/page-header/page-header';
 import { MoneyPipe } from '../../../../shared/presentation/money.pipe';
@@ -27,15 +28,6 @@ import { PAYMENT_METHODS, PaymentMethod } from '../../../domain/model/payment-me
 import { VOUCHER_TYPES, VoucherType } from '../../../domain/model/voucher-type';
 import { ExpenseAmountsCalculator } from '../../../domain/services/expense-amounts-calculator';
 import { accountsFor, needsAccount, needsPartner } from '../../../domain/services/payment-rules';
-
-/** Backend rule (`@Digits(integer = 12, fraction = 2)`): at most 2 decimals. */
-export const maxTwoDecimals = (control: AbstractControl): ValidationErrors | null => {
-  if (control.value === null || control.value === '') {
-    return null;
-  }
-  const cents = Number(control.value) * 100;
-  return Math.abs(cents - Math.round(cents)) < 1e-6 ? null : { decimals: true };
-};
 
 /**
  * Register an expense (`/expenses/new`) or correct one (`/expenses/:id/edit`). Registering takes the
@@ -92,12 +84,7 @@ export class ExpenseForm extends BaseForm implements OnInit {
     description: this.formBuilder.nonNullable.control('', Validators.maxLength(500)),
     voucherType: this.formBuilder.nonNullable.control<VoucherType>(VoucherType.INVOICE, Validators.required),
     voucherNumber: this.formBuilder.nonNullable.control('', [Validators.required, Validators.maxLength(30)]),
-    amount: this.formBuilder.control<number | null>(null, [
-      Validators.required,
-      Validators.min(0.01),
-      Validators.max(9_999_999_999.99),
-      maxTwoDecimals,
-    ]),
+    amount: this.formBuilder.control<number | null>(null, AMOUNT_VALIDATORS),
     amountIncludesIgv: this.formBuilder.nonNullable.control(false),
     paymentMethod: this.formBuilder.nonNullable.control<PaymentMethod>(PaymentMethod.BANK_ACCOUNT, Validators.required),
     bankAccountId: this.formBuilder.control<number | null>(null, Validators.required),

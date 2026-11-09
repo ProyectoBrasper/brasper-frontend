@@ -73,7 +73,8 @@
     "username": "Use 3 to 50 characters: lowercase letters, digits, dot, hyphen or underscore.",
     "password": "Must be 8 to 72 characters with at least one letter and one digit.",
     "matDatepickerParse": "Use the dd/mm/yyyy format.",
-    "decimals": "Use at most 2 decimals."
+    "decimals": "Use at most 2 decimals.",
+    "notBeforeHiring": "Cannot be before the hiring date."
   },
   "common": {
     "home": "Home",
@@ -144,7 +145,8 @@
     "CANCELLED": "Cancelled",
     "VOIDED": "Voided",
     "ANNULLED": "Annulled",
-    "OVERDUE": "Overdue"
+    "OVERDUE": "Overdue",
+    "TERMINATED": "Terminated"
   },
   "clients": {
     "subtitle": "Companies we quote and invoice projects to",
@@ -414,5 +416,29 @@
     "BANK_ACCOUNT": "Bank account",
     "PETTY_CASH": "Petty cash",
     "PARTNER_CONTRIBUTION": "Partner contribution"
+  },
+  "employees": {
+    "subtitle": "People on the payroll",
+    "new": "New employee",
+    "edit": "Edit employee",
+    "hire": "Register employee",
+    "formSubtitle": "Add a person to the payroll",
+    "data": "Employee details",
+    "fullName": "Full name",
+    "dni": "DNI",
+    "dniHint": "8 digits",
+    "position": "Position",
+    "monthlySalary": "Monthly salary",
+    "hiredOn": "Hiring date",
+    "status": "Status",
+    "locked": "Cannot be changed",
+    "empty": "No employees registered yet.",
+    "terminate": "Terminate",
+    "terminateItem": "Terminate {{name}}",
+    "terminateTitle": "Terminate employee",
+    "terminateMessage": "{{name}} will no longer be active from the date you enter (hired on {{hiredOn}}). This cannot be undone and the employee can no longer be edited.",
+    "terminatedOn": "Termination date",
+    "terminatedNotice": "This employee is terminated and can no longer be edited.",
+    "dniFormat": "The DNI must have 8 digits."
   }
 }
