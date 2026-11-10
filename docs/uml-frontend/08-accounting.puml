@@ -136,6 +136,18 @@ package "app" {
       class ReverseJournalEntryCommand <<Command>> {
         +reversedOn: string
       }
+      class RegisterJournalEntryCommand <<Command>> {
+        +entryDate: string
+        +description: string
+        +lines: JournalLineCommand[]
+      }
+      class JournalLineCommand <<Command>> {
+        +accountCode: string
+        +debit: number
+        +credit: number
+        +projectId: number | null
+      }
+      RegisterJournalEntryCommand *-- "2..*" JournalLineCommand : contains
       JournalEntry ..|> app.shared.domain.model.BaseEntity : implements
 
       class JournalLine <<ValueObject>> {
@@ -360,6 +372,7 @@ package "app" {
       }
       class JournalEntriesApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<JournalEntry[]>
+        +register(command: RegisterJournalEntryCommand): Observable<JournalEntry>
         +reverse(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry>
       }
       class TrialBalanceApiEndpoint {
@@ -390,7 +403,7 @@ package "app" {
         +getLedgerAccounts(): Observable<LedgerAccount[]>
         +createLedgerAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount>
         +getJournalEntries(year: number, month: number): Observable<JournalEntry[]>
-        +registerJournalEntry(entry: JournalEntry): Observable<JournalEntry>
+        +registerJournalEntry(command: RegisterJournalEntryCommand): Observable<JournalEntry>
         +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry>
         +getTrialBalance(year: number, month: number): Observable<TrialBalance>
         +getTaxReturn(year: number, month: number): Observable<TaxReturn | null>
@@ -465,7 +478,7 @@ package "app" {
         +createLedgerAccount(command: CreateLedgerAccountCommand): void
         +countLedgerAccountsByType(type: LedgerAccountType | null): number
         +loadJournalEntries(period: Period): void
-        +registerJournalEntry(entry: JournalEntry): void
+        +registerJournalEntry(command: RegisterJournalEntryCommand): void
         +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): void
         +getLedgerAccountByCode(code: string): LedgerAccount | undefined
         +loadTrialBalance(year: number, month: number): void
@@ -491,14 +504,18 @@ package "app" {
     package "presentation" {
       package "components" {
         class JournalLinesEditor <<Component>> {
-          +linesArray: InputSignal<FormArray>
-          +ledgerAccounts: InputSignal<LedgerAccount[]>
-          +totalDebit: Signal<number>
-          +totalCredit: Signal<number>
-          +difference: Signal<number>
+          +lines: InputSignal<FormArray<JournalLineForm>>
+          +accounts: InputSignal<LedgerAccount[]>
+          +projects: InputSignal<Project[]>
+          +totals: Signal<{debit: number, credit: number, difference: number}>
           +onAddLine(): void
           +onRemoveLine(index: number): void
         }
+        note right of JournalLinesEditor
+          oneSideValidator (por línea): debe XOR haber > 0; escribir en un lado borra el otro.
+          doubleEntryValidator (FormArray): mínimo 2 líneas, debe = haber y total > 0.
+          "Agregar línea" propone la diferencia en el lado que falta; nunca menos de 2 líneas.
+        end note
         class ReverseJournalEntryDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<ReverseJournalEntryDialog>
@@ -550,6 +567,9 @@ package "app" {
           +columns: Signal<string[]>
           +dataSource: Signal<MatTableDataSource<JournalEntry>>
           +paginator: Signal<MatPaginator>
+          +year: InputSignal<string | undefined>
+          +month: InputSignal<string | undefined>
+          +open: InputSignal<string | undefined>
           +expandedId: WritableSignal<number | null>
           +description(entry: JournalEntry): string
           +accountName(code: string): string
@@ -560,9 +580,12 @@ package "app" {
         class JournalEntryForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          -projectsStore: ProjectsStore
           -router: Router
           +entryForm: FormGroup
-          +ledgerAccounts: Signal<LedgerAccount[]>
+          +accounts: Signal<LedgerAccount[]>
+          +projects: Signal<Project[]>
+          +canSubmit: Signal<boolean>
           +onSubmit(): void
           +onCancel(): void
         }
@@ -643,6 +666,9 @@ note bottom
   Asientos: GET /journal-entries?year=&month= (por fecha y número), filas expandibles con sus líneas;
   revertir POST /{id}/reversal {reversedOn} responde con la reversa (puede caer en otro mes): se relee el mes.
   La fecha de la reversa no puede ser anterior a la del asiento (regla solo de la UI).
+  Asiento manual (POST /journal-entries, source MANUAL): solo cuentas activas, proyecto opcional (el backend
+  no lo valida), Registrar deshabilitado mientras no cuadre; al registrar se abre la lista en el mes del
+  asiento con él desplegado (?year=&month=&open=).
   Plan de cuentas: GET /ledger-accounts (por código, como texto) y POST (nueva cuenta en un diálogo; el
   tipo se propone por el primer dígito: 1–3 activo, 4 pasivo, 5 patrimonio, 6 gasto, 7 ingreso).
   json-server: /ledger-accounts, /journal-entries?entryDate_gte=&entryDate_lte=,

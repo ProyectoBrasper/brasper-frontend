@@ -52,6 +52,44 @@ describe('JournalEntriesApiEndpoint', () => {
     request.flush([{ ...resource, totalDebit: pen('295000.00'), lines: [resource.lines[0], { ...resource.lines[1], credit: pen('250000.00') }] }]);
   });
 
+  it('registers a manual entry with POST /journal-entries, the description trimmed and the amounts in PEN', () => {
+    endpoint
+      .register({
+        entryDate: '2026-11-10',
+        description: ' Ajuste de provisión de servicios ',
+        lines: [
+          { accountCode: '63', debit: 2000, credit: 0, projectId: 4 },
+          { accountCode: '42', debit: 0, credit: 2000, projectId: null },
+        ],
+      })
+      .subscribe((entry) => expect(entry.isManual()).toBe(true));
+    const request = http.expectOne((r) => r.url.endsWith('/journal-entries'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      entryDate: '2026-11-10',
+      description: 'Ajuste de provisión de servicios',
+      lines: [
+        { accountCode: '63', debit: pen(2000), credit: pen(0), projectId: 4 },
+        { accountCode: '42', debit: pen(0), credit: pen(2000), projectId: null },
+      ],
+    });
+    request.flush({ ...resource, id: 208, source: 'MANUAL', sourceId: null, description: 'Ajuste de provisión de servicios' });
+  });
+
+  it('surfaces the backend detail when an account does not exist', () => {
+    let message = '';
+    endpoint
+      .register({ entryDate: '2026-11-10', description: 'X', lines: [] })
+      .subscribe({ error: (error: Error) => (message = error.message) });
+    http
+      .expectOne((r) => r.url.endsWith('/journal-entries'))
+      .flush(
+        { title: 'Not Found', status: 404, detail: 'Una cuenta contable del asiento no existe.' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    expect(message).toBe('Una cuenta contable del asiento no existe.');
+  });
+
   it('reverses with POST /{id}/reversal and answers with the new reversal', () => {
     endpoint.reverse(202, { reversedOn: '2026-11-10' }).subscribe((reversal) => {
       expect(reversal.isReversal()).toBe(true);

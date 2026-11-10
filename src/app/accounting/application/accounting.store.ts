@@ -1,9 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Period } from '../../shared/domain/model/period';
-import { ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
+import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
 import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount, LedgerAccountType } from '../domain/model/ledger-account.entity';
@@ -19,6 +20,7 @@ import { AccountingApi } from '../infrastructure/accounting-api';
 export class AccountingStore {
   private readonly accountingApi = inject(AccountingApi);
   private readonly iamStore = inject(IamStore);
+  private readonly router = inject(Router);
 
   private readonly taxParametersSignal = signal<TaxParameters | null>(null);
   private readonly ledgerAccountsSignal = signal<LedgerAccount[]>([]);
@@ -71,6 +73,18 @@ export class AccountingStore {
       if (this.journalPeriod === period) {
         this.journalEntriesSignal.set(entries);
       }
+    });
+  }
+
+  /**
+   * Registers a manual entry and opens the journal in the entry's month with it expanded, since its date may fall in
+   * any month.
+   */
+  registerJournalEntry(command: RegisterJournalEntryCommand): void {
+    this.run(this.accountingApi.registerJournalEntry(command), 'Failed to register journal entry', (entry) => {
+      void this.router.navigate(['/accounting/journal-entries'], {
+        queryParams: { year: entry.year, month: entry.month, open: entry.id },
+      });
     });
   }
 

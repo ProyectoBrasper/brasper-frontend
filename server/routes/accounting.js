@@ -1,5 +1,5 @@
 // Accounting fake routes: GET /tax-parameters?date= (rates in force on a date; 404 without body when
-// none, like the backend), the chart of accounts and the journal entries (list by month, reversal). Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
+// none, like the backend), the chart of accounts and the journal entries (list by month, manual entry, reversal). Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
 // ACCOUNTING. Same rules, order of checks and Spanish messages as the backend. The rest comes with its screens.
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
@@ -91,6 +91,57 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     const entry = entries().find({ id: Number(req.params.id) }).value();
     if (!entry) return problem(res, 404, 'Not Found', 'Asiento no encontrado.');
     res.json(entryResource(entry));
+  });
+
+  // Manual entry, in the backend order: @Valid body (400), then the double-entry rules of JournalEntry (at least two
+  // lines, one side per line, one currency, debit = credit: 400), then the accounts (missing 404, inactive 400). 201.
+  const INVALID_ENTRY = 'El asiento necesita al menos dos líneas, un lado por línea, y debe cuadrar.';
+  const validMoney = (money) =>
+    money && typeof money.amount === 'number' && money.amount >= 0 && money.amount < 1e12
+    && Math.abs(money.amount * 100 - Math.round(money.amount * 100)) < 1e-6 && ['PEN', 'USD'].includes(money.currency);
+  server.post('/api/v1/journal-entries', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    if (!ISO_DATE.test(body.entryDate ?? '')) return problem(res, 400, 'Bad Request', 'La fecha del asiento no es válida.');
+    if (!description || description.length > 300) {
+      return problem(res, 400, 'Bad Request', 'La descripción es obligatoria (hasta 300 caracteres).');
+    }
+    const lines = Array.isArray(body.lines) ? body.lines : [];
+    if (lines.length === 0) return problem(res, 400, 'Bad Request', 'El asiento necesita líneas.');
+    for (const line of lines) {
+      if (!line || !ACCOUNT_CODE.test(line.accountCode ?? '') || !validMoney(line.debit) || !validMoney(line.credit)) {
+        return problem(res, 400, 'Bad Request', 'Cada línea necesita una cuenta válida y montos de 0 o más, con hasta 2 decimales.');
+      }
+    }
+    const currency = lines[0].debit.currency;
+    const oneSide = (line) => (line.debit.amount > 0) !== (line.credit.amount > 0);
+    const sameCurrency = (line) => line.debit.currency === currency && line.credit.currency === currency;
+    const cents = (side) => lines.reduce((sum, line) => sum + Math.round(line[side].amount * 100), 0);
+    if (lines.length < 2 || !lines.every(oneSide) || !lines.every(sameCurrency) || cents('debit') !== cents('credit')) {
+      return problem(res, 400, 'Bad Request', INVALID_ENTRY);
+    }
+    const accounts = lines.map((line) => ledgerAccounts().find({ code: line.accountCode }).value());
+    if (accounts.some((account) => !account)) return problem(res, 404, 'Not Found', 'Una cuenta contable del asiento no existe.');
+    if (accounts.some((account) => !account.active)) {
+      return problem(res, 400, 'Bad Request', 'Una cuenta contable del asiento está inactiva.');
+    }
+    const entry = {
+      id: nextId('journal-entries'),
+      entryDate: body.entryDate,
+      description,
+      source: 'MANUAL',
+      sourceId: null,
+      reversed: false,
+      reversalOfId: null,
+      lines: lines.map((line) => ({
+        accountCode: line.accountCode,
+        debit: line.debit.amount,
+        credit: line.credit.amount,
+        projectId: line.projectId == null ? null : Number(line.projectId),
+      })),
+    };
+    entries().push(entry).write();
+    res.status(201).json(entryResource(entry));
   });
 
   // Reversal: @Valid date (400), the entry (404), a reversal or a reversed entry (409). It posts a new entry on that

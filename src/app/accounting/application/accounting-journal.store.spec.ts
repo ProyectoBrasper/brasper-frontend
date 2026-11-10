@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { Period } from '../../shared/domain/model/period';
@@ -16,6 +17,7 @@ describe('AccountingStore — journal entries', () => {
       providers: [
         { provide: AccountingApi, useValue: api },
         { provide: IamStore, useValue: { hasAnyRole: () => true } },
+        { provide: Router, useValue: { navigate: vi.fn() } },
       ],
     });
     return TestBed.inject(AccountingStore);
@@ -25,6 +27,7 @@ describe('AccountingStore — journal entries', () => {
     api = {
       getJournalEntries: vi.fn().mockReturnValue(of(octoberEntries())),
       reverseJournalEntry: vi.fn(),
+      registerJournalEntry: vi.fn(),
       getLedgerAccounts: vi.fn().mockReturnValue(of(backendChart())),
     };
   });
@@ -63,6 +66,32 @@ describe('AccountingStore — journal entries', () => {
     expect(store.error()).toBe('El asiento ya está revertido o es una reversa.');
     expect(store.journalEntries()).toHaveLength(5);
     expect(api['getJournalEntries']).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the journal in the month of the new entry with it expanded', () => {
+    api['registerJournalEntry'].mockReturnValue(of(entryFixture({ id: 208, entryDate: '2026-09-30', year: 2026, month: 9 })));
+    const store = createStore();
+    const command = {
+      entryDate: '2026-09-30',
+      description: 'Ajuste',
+      lines: [
+        { accountCode: '63', debit: 100, credit: 0, projectId: null },
+        { accountCode: '42', debit: 0, credit: 100, projectId: null },
+      ],
+    };
+    store.registerJournalEntry(command);
+    expect(api['registerJournalEntry']).toHaveBeenCalledWith(command);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/accounting/journal-entries'], {
+      queryParams: { year: 2026, month: 9, open: 208 },
+    });
+  });
+
+  it('stays on the form with the API error when an account is inactive', () => {
+    api['registerJournalEntry'].mockReturnValue(throwError(() => new Error('Una cuenta contable del asiento está inactiva.')));
+    const store = createStore();
+    store.registerJournalEntry({ entryDate: '2026-11-10', description: 'X', lines: [] });
+    expect(store.error()).toBe('Una cuenta contable del asiento está inactiva.');
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
   });
 
   it('finds the account of a code for its name', () => {

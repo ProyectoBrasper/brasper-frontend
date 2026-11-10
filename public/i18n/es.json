@@ -793,6 +793,23 @@
     "reverseHelp": "Se registra un asiento nuevo con el debe y el haber invertidos; este queda marcado como revertido.",
     "automaticReverseNotice": "Es un asiento automático ({{source}}): revertirlo no cambia el documento que lo generó.",
     "reversedOn": "Fecha de la reversa",
-    "reversedBeforeEntry": "No puede ser anterior a la fecha del asiento."
+    "reversedBeforeEntry": "No puede ser anterior a la fecha del asiento.",
+    "new": "Nuevo asiento",
+    "formSubtitle": "Asiento manual de partida doble",
+    "data": "Datos del asiento",
+    "formLines": "Líneas del asiento",
+    "linesCount": "{{count}} líneas",
+    "noProject": "Sin proyecto",
+    "accountRequired": "Elige una cuenta.",
+    "oneSide": "Cada línea lleva un monto en el debe o en el haber, no en ambos.",
+    "addLine": "Agregar línea",
+    "removeLine": "Quitar línea",
+    "removeLineNumber": "Quitar la línea {{number}}",
+    "totalDebit": "Total debe:",
+    "totalCredit": "Total haber:",
+    "difference": "Diferencia:",
+    "notBalancedTitle": "El asiento no cuadra:",
+    "notBalancedHelp": "el total del debe debe ser igual al del haber. Cada línea lleva debe o haber, no ambos. Mínimo 2 líneas.",
+    "register": "Registrar asiento"
   }
 }
