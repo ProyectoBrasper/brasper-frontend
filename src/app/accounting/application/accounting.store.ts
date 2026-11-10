@@ -8,6 +8,7 @@ import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../doma
 import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount, LedgerAccountType } from '../domain/model/ledger-account.entity';
+import { SetTaxParametersCommand } from '../domain/model/tax-parameters.commands';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
 import { PayTaxReturnCommand } from '../domain/model/tax-return.commands';
 import { TaxReturn } from '../domain/model/tax-return.entity';
@@ -17,7 +18,8 @@ import { AccountingApi } from '../infrastructure/accounting-api';
 
 /**
  * Accounting context state: the chart of accounts, the journal entries and the trial balance of a month, the tax
- * returns and the tax parameters read by the invoice and expense previews. Fixed assets come with their screen.
+ * returns, the tax parameters read by the invoice and expense previews and their history. Fixed assets come with
+ * their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingStore {
@@ -26,6 +28,7 @@ export class AccountingStore {
   private readonly router = inject(Router);
 
   private readonly taxParametersSignal = signal<TaxParameters | null>(null);
+  private readonly taxParametersHistorySignal = signal<TaxParameters[]>([]);
   private readonly ledgerAccountsSignal = signal<LedgerAccount[]>([]);
   private readonly journalEntriesSignal = signal<JournalEntry[]>([]);
   private readonly trialBalanceSignal = signal<TrialBalance | null>(null);
@@ -40,6 +43,8 @@ export class AccountingStore {
 
   /** Parameters in force on the last requested date; null = none configured (use standard rates). */
   readonly taxParameters = this.taxParametersSignal.asReadonly();
+  /** Every set of rates, latest effective date first (the backend history). */
+  readonly taxParametersHistory = this.taxParametersHistorySignal.asReadonly();
   /** The chart of accounts, by code. */
   readonly ledgerAccounts = this.ledgerAccountsSignal.asReadonly();
   /** Entries of the shown month, by date and number (as the backend returns them). */
@@ -52,6 +57,8 @@ export class AccountingStore {
   readonly error = this.errorSignal.asReadonly();
   /** Admin and accounting write; management only reads (backend rule). */
   readonly canWrite = computed(() => this.iamStore.hasAnyRole(...AREA_ROLES.accountingWrite));
+  /** Only an admin sets new tax rates (backend rule). */
+  readonly canSetTaxParameters = computed(() => this.iamStore.hasAnyRole(...AREA_ROLES.taxParametersWrite));
 
   loadTaxParametersAt(date: string): void {
     this.run(
@@ -60,6 +67,22 @@ export class AccountingStore {
       (parameters) => this.taxParametersSignal.set(parameters),
       () => this.taxParametersSignal.set(null),
     );
+  }
+
+  loadTaxParametersHistory(): void {
+    this.run(this.accountingApi.getTaxParametersHistory(), 'Failed to load tax parameters', (history) =>
+      this.taxParametersHistorySignal.set(history),
+    );
+  }
+
+  /** Adds new rates from a date; the backend answers with the new row (a date already used is a 409). */
+  setTaxParameters(command: SetTaxParametersCommand, onSaved?: () => void): void {
+    this.run(this.accountingApi.setTaxParameters(command), 'Failed to set tax parameters', (parameters) => {
+      this.taxParametersHistorySignal.update((history) =>
+        [...history, parameters].sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom)),
+      );
+      onSaved?.();
+    });
   }
 
   loadLedgerAccounts(): void {

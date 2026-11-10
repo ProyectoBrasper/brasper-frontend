@@ -862,5 +862,34 @@
     "accountHint": "Required: the total leaves this account.",
     "nothingToPay": "There is nothing to pay: it will only be marked as paid, with no entry nor cash outflow.",
     "negativeBalanceNotice": "This account would end up with a negative balance (S/ {{balance}}). You can still register the payment."
+  },
+  "taxParameterStatus": {
+    "ACTIVE": "In force",
+    "SCHEDULED": "Scheduled",
+    "INACTIVE": "Previous"
+  },
+  "taxParameters": {
+    "subtitle": "Rates used in invoices, expenses and tax returns",
+    "current": "Rates in force",
+    "since": "In force since {{date}}",
+    "noneInForce": "There are no rates in force today: the standard ones are used (18 %, 12 %, 3 %, 1.5 %).",
+    "igv": "IGV",
+    "igvNote": "General sales tax",
+    "detraction": "Detraction",
+    "detractionNote": "SPOT · services",
+    "retention": "Retention",
+    "retentionNote": "Withholding agents",
+    "incomeTaxPrepayment": "Income tax prepayment",
+    "incomeTaxPrepaymentNote": "On the month sales",
+    "newTitle": "Register new rates",
+    "effectiveFrom": "Effective from",
+    "dateInUse": "There are already rates with that effective date.",
+    "retroactiveNotice": "The date is before today: the new rates will apply to the previews and to the tax returns prepared afterwards, not to those already prepared.",
+    "previewNote": "Each change creates a new effective date; the previous ones do not change. They are used for the invoice and expense previews and when preparing tax returns.",
+    "save": "Save rates",
+    "adminOnly": "Only the administrator registers new rates.",
+    "history": "History",
+    "status": "Status",
+    "emptyHistory": "There are no rates registered yet."
   }
 }

@@ -6,6 +6,7 @@ import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../doma
 import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount } from '../domain/model/ledger-account.entity';
+import { SetTaxParametersCommand } from '../domain/model/tax-parameters.commands';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
 import { PayTaxReturnCommand } from '../domain/model/tax-return.commands';
 import { TaxReturn } from '../domain/model/tax-return.entity';
@@ -19,7 +20,7 @@ import { TrialBalanceApiEndpoint } from './trial-balance-api-endpoint';
 /**
  * Accounting context facade: the chart of accounts, the journal entries of a month (manual ones and reversals) and the tax
  * parameters that Billing and Expenses read for their amount previews, the trial balance of a month and the tax
- * returns. Fixed assets come with their screen.
+ * returns and the history of the tax rates. Fixed assets come with their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingApi extends BaseApi {
@@ -33,6 +34,14 @@ export class AccountingApi extends BaseApi {
   /** Parameters in force on `date` (`yyyy-MM-dd`), or null when none are configured. */
   getTaxParametersAt(date: string): Observable<TaxParameters | null> {
     return this.taxParametersEndpoint.getAt(date);
+  }
+
+  getTaxParametersHistory(): Observable<TaxParameters[]> {
+    return this.taxParametersEndpoint.getHistory();
+  }
+
+  setTaxParameters(command: SetTaxParametersCommand): Observable<TaxParameters> {
+    return this.taxParametersEndpoint.set(command);
   }
 
   getLedgerAccounts(): Observable<LedgerAccount[]> {

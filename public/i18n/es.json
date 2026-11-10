@@ -862,5 +862,34 @@
     "accountHint": "Obligatoria: el total sale de esta cuenta.",
     "nothingToPay": "No hay nada que pagar: solo se marcará como pagada, sin asiento ni salida de caja.",
     "negativeBalanceNotice": "Esta cuenta quedaría con saldo negativo (S/ {{balance}}). Puedes registrar el pago igual."
+  },
+  "taxParameterStatus": {
+    "ACTIVE": "Vigente",
+    "SCHEDULED": "Programada",
+    "INACTIVE": "Anterior"
+  },
+  "taxParameters": {
+    "subtitle": "Tasas usadas en facturas, gastos y declaraciones",
+    "current": "Tasas vigentes",
+    "since": "Vigentes desde {{date}}",
+    "noneInForce": "No hay parámetros vigentes hoy: se usan las tasas estándar (18 %, 12 %, 3 %, 1.5 %).",
+    "igv": "IGV",
+    "igvNote": "Impuesto general a las ventas",
+    "detraction": "Detracción",
+    "detractionNote": "SPOT · servicios",
+    "retention": "Retención",
+    "retentionNote": "Agentes de retención",
+    "incomeTaxPrepayment": "Pago a cuenta de renta",
+    "incomeTaxPrepaymentNote": "Sobre las ventas del mes",
+    "newTitle": "Registrar nuevos parámetros",
+    "effectiveFrom": "Vigente desde",
+    "dateInUse": "Ya existen parámetros con esa fecha de vigencia.",
+    "retroactiveNotice": "La fecha es anterior a hoy: las nuevas tasas se aplicarán a las vistas previas y a las declaraciones que se preparen después, no a las ya preparadas.",
+    "previewNote": "Cada cambio crea una nueva vigencia; las anteriores no se modifican. Se usan para la vista previa de facturas y gastos y al preparar las declaraciones.",
+    "save": "Guardar parámetros",
+    "adminOnly": "Solo el administrador registra nuevos parámetros.",
+    "history": "Historial",
+    "status": "Estado",
+    "emptyHistory": "Aún no hay parámetros registrados."
   }
 }

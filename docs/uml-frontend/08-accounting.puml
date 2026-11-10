@@ -255,6 +255,17 @@ package "app" {
         +effectiveFrom: string
       }
       TaxParameters ..|> app.shared.domain.model.BaseEntity : implements
+      note right of TaxParameters
+        Filas inmutables por vigencia (sin editar ni borrar); las tasas son fracciones (0.18 = 18 %).
+        Las vigentes a una fecha son la de vigencia más reciente <= esa fecha. Solo ADMIN registra.
+      end note
+      class SetTaxParametersCommand <<Command>> {
+        +effectiveFrom: string
+        +igv: number
+        +detraction: number
+        +retention: number
+        +incomeTaxPrepayment: number
+      }
 
       class FixedAsset <<Entity>> {
         - #id: number
@@ -414,6 +425,8 @@ package "app" {
       }
       class TaxParametersApiEndpoint {
         +getAt(date: string): Observable<TaxParameters | null>
+        +getHistory(): Observable<TaxParameters[]>
+        +set(command: SetTaxParametersCommand): Observable<TaxParameters>
       }
       class FixedAssetsApiEndpoint {
         +dispose(id: number): Observable<FixedAsset>
@@ -437,7 +450,8 @@ package "app" {
         +prepareTaxReturn(year: number, month: number): Observable<TaxReturn>
         +payTaxReturn(id: number, command: PayTaxReturnCommand): Observable<TaxReturn>
         +getTaxParametersAt(date: string): Observable<TaxParameters | null>
-        +setTaxParameters(parameters: TaxParameters): Observable<TaxParameters>
+        +getTaxParametersHistory(): Observable<TaxParameters[]>
+        +setTaxParameters(command: SetTaxParametersCommand): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
         +registerFixedAsset(asset: FixedAsset): Observable<FixedAsset>
         +disposeFixedAsset(id: number): Observable<FixedAsset>
@@ -512,8 +526,10 @@ package "app" {
         +loadTaxReturns(): void
         +prepareTaxReturn(period: Period): void
         +payTaxReturn(id: number, command: PayTaxReturnCommand, onPaid?: () => void): void
-        +loadTaxParameters(): void
-        +setTaxParameters(parameters: TaxParameters): void
+        +loadTaxParametersAt(date: string): void
+        +loadTaxParametersHistory(): void
+        +setTaxParameters(command: SetTaxParametersCommand, onSaved?: () => void): void
+        +canSetTaxParameters: Signal<boolean>
         +loadFixedAssets(): void
         +registerFixedAsset(asset: FixedAsset): void
         +disposeFixedAsset(id: number): void
@@ -638,9 +654,14 @@ package "app" {
         class TaxParametersForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          +history: Signal<TaxParameters[]>
+          +current: Signal<TaxParameters | undefined>
+          +canSet: Signal<boolean>
           +parametersForm: FormGroup
-          +current: Signal<TaxParameters | null>
+          +retroactive: Signal<boolean>
+          +status(parameters: TaxParameters): string
           +onSubmit(): void
+          +onReset(): void
         }
         class FixedAssetList <<Component>> {
           -accountingStore: AccountingStore
@@ -698,6 +719,9 @@ note bottom
   Asientos: GET /journal-entries?year=&month= (por fecha y número), filas expandibles con sus líneas;
   revertir POST /{id}/reversal {reversedOn} responde con la reversa (puede caer en otro mes): se relee el mes.
   La fecha de la reversa no puede ser anterior a la del asiento (regla solo de la UI).
+  Parámetros tributarios: vigentes hoy (de GET /tax-parameters/history), formulario solo ADMIN
+  (AREA_ROLES.taxParametersWrite) precargado con las vigentes y vigencia el 1.º del mes siguiente, aviso si la
+  fecha es anterior a hoy, fecha repetida rechazada antes del 409, e historial con Vigente / Programada / Anterior.
   Declaraciones: GET /tax-returns/history (más reciente primero) da el mes y el anterior; POST /tax-returns
   {year, month} prepara (409 si ya existe; aviso si el mes anterior no tiene, el crédito saldría 0); POST
   /{id}/payment {paidOn, bankAccountId}: asiento TAX_RETURN y salida de caja "Tax return payment" si hay total.
