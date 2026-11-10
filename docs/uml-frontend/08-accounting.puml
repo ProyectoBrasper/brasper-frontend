@@ -174,16 +174,24 @@ package "app" {
         +lines: TrialBalanceLine[]
         +totalDebit(): number
         +totalCredit(): number
+        +totalBalance(): number
         +isBalanced(): boolean
+        +isEmpty(): boolean
       }
       class TrialBalanceLine <<ValueObject>> {
         +accountCode: string
         +accountName: string
         +debit: number
         +credit: number
-        +balance: number
+        +currency: string
+        +balance(): number
       }
       TrialBalance *-- "*" TrialBalanceLine : contains
+      note right of TrialBalance
+        Movimientos del mes (backend totalsByPeriod), no saldos acumulados: solo cuentas con
+        movimiento, por código como texto; incluye revertidos y reversas. El backend no manda
+        totales ni saldo: balance() = debe − haber, los totales se suman aquí.
+      end note
 
       class TaxReturn <<Entity>> {
         - #id: number
@@ -286,9 +294,7 @@ package "app" {
       class TrialBalanceResource <<Resource>> {
         +year: number
         +month: number
-        +lines: TrialBalanceLine[]
-        +totalDebit: number
-        +totalCredit: number
+        +lines: Array<{accountCode: string, accountName: string, debit: MoneyResource, credit: MoneyResource}>
       }
       class TaxReturnResource <<Resource>> {
         +id: number
@@ -380,6 +386,9 @@ package "app" {
         -assembler: TrialBalanceAssembler
         +getByPeriod(year: number, month: number): Observable<TrialBalance>
       }
+      note right of TrialBalanceApiEndpoint
+        GET /ledger-accounts/trial-balance?year=&month= (ambos obligatorios).
+      end note
       class TaxReturnsApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<TaxReturn | null>
         +prepare(year: number, month: number): Observable<TaxReturn>
@@ -481,7 +490,7 @@ package "app" {
         +registerJournalEntry(command: RegisterJournalEntryCommand): void
         +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): void
         +getLedgerAccountByCode(code: string): LedgerAccount | undefined
-        +loadTrialBalance(year: number, month: number): void
+        +loadTrialBalance(period: Period): void
         +loadTaxReturn(year: number, month: number): void
         +prepareTaxReturn(year: number, month: number): void
         +payTaxReturn(id: number, paidOn: string, bankAccountId: number): void
@@ -593,6 +602,7 @@ package "app" {
           -accountingStore: AccountingStore
           +period: WritableSignal<Period>
           +trialBalance: Signal<TrialBalance | null>
+          +lines: Signal<TrialBalanceLine[]>
           +displayedColumns: string[]
         }
         class TaxReturnList <<Component>> {
@@ -666,13 +676,14 @@ note bottom
   Asientos: GET /journal-entries?year=&month= (por fecha y número), filas expandibles con sus líneas;
   revertir POST /{id}/reversal {reversedOn} responde con la reversa (puede caer en otro mes): se relee el mes.
   La fecha de la reversa no puede ser anterior a la del asiento (regla solo de la UI).
+  Balance de comprobación: sumas del mes por cuenta con saldo = debe − haber (negativo en rojo), totales y chip
+  Cuadrado / No cuadra; la API falsa lo calcula desde los asientos guardados, como el backend.
   Asiento manual (POST /journal-entries, source MANUAL): solo cuentas activas, proyecto opcional (el backend
   no lo valida), Registrar deshabilitado mientras no cuadre; al registrar se abre la lista en el mes del
   asiento con él desplegado (?year=&month=&open=).
   Plan de cuentas: GET /ledger-accounts (por código, como texto) y POST (nueva cuenta en un diálogo; el
   tipo se propone por el primer dígito: 1–3 activo, 4 pasivo, 5 patrimonio, 6 gasto, 7 ingreso).
-  json-server: /ledger-accounts, /journal-entries?entryDate_gte=&entryDate_lte=,
-  /trial-balances?year=&month=, /tax-returns?year=&month=, /tax-parameters, /fixed-assets
-  (con fake API trial-balances y tax-returns se guardan ya calculados).
+  json-server: /ledger-accounts, /journal-entries?year=&month=, /ledger-accounts/trial-balance?year=&month=
+  (calculado desde los asientos), /tax-returns?year=&month=, /tax-parameters, /fixed-assets.
 end note
 @enduml

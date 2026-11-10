@@ -1,0 +1,73 @@
+.info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+  font: var(--mat-sys-body-medium);
+}
+
+.balance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--brasper-radius-md);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+}
+
+.balance-chip mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.balance-chip.ok {
+  background: var(--brasper-success-container);
+  color: var(--brasper-success);
+}
+
+.balance-chip.off {
+  background: var(--brasper-danger-container);
+  color: var(--brasper-danger);
+}
+
+table {
+  min-width: 760px;
+}
+
+.code {
+  width: 140px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.name {
+  font-weight: 500;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--brasper-danger);
+}
+
+.totals-row td {
+  background: var(--mat-sys-surface-container);
+  font-weight: 700;
+}
+
+/* The totals label spans the code and name columns. */
+.hidden-cell {
+  display: none;
+}
+
+/* No totals for a month without movements (the table does not take control flow around its rows). */
+.hidden-row {
+  display: none;
+}
