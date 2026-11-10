@@ -7,7 +7,7 @@ import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { BaseResource } from '../../shared/infrastructure/base-resource';
 import { BaseResponse } from '../../shared/infrastructure/base-response';
 import { PaymentStatus } from '../../shared/domain/model/payment-status';
-import { RegisterLoanCommand } from '../domain/model/loan.commands';
+import { PayInstallmentCommand, RegisterLoanCommand, ScheduleInstallmentCommand } from '../domain/model/loan.commands';
 import { Loan, LoanInstallment, LoanType } from '../domain/model/loan.entity';
 
 /** Backend `LoanResource.InstallmentResource`. */
@@ -48,6 +48,19 @@ export interface RegisterLoanRequest {
   currency: string;
   interestRate: number;
   disbursedOn: string;
+  bankAccountId: number;
+}
+
+/** Body of `POST /loans/{id}/installments` (backend `ScheduleInstallmentResource`). */
+export interface ScheduleInstallmentRequest {
+  dueOn: string;
+  principal: number;
+  interest: number;
+}
+
+/** Body of `POST /loans/{id}/installments/{installmentId}/payments` (backend `PayInstallmentResource`). */
+export interface PayInstallmentRequest {
+  paidOn: string;
   bankAccountId: number;
 }
 
@@ -110,8 +123,9 @@ export class LoanAssembler implements BaseAssembler<Loan, LoanResource, LoansRes
 }
 
 /**
- * Client for `/loans` (admin, accounting and management read; admin and accounting write): list and `POST`, which
- * posts the disbursement in the chosen account. Installments are scheduled and paid with their own calls, later.
+ * Client for `/loans` (admin, accounting and management read; admin and accounting write): list, get, `POST` (posts
+ * the disbursement in the chosen account) and the installments, which are scheduled and paid with `POST`s that
+ * answer with the whole loan (there is no endpoint that lists installments apart).
  */
 export class LoansApiEndpoint extends BaseApiEndpoint<Loan, LoanResource, LoansResponse, LoanAssembler> {
   constructor(http: HttpClient) {
@@ -137,5 +151,29 @@ export class LoansApiEndpoint extends BaseApiEndpoint<Loan, LoanResource, LoansR
       map((resource) => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Failed to register loan')),
     );
+  }
+
+  /** `POST /loans/{id}/installments`: answers with the loan and its new installment. */
+  scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): Observable<Loan> {
+    const request: ScheduleInstallmentRequest = {
+      dueOn: command.dueOn,
+      principal: command.principal,
+      interest: command.interest,
+    };
+    return this.http.post<LoanResource>(`${this.endpointUrl}/${loanId}/installments`, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to schedule installment')),
+    );
+  }
+
+  /** `POST /loans/{id}/installments/{installmentId}/payments`: answers with the loan, its balance and status. */
+  payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): Observable<Loan> {
+    const request: PayInstallmentRequest = { paidOn: command.paidOn, bankAccountId: command.bankAccountId };
+    return this.http
+      .post<LoanResource>(`${this.endpointUrl}/${loanId}/installments/${installmentId}/payments`, request)
+      .pipe(
+        map((resource) => this.assembler.toEntityFromResource(resource)),
+        catchError(this.handleError('Failed to pay installment')),
+      );
   }
 }

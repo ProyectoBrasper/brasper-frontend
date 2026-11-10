@@ -171,6 +171,15 @@ package "app" {
         +disbursedOn: string
         +bankAccountId: number
       }
+      class ScheduleInstallmentCommand <<Command>> {
+        +dueOn: string
+        +principal: number
+        +interest: number
+      }
+      class PayInstallmentCommand <<Command>> {
+        +paidOn: string
+        +bankAccountId: number
+      }
       class RegisterPayablePaymentCommand <<Command>> {
         +paidOn: string
         +amount: number
@@ -235,8 +244,20 @@ package "app" {
         +paid: boolean
         +paidOn: string | null
         +total(): number
+        +status(today: string): InstallmentStatus
       }
       LoanInstallment ..|> app.shared.domain.model.BaseEntity : implements
+
+      enum InstallmentStatus {
+        PENDING
+        OVERDUE
+        PAID
+      }
+      LoanInstallment --> InstallmentStatus : derives
+      note right of InstallmentStatus
+        El backend solo sabe si la cuota está pagada; OVERDUE (no pagada y con
+        vencimiento anterior a hoy) lo calcula el front.
+      end note
       Loan "1" *-- "*" LoanInstallment : contains
 
       class Partner <<Entity>> {
@@ -434,11 +455,11 @@ package "app" {
       }
       class LoansApiEndpoint {
         +register(command: RegisterLoanCommand): Observable<Loan>
-        +schedule(loanId: number, dueOn: string, principal: number, interest: number): Observable<Loan>
-        +pay(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<Loan>
+        +scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): Observable<Loan>
+        +payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): Observable<Loan>
       }
       note right of LoansApiEndpoint
-        Implementado: getAll() y register(). schedule() y pay() llegan con el detalle del préstamo:
+        Implementado: getAll(), getById(), register(), scheduleInstallment() y payInstallment().
         POST /loans/{id}/installments y POST /loans/{id}/installments/{iid}/payments responden con el
         préstamo completo; no existe un GET de cuotas.
       end note
@@ -468,8 +489,8 @@ package "app" {
         +getLoans(): Observable<Loan[]>
         +getLoanById(id: number): Observable<Loan>
         +registerLoan(command: RegisterLoanCommand): Observable<Loan>
-        +scheduleInstallment(loanId: number, dueOn: string, principal: number, interest: number): Observable<Loan>
-        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<Loan>
+        +scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): Observable<Loan>
+        +payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): Observable<Loan>
         +getPartners(): Observable<Partner[]>
         +registerPartner(partner: Partner): Observable<Partner>
         +registerContribution(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
@@ -551,9 +572,10 @@ package "app" {
         +loadLoans(): void
         +registerLoan(command: RegisterLoanCommand, navigateTo: string[]): void
         +countLoansByType(type: LoanType | null): number
-        +loadLoan(loanId: number): void
-        +scheduleInstallment(loanId: number, dueOn: string, principal: number, interest: number): void
-        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): void
+        +loadLoan(id: number): void
+        +scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): void
+        +payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): void
+        +getLoanById(id: number): Loan | undefined
         +loadPartners(): void
         +registerPartner(partner: Partner): void
         +registerContribution(partnerId: number, contribution: PartnerContribution): void
@@ -608,16 +630,21 @@ package "app" {
         class ScheduleInstallmentDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<ScheduleInstallmentDialog>
-          +data: {loan: Loan}
+          +loan: Loan
+          +unscheduled: number
+          +minDueOn: Date | null
           +installmentForm: FormGroup
+          +total: Signal<number>
           +onSave(): void
           +onCancel(): void
         }
         class PayInstallmentDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<PayInstallmentDialog>
-          +data: {installment: LoanInstallment, accounts: BankAccount[]}
+          +data: {loan: Loan, installment: LoanInstallment, number: number, bankAccounts: BankAccount[]}
+          +accounts: BankAccount[]
           +paymentForm: FormGroup
+          +negativeBalance: Signal<number | null>
           +onSave(): void
           +onCancel(): void
         }
@@ -725,11 +752,16 @@ package "app" {
         class LoanDetail <<Component>> {
           -treasuryStore: TreasuryStore
           -dialog: MatDialog
-          -route: ActivatedRoute
+          +id: InputSignal<string>
           +loan: Signal<Loan | undefined>
           +installments: Signal<LoanInstallment[]>
-          +onScheduleInstallment(): void
-          +onPayInstallment(installment: LoanInstallment): void
+          +totals: Signal<{principal: number, interest: number, total: number}>
+          +paidShare: Signal<number>
+          +unscheduled: Signal<number>
+          +columns: Signal<string[]>
+          +isOverdue(installment: LoanInstallment): boolean
+          +onSchedule(loan: Loan): void
+          +onPay(loan: Loan, installment: LoanInstallment, number: number): void
         }
         class PartnerList <<Component>> {
           -treasuryStore: TreasuryStore
@@ -800,6 +832,12 @@ note bottom
   porcentaje anual (0 a 100 con 2 decimales, tope propio de la UI) y viaja como fracción.
   El saldo pendiente es el capital menos el capital de las cuotas pagadas; el estado pasa a PARTIALLY_PAID
   con la primera cuota pagada y a PAID cuando el saldo llega a cero.
+  Detalle (GET /loans/{id}): cuotas numeradas por vencimiento con totales. Programar cuota: capital > 0 sin
+  superar el capital por programar (409 en el backend) e interés >= 0; la UI propone el capital restante y un
+  vencimiento un mes después de la última cuota, y no deja vencer antes del desembolso (el backend no lo
+  revisa). Pagar cuota: siempre la cuota entera; cuenta en la moneda del préstamo (la del préstamo primero,
+  cualquiera vale), fecha libre; la caja va al revés del desembolso ("Loan installment: <contraparte>") y la
+  UI solo avisa si deja la cuenta en negativo. El backend no dice con qué cuenta se pagó cada cuota.
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

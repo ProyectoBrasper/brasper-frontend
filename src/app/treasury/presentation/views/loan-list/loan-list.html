@@ -85,7 +85,13 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let loan; columns: displayedColumns" [class.paid]="loan.isPaid()"></tr>
+      <tr
+        mat-row
+        class="clickable"
+        *matRowDef="let loan; columns: displayedColumns"
+        [class.paid]="loan.isPaid()"
+        [routerLink]="['/treasury/loans', loan.id]"
+      ></tr>
       <tr class="mat-mdc-row empty-row" *matNoDataRow>
         <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
           {{ (loading() ? 'common.loading' : 'loans.empty') | translate }}

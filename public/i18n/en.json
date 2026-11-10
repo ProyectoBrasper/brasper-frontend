@@ -582,6 +582,11 @@
     "PARTIALLY_PAID": "Partially paid",
     "PAID": "Paid"
   },
+  "installmentStatus": {
+    "PENDING": "Pending",
+    "OVERDUE": "Overdue",
+    "PAID": "Paid"
+  },
   "payables": {
     "subtitle": "Pending obligations by week",
     "outstanding": "Balance to pay",
@@ -655,6 +660,37 @@
     "accountHintReceived": "PEN account the money goes into.",
     "accountHintGranted": "PEN account the money comes out of.",
     "negativeBalanceNotice": "This account would end up with a negative balance ({{balance}}). You can still register the loan.",
-    "installmentsNote": "Installments are scheduled from the loan detail."
+    "installmentsNote": "Installments are scheduled from the loan detail.",
+    "detailSubtitle": "Disbursed {{date}} · Account {{account}}",
+    "principalNote": "Amount disbursed",
+    "rateNote": "Informative only",
+    "totalInterest": "Total interest",
+    "totalInterestNote": "Sum of the installments interest",
+    "paidShare": "Capital paid back",
+    "paidCount": "{{paid}} of {{total}} installments paid",
+    "noInstallmentsYet": "No installments scheduled",
+    "unscheduledNotice": "{{amount}} of the capital is still to be scheduled.",
+    "installments": "Installments",
+    "installmentsCount": "{{count}} in total",
+    "number": "No.",
+    "dueOn": "Due date",
+    "interest": "Interest",
+    "total": "Total",
+    "paidOn": "Payment date",
+    "totals": "Totals",
+    "noInstallments": "This loan has no installments yet.",
+    "notFound": "The loan was not found.",
+    "scheduleInstallment": "Schedule installment",
+    "unscheduled": "Capital to schedule",
+    "dueBeforeDisbursement": "It cannot be before the disbursement.",
+    "exceedsUnscheduled": "It cannot exceed the capital to schedule ({{amount}}).",
+    "interestHint": "It can be 0.",
+    "installmentTotal": "Installment total",
+    "payInstallment": "Pay installment",
+    "payInstallmentFor": "Pay installment {{number}}",
+    "payInstallmentNumber": "Pay installment {{number}}",
+    "payHintReceived": "The installment total leaves this account.",
+    "payHintGranted": "The installment total comes into this account.",
+    "negativeBalancePayNotice": "This account would end up with a negative balance ({{balance}}). You can still register the payment."
   }
 }

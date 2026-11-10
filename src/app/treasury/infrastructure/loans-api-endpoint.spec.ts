@@ -99,6 +99,51 @@ describe('LoansApiEndpoint', () => {
     });
   });
 
+  it('gets one loan with GET /loans/{id}', () => {
+    endpoint.getById(2).subscribe((loan) => expect(loan.counterparty).toBe('Ing. Walter Soto (contratista)'));
+    http.expectOne((r) => r.url.endsWith('/loans/2')).flush(resource);
+  });
+
+  it('schedules with POST /loans/{id}/installments and answers with the whole loan', () => {
+    endpoint
+      .scheduleInstallment(2, { dueOn: '2026-12-05', principal: 10000, interest: 0 })
+      .subscribe((loan) => expect(loan.installments).toHaveLength(3));
+    const request = http.expectOne((r) => r.url.endsWith('/loans/2/installments'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ dueOn: '2026-12-05', principal: 10000, interest: 0 });
+    request.flush({
+      ...resource,
+      installments: [
+        ...resource.installments,
+        { id: 12, dueOn: '2026-12-05', principal: 10000, interest: 0, paid: false, paidOn: null },
+      ],
+    });
+  });
+
+  it('pays with POST /loans/{id}/installments/{installmentId}/payments and the backend body', () => {
+    endpoint
+      .payInstallment(2, 10, { paidOn: '2026-11-09', bankAccountId: 1 })
+      .subscribe((loan) => expect(loan.outstandingBalance).toBe(10000));
+    const request = http.expectOne((r) => r.url.endsWith('/loans/2/installments/10/payments'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ paidOn: '2026-11-09', bankAccountId: 1 });
+    request.flush({ ...resource, outstandingBalance: 10000 });
+  });
+
+  it('surfaces the backend detail when the installments would exceed the capital', () => {
+    let message = '';
+    endpoint
+      .scheduleInstallment(2, { dueOn: '2026-12-05', principal: 30000, interest: 0 })
+      .subscribe({ error: (error: Error) => (message = error.message) });
+    http
+      .expectOne((r) => r.url.endsWith('/loans/2/installments'))
+      .flush(
+        { title: 'Conflict', status: 409, detail: 'Las cuotas no pueden sumar más que el capital del préstamo.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    expect(message).toBe('Las cuotas no pueden sumar más que el capital del préstamo.');
+  });
+
   it('surfaces the backend detail when the account currency does not match', () => {
     let message = '';
     endpoint
