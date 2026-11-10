@@ -61,6 +61,18 @@ package "app" {
         EXPENSE
       }
       LedgerAccount --> LedgerAccountType : has
+      note right of LedgerAccount
+        code: 2 a 10 dígitos, empieza con 1–9 (AccountCode), único (409).
+        El backend no expone desactivar ni editar: active siempre llega en true.
+        Plan sembrado por el backend (V31–V37): 10, 12, 122, 16, 33, 39, 40111,
+        4017, 42, 45, 455, 50, 59, 60, 62, 63, 65, 67, 68, 70, 77.
+      end note
+
+      class CreateLedgerAccountCommand <<Command>> {
+        +code: string
+        +name: string
+        +type: LedgerAccountType
+      }
 
       class JournalEntry <<Entity>> {
         - #id: number
@@ -284,7 +296,13 @@ package "app" {
         +toResourceFromEntity(entity: FixedAsset): FixedAssetResource
       }
 
+      class CreateLedgerAccountRequest <<Request>> {
+        +code: string
+        +name: string
+        +type: string
+      }
       class LedgerAccountsApiEndpoint {
+        +createAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount>
       }
       class JournalEntriesApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<JournalEntry[]>
@@ -316,7 +334,7 @@ package "app" {
         -taxParametersEndpoint: TaxParametersApiEndpoint
         -fixedAssetsEndpoint: FixedAssetsApiEndpoint
         +getLedgerAccounts(): Observable<LedgerAccount[]>
-        +createLedgerAccount(account: LedgerAccount): Observable<LedgerAccount>
+        +createLedgerAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount>
         +getJournalEntries(year: number, month: number): Observable<JournalEntry[]>
         +registerJournalEntry(entry: JournalEntry): Observable<JournalEntry>
         +reverseJournalEntry(id: number): Observable<JournalEntry>
@@ -378,7 +396,7 @@ package "app" {
         -taxReturnSignal: WritableSignal<TaxReturn | null>
         -taxParametersSignal: WritableSignal<TaxParameters | null>
         -fixedAssetsSignal: WritableSignal<FixedAsset[]>
-        -loadingSignal: WritableSignal<boolean>
+        -pendingSignal: WritableSignal<number>
         -errorSignal: WritableSignal<string | null>
         +ledgerAccounts: Signal<LedgerAccount[]>
         +journalEntries: Signal<JournalEntry[]>
@@ -388,8 +406,10 @@ package "app" {
         +fixedAssets: Signal<FixedAsset[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
         +loadLedgerAccounts(): void
-        +createLedgerAccount(account: LedgerAccount): void
+        +createLedgerAccount(command: CreateLedgerAccountCommand): void
+        +countLedgerAccountsByType(type: LedgerAccountType | null): number
         +loadJournalEntries(year: number, month: number): void
         +registerJournalEntry(entry: JournalEntry): void
         +reverseJournalEntry(id: number): void
@@ -424,6 +444,15 @@ package "app" {
           +onAddLine(): void
           +onRemoveLine(index: number): void
         }
+        class CreateLedgerAccountDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<CreateLedgerAccountDialog>
+          +data: {codesInUse: string[]}
+          +accountForm: FormGroup
+          +types: LedgerAccountType[]
+          +onSave(): void
+          +onCancel(): void
+        }
         class PayTaxReturnDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<PayTaxReturnDialog>
@@ -443,8 +472,11 @@ package "app" {
           +dataSource: Signal<MatTableDataSource<LedgerAccount>>
           +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
+          +types: (LedgerAccountType | null)[]
           +typeFilter: WritableSignal<LedgerAccountType | null>
-          +onAdd(): void
+          +canWrite: Signal<boolean>
+          +count(type: LedgerAccountType | null): number
+          +onCreate(): void
         }
         class JournalEntryList <<Component>> {
           -accountingStore: AccountingStore
@@ -509,6 +541,8 @@ package "app" {
       }
 
       LedgerAccountList --> AccountingStore : uses
+      LedgerAccountList --> CreateLedgerAccountDialog : opens
+      LedgerAccountList --> app.shared.presentation.components.StatusChip : contains
       JournalEntryList --> AccountingStore : uses
       JournalEntryForm --> AccountingStore : uses
       TrialBalanceView --> AccountingStore : uses
@@ -537,7 +571,10 @@ note bottom
   cada línea con debe XOR haber; JournalLinesEditor muestra la diferencia en tiempo real.
   Los asientos automáticos (facturas, gastos, pagos) los genera el backend; aquí solo se ven y se
   pueden revertir. AccountingStore.taxParameters lo leen billing y expenses para la vista previa
-  de IGV / detracción / retención. Solo ROLE_ACCOUNTING y ROLE_ADMIN acceden a este módulo.
+  de IGV / detracción / retención. Leen ADMIN, ACCOUNTING y MANAGEMENT; escriben ADMIN y ACCOUNTING
+  (AREA_ROLES.accountingWrite); los parámetros tributarios los registra solo ADMIN.
+  Plan de cuentas: GET /ledger-accounts (por código, como texto) y POST (nueva cuenta en un diálogo; el
+  tipo se propone por el primer dígito: 1–3 activo, 4 pasivo, 5 patrimonio, 6 gasto, 7 ingreso).
   json-server: /ledger-accounts, /journal-entries?entryDate_gte=&entryDate_lte=,
   /trial-balances?year=&month=, /tax-returns?year=&month=, /tax-parameters, /fixed-assets
   (con fake API trial-balances y tax-returns se guardan ya calculados).
