@@ -1,6 +1,6 @@
 // Treasury fake routes. Reads are for finance roles only (backend #120); writes are ADMIN and ACCOUNTING. Same
-// rules, order of checks and Spanish messages as the backend (messages_es.properties). Loans and partner
-// writes come with their screens.
+// rules, order of checks and Spanish messages as the backend (messages_es.properties). Loan installments and
+// partner writes come with their screens.
 const { weekExists } = require('./cash-flow-week');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
@@ -8,6 +8,7 @@ const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
 const BANKS = ['BCP', 'BBVA', 'BANCO_DE_LA_NACION', 'CASH'];
 const ACCOUNT_TYPES = ['CHECKING', 'DETRACTIONS', 'PETTY_CASH'];
 const PAYABLE_TYPES = ['SUPPLIER', 'TECHNICIAN', 'ACCOUNTING', 'SELF_DETRACTION', 'TAX', 'OTHER'];
+const LOAN_TYPES = ['RECEIVED', 'GRANTED'];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Stored record → BankAccountResource (the backend does not return `openedOn`). */
@@ -251,6 +252,75 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
   });
   // Anything else on /payables stays behind the finance roles.
   server.use('/api/v1/payables', requireRoles(...READERS));
+
+  // ---------- Loans ----------
+  const loans = () => db.get('loans');
+  const sumCents = (items, field) => items.reduce((sum, item) => sum + Math.round(item[field] * 100), 0);
+  /** Stored loan → LoanResource: the total interest and the outstanding balance are derived like the backend `Loan`. */
+  const loanResource = (loan) => {
+    const paid = loan.installments.filter((installment) => installment.paid);
+    return {
+      ...loan,
+      totalInterest: sumCents(loan.installments, 'interest') / 100,
+      outstandingBalance: (Math.round(loan.principal * 100) - sumCents(paid, 'principal')) / 100,
+    };
+  };
+
+  // GET /loans?type= (optional), oldest first.
+  server.get('/api/v1/loans', requireRoles(...READERS), (req, res) => {
+    const { type } = req.query;
+    if (type !== undefined && !LOAN_TYPES.includes(type)) return problem(res, 400, 'Bad Request', 'Tipo de préstamo no válido.');
+    res.json(loans().sortBy('id').value().filter((loan) => !type || loan.type === type).map(loanResource));
+  });
+
+  // Register: same order as the backend (@Valid fields 400, then the account 404, then its currency 400). It posts the
+  // disbursement (an inflow when received, an outflow when granted) with the backend concept, in English, and the
+  // loan starts pending without installments. The backend has no check of its own for USD.
+  server.post('/api/v1/loans', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const counterparty = typeof body.counterparty === 'string' ? body.counterparty.trim() : '';
+    if (!LOAN_TYPES.includes(body.type)) return problem(res, 400, 'Bad Request', 'Tipo de préstamo no válido.');
+    if (!counterparty || counterparty.length > 200) {
+      return problem(res, 400, 'Bad Request', 'La contraparte es obligatoria (hasta 200 caracteres).');
+    }
+    if (!validAmount(body.principal)) return problem(res, 400, 'Bad Request', 'El capital debe ser mayor a 0, con hasta 2 decimales.');
+    if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if (typeof body.interestRate !== 'number' || body.interestRate < 0) {
+      return problem(res, 400, 'Bad Request', 'La tasa de interés no puede ser negativa.');
+    }
+    if (!ISO_DATE.test(body.disbursedOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de desembolso no es válida.');
+    if (body.bankAccountId == null) return problem(res, 400, 'Bad Request', 'Indica la cuenta del préstamo.');
+    const account = findAccount(body.bankAccountId);
+    if (!account) return problem(res, 404, 'Not Found', 'No se encontró la cuenta bancaria del préstamo.');
+    if (account.currency !== body.currency) {
+      return problem(res, 400, 'Bad Request', 'La moneda del préstamo debe coincidir con la de la cuenta bancaria.');
+    }
+    const loan = {
+      id: nextId('loans'),
+      type: body.type,
+      counterparty,
+      principal: body.principal,
+      currency: body.currency,
+      interestRate: Math.round(body.interestRate * 10000) / 10000,
+      disbursedOn: body.disbursedOn,
+      bankAccountId: account.id,
+      status: 'PENDING',
+      installments: [],
+    };
+    loans().push(loan).write();
+    postMovement(
+      account,
+      loan.disbursedOn,
+      loan.type === 'RECEIVED' ? 'INFLOW' : 'OUTFLOW',
+      loan.principal,
+      `Loan disbursement: ${loan.counterparty}`,
+      'LOAN_DISBURSEMENT',
+      loan.id,
+    );
+    res.status(201).json(loanResource(loan));
+  });
+  // Anything else on /loans stays behind the finance roles (the detail and its installments come with their screen).
+  server.use('/api/v1/loans', requireRoles(...READERS));
 
   // Partners: same read roles. Registering partners and their contributions come with the partners screen.
   server.get('/api/v1/partners/:id', requireRoles(...READERS), (req, res, next) => {

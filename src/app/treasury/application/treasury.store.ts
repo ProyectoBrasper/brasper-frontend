@@ -14,12 +14,15 @@ import { PaymentStatus } from '../../shared/domain/model/payment-status';
 import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
 import { Payable } from '../domain/model/payable.entity';
 import { countByStatus, outstandingBalance } from '../domain/services/payable-figures';
+import { RegisterLoanCommand } from '../domain/model/loan.commands';
+import { Loan, LoanType } from '../domain/model/loan.entity';
+import { countByType } from '../domain/services/loan-figures';
 import { Partner } from '../domain/model/partner.entity';
 import { TreasuryApi } from '../infrastructure/treasury-api';
 
 /**
  * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements,
- * payables and partners. Loans and contributions come with their screens.
+ * payables, loans and partners. Installments and contributions come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryStore {
@@ -31,6 +34,7 @@ export class TreasuryStore {
   private readonly partnersSignal = signal<Partner[]>([]);
   private readonly movementsSignal = signal<CashMovement[]>([]);
   private readonly payablesSignal = signal<Payable[]>([]);
+  private readonly loansSignal = signal<Loan[]>([]);
   /** Account and month whose movements are shown (to drop late answers and reload after changes). */
   private movementsKey: { bankAccountId: number; period: Period } | null = null;
   /** Requests in flight; several can run at once. */
@@ -45,6 +49,8 @@ export class TreasuryStore {
   readonly movementTotals = computed(() => movementTotals(this.movementsSignal()));
   /** Payables, oldest first (as the backend returns them). */
   readonly payables = this.payablesSignal.asReadonly();
+  /** Loans in the order the backend returns them. */
+  readonly loans = this.loansSignal.asReadonly();
   /** What the company still owes: sum of the balances of the unpaid payables. */
   readonly outstandingPayables = computed(() => outstandingBalance(this.payablesSignal()));
   /** Cash of the company in PEN: sum of the current balances of the PEN accounts (in cents, no drift). */
@@ -148,6 +154,26 @@ export class TreasuryStore {
 
   countPayablesByStatus(status: PaymentStatus | null): number {
     return countByStatus(this.payablesSignal(), status);
+  }
+
+  loadLoans(): void {
+    this.run(this.treasuryApi.getLoans(), 'Failed to load loans', (loans) => this.loansSignal.set(loans));
+  }
+
+  /**
+   * Registers a loan and navigates to `navigateTo` when the API accepts it. The backend posts the disbursement in
+   * the chosen account, so its balance is re-read.
+   */
+  registerLoan(command: RegisterLoanCommand, navigateTo: string[]): void {
+    this.run(this.treasuryApi.registerLoan(command), 'Failed to register loan', (loan) => {
+      this.loansSignal.update((loans) => [...loans, loan]);
+      this.loadBankAccounts();
+      void this.router.navigate(navigateTo);
+    });
+  }
+
+  countLoansByType(type: LoanType | null): number {
+    return countByType(this.loansSignal(), type);
   }
 
   loadPartners(): void {

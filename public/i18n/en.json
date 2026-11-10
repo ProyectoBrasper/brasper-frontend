@@ -573,6 +573,15 @@
     "PARTIALLY_PAID": "Partially paid",
     "PAID": "Paid"
   },
+  "loanType": {
+    "RECEIVED": "Received",
+    "GRANTED": "Granted"
+  },
+  "loanStatus": {
+    "PENDING": "Pending",
+    "PARTIALLY_PAID": "Partially paid",
+    "PAID": "Paid"
+  },
   "payables": {
     "subtitle": "Pending obligations by week",
     "outstanding": "Balance to pay",
@@ -615,5 +624,37 @@
     "weekOption": "Week {{number}} · {{from}} to {{to}}",
     "cashFlowNote": "It is used to project the cash flow.",
     "doubleCostNotice": "If it is a purchase with a voucher, register it in Expenses as pending: its payable is created by itself. Registering it here too would book the cost twice in Accounting."
+  },
+  "loans": {
+    "subtitle": "Loans received and granted",
+    "new": "Register loan",
+    "all": "All",
+    "filter": {
+      "RECEIVED": "Received",
+      "GRANTED": "Granted"
+    },
+    "filterByType": "Filter by type",
+    "type": "Type",
+    "counterparty": "Counterparty",
+    "principal": "Principal",
+    "interestRate": "Rate",
+    "rateValue": "{{rate}} % a year",
+    "disbursedOn": "Disbursement",
+    "account": "Account",
+    "outstanding": "Outstanding balance",
+    "status": "Status",
+    "empty": "There are no loans of this type.",
+    "formSubtitle": "Money the company borrowed or lent",
+    "data": "Loan details",
+    "helpReceived": "The company receives the money: it goes into the chosen account on the disbursement date.",
+    "helpGranted": "The company hands the money out: it leaves the chosen account on the disbursement date.",
+    "counterpartyHintReceived": "Who lends the money, for example a bank.",
+    "counterpartyHintGranted": "Who the money is lent to.",
+    "interestRateAnnual": "Yearly interest rate",
+    "interestRateHint": "Informative only: the interest comes from the installments.",
+    "accountHintReceived": "PEN account the money goes into.",
+    "accountHintGranted": "PEN account the money comes out of.",
+    "negativeBalanceNotice": "This account would end up with a negative balance ({{balance}}). You can still register the loan.",
+    "installmentsNote": "Installments are scheduled from the loan detail."
   }
 }

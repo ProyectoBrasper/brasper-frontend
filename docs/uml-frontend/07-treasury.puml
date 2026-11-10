@@ -162,6 +162,15 @@ package "app" {
         +projectId: number | null
         +week: CashFlowWeek
       }
+      class RegisterLoanCommand <<Command>> {
+        +type: LoanType
+        +counterparty: string
+        +principal: number
+        +currency: string
+        +interestRate: number
+        +disbursedOn: string
+        +bankAccountId: number
+      }
       class RegisterPayablePaymentCommand <<Command>> {
         +paidOn: string
         +amount: number
@@ -177,23 +186,33 @@ package "app" {
         - #type: LoanType
         - #counterparty: string
         - #principal: number
+        - #currency: string
         - #interestRate: number
         - #disbursedOn: string
         - #bankAccountId: number
         - #totalInterest: number
         - #outstandingBalance: number
         - #status: PaymentStatus
+        - #installments: LoanInstallment[]
         +id: number
         +type: LoanType
         +counterparty: string
         +principal: number
+        +currency: string
         +interestRate: number
         +disbursedOn: string
         +bankAccountId: number
         +totalInterest: number
         +outstandingBalance: number
         +status: PaymentStatus
+        +installments: LoanInstallment[]
+        +isReceived(): boolean
+        +isPaid(): boolean
       }
+      note right of Loan
+        interestRate es una fracción (0.12 = 12 % anual) y solo informa: el interés sale de las cuotas.
+        El saldo, el interés total y el estado los calcula el backend; las cuotas llegan dentro del préstamo.
+      end note
       Loan ..|> app.shared.domain.model.BaseEntity : implements
 
       enum LoanType {
@@ -204,14 +223,12 @@ package "app" {
 
       class LoanInstallment <<Entity>> {
         - #id: number
-        - #loanId: number
         - #dueOn: string
         - #principal: number
         - #interest: number
         - #paid: boolean
         - #paidOn: string | null
         +id: number
-        +loanId: number
         +dueOn: string
         +principal: number
         +interest: number
@@ -220,7 +237,7 @@ package "app" {
         +total(): number
       }
       LoanInstallment ..|> app.shared.domain.model.BaseEntity : implements
-      Loan "1" <-- "*" LoanInstallment : references loanId
+      Loan "1" *-- "*" LoanInstallment : contains
 
       class Partner <<Entity>> {
         - #id: number
@@ -310,16 +327,17 @@ package "app" {
         +type: string
         +counterparty: string
         +principal: number
+        +currency: string
         +interestRate: number
         +disbursedOn: string
         +bankAccountId: number
         +totalInterest: number
         +outstandingBalance: number
         +status: string
+        +installments: LoanInstallmentResource[]
       }
       class LoanInstallmentResource <<Resource>> {
         +id: number
-        +loanId: number
         +dueOn: string
         +principal: number
         +interest: number
@@ -348,8 +366,6 @@ package "app" {
       }
       class LoansResponse <<Response>> {
       }
-      class LoanInstallmentsResponse <<Response>> {
-      }
       class PartnersResponse <<Response>> {
       }
       class PartnerContributionsResponse <<Response>> {
@@ -372,11 +388,6 @@ package "app" {
         +toEntitiesFromResponse(response: LoansResponse): Loan[]
         +toEntityFromResource(resource: LoanResource): Loan
         +toResourceFromEntity(entity: Loan): LoanResource
-      }
-      class LoanInstallmentAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: LoanInstallmentsResponse): LoanInstallment[]
-        +toEntityFromResource(resource: LoanInstallmentResource): LoanInstallment
-        +toResourceFromEntity(entity: LoanInstallment): LoanInstallmentResource
       }
       class PartnerAssembler <<Assembler>> {
         +toEntitiesFromResponse(response: PartnersResponse): Partner[]
@@ -412,13 +423,25 @@ package "app" {
         +pay(id: number, command: RegisterPayablePaymentCommand): Observable<Payable>
         +reschedule(id: number, week: CashFlowWeek): Observable<Payable>
       }
+      class RegisterLoanRequest <<Request>> {
+        +type: string
+        +counterparty: string
+        +principal: number
+        +currency: string
+        +interestRate: number
+        +disbursedOn: string
+        +bankAccountId: number
+      }
       class LoansApiEndpoint {
+        +register(command: RegisterLoanCommand): Observable<Loan>
+        +schedule(loanId: number, dueOn: string, principal: number, interest: number): Observable<Loan>
+        +pay(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<Loan>
       }
-      class LoanInstallmentsApiEndpoint {
-        +getByLoanId(loanId: number): Observable<LoanInstallment[]>
-        +schedule(loanId: number, installment: LoanInstallment): Observable<LoanInstallment>
-        +pay(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<LoanInstallment>
-      }
+      note right of LoansApiEndpoint
+        Implementado: getAll() y register(). schedule() y pay() llegan con el detalle del préstamo:
+        POST /loans/{id}/installments y POST /loans/{id}/installments/{iid}/payments responden con el
+        préstamo completo; no existe un GET de cuotas.
+      end note
       class PartnersApiEndpoint {
       }
       class PartnerContributionsApiEndpoint {
@@ -430,7 +453,6 @@ package "app" {
         -bankAccountsEndpoint: BankAccountsApiEndpoint
         -payablesEndpoint: PayablesApiEndpoint
         -loansEndpoint: LoansApiEndpoint
-        -loanInstallmentsEndpoint: LoanInstallmentsApiEndpoint
         -partnersEndpoint: PartnersApiEndpoint
         -partnerContributionsEndpoint: PartnerContributionsApiEndpoint
         +getBankAccounts(): Observable<BankAccount[]>
@@ -445,10 +467,9 @@ package "app" {
         +reschedulePayable(id: number, week: CashFlowWeek): Observable<Payable>
         +getLoans(): Observable<Loan[]>
         +getLoanById(id: number): Observable<Loan>
-        +registerLoan(loan: Loan): Observable<Loan>
-        +getInstallments(loanId: number): Observable<LoanInstallment[]>
-        +scheduleInstallment(loanId: number, installment: LoanInstallment): Observable<LoanInstallment>
-        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<LoanInstallment>
+        +registerLoan(command: RegisterLoanCommand): Observable<Loan>
+        +scheduleInstallment(loanId: number, dueOn: string, principal: number, interest: number): Observable<Loan>
+        +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): Observable<Loan>
         +getPartners(): Observable<Partner[]>
         +registerPartner(partner: Partner): Observable<Partner>
         +registerContribution(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
@@ -459,39 +480,34 @@ package "app" {
       CashMovementResource ..|> app.shared.infrastructure.BaseResource : implements
       PayableResource ..|> app.shared.infrastructure.BaseResource : implements
       LoanResource ..|> app.shared.infrastructure.BaseResource : implements
-      LoanInstallmentResource ..|> app.shared.infrastructure.BaseResource : implements
       PartnerResource ..|> app.shared.infrastructure.BaseResource : implements
       PartnerContributionResource ..|> app.shared.infrastructure.BaseResource : implements
       BankAccountsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PayablesResponse ..|> app.shared.infrastructure.BaseResponse : implements
       LoansResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      LoanInstallmentsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnersResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnerContributionsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       BankAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PayableAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       LoanAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      LoanInstallmentAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerContributionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       BankAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PayablesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       LoansApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      LoanInstallmentsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PartnersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PartnerContributionsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       TreasuryApi --|> app.shared.infrastructure.BaseApi : extends
       TreasuryApi --> BankAccountsApiEndpoint : delegates to
       TreasuryApi --> PayablesApiEndpoint : delegates to
       TreasuryApi --> LoansApiEndpoint : delegates to
-      TreasuryApi --> LoanInstallmentsApiEndpoint : delegates to
       TreasuryApi --> PartnersApiEndpoint : delegates to
       TreasuryApi --> PartnerContributionsApiEndpoint : delegates to
       BankAccountsApiEndpoint --> BankAccountAssembler : uses
       BankAccountsApiEndpoint --> CashMovementAssembler : uses
       PayablesApiEndpoint --> PayableAssembler : uses
       LoansApiEndpoint --> LoanAssembler : uses
-      LoanInstallmentsApiEndpoint --> LoanInstallmentAssembler : uses
+      LoansApiEndpoint ..> RegisterLoanCommand : sends
       PartnersApiEndpoint --> PartnerAssembler : uses
       PartnerContributionsApiEndpoint --> PartnerContributionAssembler : uses
       BankAccountsApiEndpoint ..> TransferFundsCommand : sends
@@ -505,7 +521,6 @@ package "app" {
         -movementsSignal: WritableSignal<CashMovement[]>
         -payablesSignal: WritableSignal<Payable[]>
         -loansSignal: WritableSignal<Loan[]>
-        -installmentsSignal: WritableSignal<LoanInstallment[]>
         -partnersSignal: WritableSignal<Partner[]>
         -contributionsSignal: WritableSignal<PartnerContribution[]>
         -loadingSignal: WritableSignal<boolean>
@@ -518,7 +533,6 @@ package "app" {
         +payables: Signal<Payable[]>
         +outstandingPayables: Signal<number>
         +loans: Signal<Loan[]>
-        +installments: Signal<LoanInstallment[]>
         +partners: Signal<Partner[]>
         +contributions: Signal<PartnerContribution[]>
         +loading: Signal<boolean>
@@ -535,9 +549,10 @@ package "app" {
         +reschedulePayable(id: number, week: CashFlowWeek): void
         +countPayablesByStatus(status: PaymentStatus | null): number
         +loadLoans(): void
-        +loadLoanDetail(loanId: number): void
-        +registerLoan(loan: Loan): void
-        +scheduleInstallment(loanId: number, installment: LoanInstallment): void
+        +registerLoan(command: RegisterLoanCommand, navigateTo: string[]): void
+        +countLoansByType(type: LoanType | null): number
+        +loadLoan(loanId: number): void
+        +scheduleInstallment(loanId: number, dueOn: string, principal: number, interest: number): void
         +payInstallment(loanId: number, installmentId: number, paidOn: string, bankAccountId: number): void
         +loadPartners(): void
         +registerPartner(partner: Partner): void
@@ -549,7 +564,6 @@ package "app" {
       TreasuryStore --> CashMovement : manages
       TreasuryStore --> Payable : manages
       TreasuryStore --> Loan : manages
-      TreasuryStore --> LoanInstallment : manages
       TreasuryStore --> Partner : manages
       TreasuryStore --> PartnerContribution : manages
     }
@@ -683,20 +697,28 @@ package "app" {
         }
         class LoanList <<Component>> {
           -treasuryStore: TreasuryStore
-          -router: Router
+          -translate: TranslateService
           +displayedColumns: string[]
           +dataSource: Signal<MatTableDataSource<Loan>>
+          +sort: Signal<MatSort>
+          +paginator: Signal<MatPaginator>
+          +types: (LoanType | null)[]
           +typeFilter: WritableSignal<LoanType | null>
-          +onView(id: number): void
-          +onAdd(): void
+          +canWrite: Signal<boolean>
+          +count(type: LoanType | null): number
+          +rateLabel(loan: Loan): string
+          +accountLabel(loan: Loan): string
         }
         class LoanForm <<Component>> {
           -formBuilder: FormBuilder
           -treasuryStore: TreasuryStore
           -router: Router
           +loanForm: FormGroup
-          +loanTypes: LoanType[]
-          +bankAccounts: Signal<BankAccount[]>
+          +types: LoanType[]
+          +accounts: Signal<BankAccount[]>
+          +isReceived: Signal<boolean>
+          +negativeBalance: Signal<number | null>
+          +accountLabel(account: BankAccount): string
           +onSubmit(): void
           +onCancel(): void
         }
@@ -771,6 +793,13 @@ note bottom
   Nueva cuenta por pagar (POST /payables): semana como año, mes y semana del mes (las opciones salen del mes,
   con sus fechas). Contabilidad registra su costo salvo TAX y SELF_DETRACTION: una compra con comprobante va
   en Gastos como pendiente (crea su cuenta por pagar sola); el formulario lo avisa y nunca envía expenseId.
+  Préstamos: GET /loans (?type=RECEIVED|GRANTED) y POST /loans; solo PEN en la práctica (el backend compara la
+  moneda con la de la cuenta, que hoy siempre es PEN). Registrar mueve caja en la cuenta elegida el día del
+  desembolso: recibido = ingreso, otorgado = egreso ("Loan disbursement: <contraparte>"). El backend no
+  impide que un otorgado deje la cuenta en negativo: el formulario solo avisa. La tasa se escribe como
+  porcentaje anual (0 a 100 con 2 decimales, tope propio de la UI) y viaja como fracción.
+  El saldo pendiente es el capital menos el capital de las cuotas pagadas; el estado pasa a PARTIALLY_PAID
+  con la primera cuota pagada y a PAID cuando el saldo llega a cero.
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

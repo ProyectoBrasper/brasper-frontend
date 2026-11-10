@@ -6,8 +6,11 @@ import { BankAccount } from '../domain/model/bank-account.entity';
 import { RegisterAdjustmentCommand, TransferFundsCommand } from '../domain/model/cash-movement.commands';
 import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
+import { RegisterLoanCommand } from '../domain/model/loan.commands';
+import { Loan } from '../domain/model/loan.entity';
 import { Partner } from '../domain/model/partner.entity';
 import { BankAccountsApiEndpoint } from './bank-accounts-api-endpoint';
+import { LoansApiEndpoint } from './loans-api-endpoint';
 import { PartnersApiEndpoint } from './partners-api-endpoint';
 import { PayablesApiEndpoint } from './payables-api-endpoint';
 import { CashFlowWeek } from '../../shared/domain/model/cash-flow-week';
@@ -15,8 +18,8 @@ import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/m
 import { Payable } from '../domain/model/payable.entity';
 
 /**
- * Treasury context facade: bank accounts (open, movements, adjustments, transfers), payables (pay, reschedule)
- * and partners. Loans and contributions come with their screens.
+ * Treasury context facade: bank accounts (open, movements, adjustments, transfers), payables (pay, reschedule),
+ * loans (list, register) and partners. Installments and contributions come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryApi extends BaseApi {
@@ -24,6 +27,7 @@ export class TreasuryApi extends BaseApi {
   private readonly bankAccountsEndpoint = new BankAccountsApiEndpoint(this.http);
   private readonly partnersEndpoint = new PartnersApiEndpoint(this.http);
   private readonly payablesEndpoint = new PayablesApiEndpoint(this.http);
+  private readonly loansEndpoint = new LoansApiEndpoint(this.http);
 
   getBankAccounts(): Observable<BankAccount[]> {
     return this.bankAccountsEndpoint.getAll();
@@ -63,6 +67,14 @@ export class TreasuryApi extends BaseApi {
 
   reschedulePayable(id: number, week: CashFlowWeek): Observable<Payable> {
     return this.payablesEndpoint.reschedule(id, week);
+  }
+
+  getLoans(): Observable<Loan[]> {
+    return this.loansEndpoint.getAll();
+  }
+
+  registerLoan(command: RegisterLoanCommand): Observable<Loan> {
+    return this.loansEndpoint.register(command);
   }
 
   getPartners(): Observable<Partner[]> {

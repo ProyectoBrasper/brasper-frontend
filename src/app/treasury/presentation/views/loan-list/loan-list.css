@@ -1,0 +1,49 @@
+.type-filter {
+  --mat-chip-elevated-selected-container-color: var(--mat-sys-primary);
+  --mat-chip-selected-label-text-color: var(--mat-sys-on-primary);
+  --mat-chip-elevated-container-color: var(--mat-sys-surface);
+  --mat-chip-outline-color: var(--mat-sys-outline-variant);
+  --mat-chip-label-text-color: var(--mat-sys-on-surface-variant);
+  display: block;
+  margin-bottom: 20px;
+}
+
+table {
+  min-width: 1100px;
+}
+
+.counterparty {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Icon and word, so the direction never relies on color alone. */
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.type mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.received {
+  color: var(--brasper-success);
+}
+
+.granted {
+  color: var(--brasper-info);
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--mat-sys-outline);
+}
