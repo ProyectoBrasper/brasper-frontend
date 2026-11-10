@@ -582,6 +582,11 @@
     "PARTIALLY_PAID": "Pago parcial",
     "PAID": "Pagado"
   },
+  "installmentStatus": {
+    "PENDING": "Pendiente",
+    "OVERDUE": "Vencida",
+    "PAID": "Pagada"
+  },
   "payables": {
     "subtitle": "Obligaciones pendientes por semana",
     "outstanding": "Saldo por pagar",
@@ -655,6 +660,37 @@
     "accountHintReceived": "Cuenta en soles donde ingresa el dinero.",
     "accountHintGranted": "Cuenta en soles de donde sale el dinero.",
     "negativeBalanceNotice": "Esta cuenta quedaría con saldo negativo ({{balance}}). Puedes registrar el préstamo igual.",
-    "installmentsNote": "Las cuotas se programan desde el detalle del préstamo."
+    "installmentsNote": "Las cuotas se programan desde el detalle del préstamo.",
+    "detailSubtitle": "Desembolso {{date}} · Cuenta {{account}}",
+    "principalNote": "Monto desembolsado",
+    "rateNote": "Solo informativa",
+    "totalInterest": "Interés total",
+    "totalInterestNote": "Suma de los intereses de las cuotas",
+    "paidShare": "Capital devuelto",
+    "paidCount": "{{paid}} de {{total}} cuotas pagadas",
+    "noInstallmentsYet": "Sin cuotas programadas",
+    "unscheduledNotice": "Falta programar {{amount}} del capital.",
+    "installments": "Cuotas",
+    "installmentsCount": "{{count}} en total",
+    "number": "N°",
+    "dueOn": "Vencimiento",
+    "interest": "Interés",
+    "total": "Total",
+    "paidOn": "Fecha de pago",
+    "totals": "Totales",
+    "noInstallments": "Este préstamo aún no tiene cuotas.",
+    "notFound": "No se encontró el préstamo.",
+    "scheduleInstallment": "Programar cuota",
+    "unscheduled": "Capital por programar",
+    "dueBeforeDisbursement": "No puede ser anterior al desembolso.",
+    "exceedsUnscheduled": "No puede superar el capital por programar ({{amount}}).",
+    "interestHint": "Puede ser 0.",
+    "installmentTotal": "Total de la cuota",
+    "payInstallment": "Pagar cuota",
+    "payInstallmentFor": "Pagar la cuota {{number}}",
+    "payInstallmentNumber": "Pagar cuota {{number}}",
+    "payHintReceived": "El total de la cuota sale de esta cuenta.",
+    "payHintGranted": "El total de la cuota ingresa a esta cuenta.",
+    "negativeBalancePayNotice": "Esta cuenta quedaría con saldo negativo ({{balance}}). Puedes registrar el pago igual."
   }
 }

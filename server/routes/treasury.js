@@ -1,6 +1,6 @@
 // Treasury fake routes. Reads are for finance roles only (backend #120); writes are ADMIN and ACCOUNTING. Same
-// rules, order of checks and Spanish messages as the backend (messages_es.properties). Loan installments and
-// partner writes come with their screens.
+// rules, order of checks and Spanish messages as the backend (messages_es.properties). Partner writes come with
+// their screen.
 const { weekExists } = require('./cash-flow-week');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
@@ -319,7 +319,82 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     );
     res.status(201).json(loanResource(loan));
   });
-  // Anything else on /loans stays behind the finance roles (the detail and its installments come with their screen).
+  const LOAN_NOT_FOUND = 'Préstamo no encontrado.';
+  const findLoan = (id) => loans().find({ id: Number(id) }).value();
+  /** Installment ids are global, like the backend table. */
+  const nextInstallmentId = () =>
+    Math.max(0, ...loans().value().flatMap((loan) => loan.installments.map((installment) => installment.id))) + 1;
+  /** >= 0 with at most 2 decimals and 12 integer digits (`@PositiveOrZero @Digits(integer = 12, fraction = 2)`). */
+  const validCharge = (value) =>
+    typeof value === 'number' && value >= 0 && value < 1e12 && Math.abs(value * 100 - Math.round(value * 100)) < 1e-6;
+
+  server.get('/api/v1/loans/:id', requireRoles(...READERS), (req, res) => {
+    const loan = findLoan(req.params.id);
+    if (!loan) return problem(res, 404, 'Not Found', LOAN_NOT_FOUND);
+    res.json(loanResource(loan));
+  });
+
+  // Schedule: @Valid body (400), the loan (404, looked up in the controller), then the capital of all the
+  // installments against the loan's (409). It answers with the whole loan (201) and moves no cash.
+  server.post('/api/v1/loans/:id/installments', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.dueOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de vencimiento no es válida.');
+    if (!validAmount(body.principal)) {
+      return problem(res, 400, 'Bad Request', 'El capital de la cuota debe ser mayor a 0, con hasta 2 decimales.');
+    }
+    if (!validCharge(body.interest)) {
+      return problem(res, 400, 'Bad Request', 'El interés no puede ser negativo y admite hasta 2 decimales.');
+    }
+    const loan = findLoan(req.params.id);
+    if (!loan) return problem(res, 404, 'Not Found', LOAN_NOT_FOUND);
+    if (sumCents(loan.installments, 'principal') + Math.round(body.principal * 100) > Math.round(loan.principal * 100)) {
+      return problem(res, 409, 'Conflict', 'Las cuotas no pueden sumar más que el capital del préstamo.');
+    }
+    const installment = {
+      id: nextInstallmentId(),
+      dueOn: body.dueOn,
+      principal: body.principal,
+      interest: body.interest,
+      paid: false,
+      paidOn: null,
+    };
+    loans().find({ id: loan.id }).assign({ installments: [...loan.installments, installment] }).write();
+    res.status(201).json(loanResource(findLoan(loan.id)));
+  });
+
+  // Pay a whole installment: @Valid body (400), loan and installment (404), already paid (409), account (404),
+  // currency (400). The cash goes the other way than the disbursement, for capital plus interest, with the backend
+  // concept in English; the loan becomes PARTIALLY_PAID, or PAID when nothing is left (200).
+  server.post('/api/v1/loans/:id/installments/:installmentId/payments', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.paidOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de pago no es válida.');
+    if (body.bankAccountId == null) return problem(res, 400, 'Bad Request', 'Indica la cuenta de pago.');
+    const loan = findLoan(req.params.id);
+    if (!loan) return problem(res, 404, 'Not Found', LOAN_NOT_FOUND);
+    const installment = loan.installments.find((i) => i.id === Number(req.params.installmentId));
+    if (!installment) return problem(res, 404, 'Not Found', 'Cuota no encontrada en ese préstamo.');
+    if (installment.paid) return problem(res, 409, 'Conflict', 'La cuota ya está pagada.');
+    const account = findAccount(body.bankAccountId);
+    if (!account) return problem(res, 404, 'Not Found', 'No se encontró la cuenta bancaria del préstamo.');
+    if (account.currency !== loan.currency) {
+      return problem(res, 400, 'Bad Request', 'La moneda del préstamo debe coincidir con la de la cuenta bancaria.');
+    }
+    const installments = loan.installments.map((i) => (i.id === installment.id ? { ...i, paid: true, paidOn: body.paidOn } : i));
+    const outstanding = loanResource({ ...loan, installments }).outstandingBalance;
+    loans().find({ id: loan.id }).assign({ installments, status: outstanding > 0 ? 'PARTIALLY_PAID' : 'PAID' }).write();
+    const total = (Math.round(installment.principal * 100) + Math.round(installment.interest * 100)) / 100;
+    postMovement(
+      account,
+      body.paidOn,
+      loan.type === 'RECEIVED' ? 'OUTFLOW' : 'INFLOW',
+      total,
+      `Loan installment: ${loan.counterparty}`,
+      'LOAN_INSTALLMENT',
+      installment.id,
+    );
+    res.json(loanResource(findLoan(loan.id)));
+  });
+  // Anything else on /loans stays behind the finance roles.
   server.use('/api/v1/loans', requireRoles(...READERS));
 
   // Partners: same read roles. Registering partners and their contributions come with the partners screen.

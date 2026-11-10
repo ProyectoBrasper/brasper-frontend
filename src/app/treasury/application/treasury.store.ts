@@ -14,7 +14,7 @@ import { PaymentStatus } from '../../shared/domain/model/payment-status';
 import { CreatePayableCommand, RegisterPayablePaymentCommand } from '../domain/model/payable.commands';
 import { Payable } from '../domain/model/payable.entity';
 import { countByStatus, outstandingBalance } from '../domain/services/payable-figures';
-import { RegisterLoanCommand } from '../domain/model/loan.commands';
+import { PayInstallmentCommand, RegisterLoanCommand, ScheduleInstallmentCommand } from '../domain/model/loan.commands';
 import { Loan, LoanType } from '../domain/model/loan.entity';
 import { countByType } from '../domain/services/loan-figures';
 import { Partner } from '../domain/model/partner.entity';
@@ -22,7 +22,7 @@ import { TreasuryApi } from '../infrastructure/treasury-api';
 
 /**
  * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements,
- * payables, loans and partners. Installments and contributions come with their screens.
+ * payables, loans with their installments and partners. Contributions come with their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryStore {
@@ -172,6 +172,33 @@ export class TreasuryStore {
     });
   }
 
+  /** Re-reads one loan (the detail may be opened directly by URL, and its installments change). */
+  loadLoan(id: number): void {
+    this.run(this.treasuryApi.getLoanById(id), 'Failed to load loan', (loan) => this.upsertLoan(loan));
+  }
+
+  /** Schedules an installment; the backend answers with the whole loan. No cash moves. */
+  scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): void {
+    this.run(this.treasuryApi.scheduleInstallment(loanId, command), 'Failed to schedule installment', (loan) =>
+      this.upsertLoan(loan),
+    );
+  }
+
+  /**
+   * Pays an installment. The backend answers with the loan, its new balance and status, and moves the cash of the
+   * chosen account, so the balances are re-read.
+   */
+  payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): void {
+    this.run(this.treasuryApi.payInstallment(loanId, installmentId, command), 'Failed to pay installment', (loan) => {
+      this.upsertLoan(loan);
+      this.loadBankAccounts();
+    });
+  }
+
+  getLoanById(id: number): Loan | undefined {
+    return this.loansSignal().find((loan) => loan.id === id);
+  }
+
   countLoansByType(type: LoanType | null): number {
     return countByType(this.loansSignal(), type);
   }
@@ -199,6 +226,12 @@ export class TreasuryStore {
       accounts.some((a) => a.id === account.id)
         ? accounts.map((a) => (a.id === account.id ? account : a))
         : [...accounts, account],
+    );
+  }
+
+  private upsertLoan(loan: Loan): void {
+    this.loansSignal.update((loans) =>
+      loans.some((l) => l.id === loan.id) ? loans.map((l) => (l.id === loan.id ? loan : l)) : [...loans, loan],
     );
   }
 

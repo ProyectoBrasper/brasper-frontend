@@ -14,3 +14,22 @@ export interface RegisterLoanCommand {
   disbursedOn: string;
   bankAccountId: number;
 }
+
+/**
+ * An installment to schedule (backend `ScheduleInstallmentResource`), in the loan's currency. The capital of all the
+ * installments cannot exceed the loan's (409); the interest can be zero.
+ */
+export interface ScheduleInstallmentCommand {
+  dueOn: string;
+  principal: number;
+  interest: number;
+}
+
+/**
+ * The payment of an installment (backend `PayInstallmentResource`): always the whole installment, capital plus
+ * interest, from or into the chosen account (out when the loan was received, in when it was granted).
+ */
+export interface PayInstallmentCommand {
+  paidOn: string;
+  bankAccountId: number;
+}

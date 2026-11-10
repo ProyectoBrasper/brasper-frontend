@@ -11,6 +11,16 @@ export enum LoanType {
 
 export const LOAN_TYPES: readonly LoanType[] = Object.values(LoanType);
 
+/**
+ * What the screen shows for an installment. The backend only knows paid or not: OVERDUE is derived in the front
+ * for an unpaid installment whose due date has passed.
+ */
+export enum InstallmentStatus {
+  PENDING = 'PENDING',
+  OVERDUE = 'OVERDUE',
+  PAID = 'PAID',
+}
+
 /** One installment of a loan (backend `LoanResource.InstallmentResource`): capital plus interest, due on a day. */
 export class LoanInstallment implements BaseEntity {
   #id: number;
@@ -67,6 +77,14 @@ export class LoanInstallment implements BaseEntity {
   /** What paying it moves in cash: capital plus interest (in cents, no float drift). */
   total(): number {
     return (Math.round(this.#principal * 100) + Math.round(this.#interest * 100)) / 100;
+  }
+
+  /** Paid, or pending until the day after it is due (`today` as `yyyy-MM-dd`, so strings compare as dates). */
+  status(today: string): InstallmentStatus {
+    if (this.#paid) {
+      return InstallmentStatus.PAID;
+    }
+    return this.#dueOn < today ? InstallmentStatus.OVERDUE : InstallmentStatus.PENDING;
   }
 }
 

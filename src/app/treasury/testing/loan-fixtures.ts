@@ -20,6 +20,16 @@ export function loanFixture(overrides: Partial<ConstructorParameters<typeof Loan
   });
 }
 
+/**
+ * The 8 installments of loan 1 (DATOS.md §8): 25,000 of capital plus interest falling from 2,000 by 250, due on the
+ * 10th from April 2026; the first 7 paid on their due date.
+ */
+export const datosLoan1Installments = (): LoanInstallment[] =>
+  Array.from({ length: 8 }, (_, k) => {
+    const day = `2026-${String(4 + k).padStart(2, '0')}-10`;
+    return new LoanInstallment({ id: k + 1, dueOn: day, principal: 25000, interest: 2000 - 250 * k, paid: k < 7, paidOn: k < 7 ? day : null });
+  });
+
 /** The 2 loans of DATOS.md §8 (the backend computes a balance of 25,000.00 for the first one, not 25,250.00). */
 export const datosLoans = (): Loan[] => [
   loanFixture(),

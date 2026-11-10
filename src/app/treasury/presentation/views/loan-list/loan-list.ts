@@ -20,7 +20,7 @@ const AMOUNT_COLUMNS = ['principal', 'outstandingBalance'] as const;
 
 /**
  * Loans the company received or granted (`/treasury/loans`) with a filter by type. Admin and accounting register
- * them; management only reads. Installments are scheduled and paid from the loan detail, which comes next.
+ * them; management only reads. A row opens the loan detail, where installments are scheduled and paid.
  */
 @Component({
   selector: 'app-loan-list',

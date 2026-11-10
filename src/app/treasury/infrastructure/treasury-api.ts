@@ -6,7 +6,7 @@ import { BankAccount } from '../domain/model/bank-account.entity';
 import { RegisterAdjustmentCommand, TransferFundsCommand } from '../domain/model/cash-movement.commands';
 import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
-import { RegisterLoanCommand } from '../domain/model/loan.commands';
+import { PayInstallmentCommand, RegisterLoanCommand, ScheduleInstallmentCommand } from '../domain/model/loan.commands';
 import { Loan } from '../domain/model/loan.entity';
 import { Partner } from '../domain/model/partner.entity';
 import { BankAccountsApiEndpoint } from './bank-accounts-api-endpoint';
@@ -19,7 +19,7 @@ import { Payable } from '../domain/model/payable.entity';
 
 /**
  * Treasury context facade: bank accounts (open, movements, adjustments, transfers), payables (pay, reschedule),
- * loans (list, register) and partners. Installments and contributions come with their screens.
+ * loans (list, register, schedule and pay installments) and partners. Contributions come with their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryApi extends BaseApi {
@@ -75,6 +75,18 @@ export class TreasuryApi extends BaseApi {
 
   registerLoan(command: RegisterLoanCommand): Observable<Loan> {
     return this.loansEndpoint.register(command);
+  }
+
+  getLoanById(id: number): Observable<Loan> {
+    return this.loansEndpoint.getById(id);
+  }
+
+  scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): Observable<Loan> {
+    return this.loansEndpoint.scheduleInstallment(loanId, command);
+  }
+
+  payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): Observable<Loan> {
+    return this.loansEndpoint.payInstallment(loanId, installmentId, command);
   }
 
   getPartners(): Observable<Partner[]> {
