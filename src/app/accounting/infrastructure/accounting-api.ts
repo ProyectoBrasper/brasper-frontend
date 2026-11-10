@@ -2,21 +2,26 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
+import { ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
+import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount } from '../domain/model/ledger-account.entity';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
+import { JournalEntriesApiEndpoint } from './journal-entries-api-endpoint';
 import { LedgerAccountsApiEndpoint } from './ledger-accounts-api-endpoint';
 import { TaxParametersApiEndpoint } from './tax-parameters-api-endpoint';
 
 /**
- * Accounting context facade: the chart of accounts and the tax parameters that Billing and Expenses read for their
- * amount previews. Journal entries, trial balance, tax returns and fixed assets come with their screens.
+ * Accounting context facade: the chart of accounts, the journal entries of a month (and their reversal) and the tax
+ * parameters that Billing and Expenses read for their amount previews. Trial balance, tax returns and fixed assets
+ * come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingApi extends BaseApi {
   private readonly http = inject(HttpClient);
   private readonly taxParametersEndpoint = new TaxParametersApiEndpoint(this.http);
   private readonly ledgerAccountsEndpoint = new LedgerAccountsApiEndpoint(this.http);
+  private readonly journalEntriesEndpoint = new JournalEntriesApiEndpoint(this.http);
 
   /** Parameters in force on `date` (`yyyy-MM-dd`), or null when none are configured. */
   getTaxParametersAt(date: string): Observable<TaxParameters | null> {
@@ -29,5 +34,13 @@ export class AccountingApi extends BaseApi {
 
   createLedgerAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount> {
     return this.ledgerAccountsEndpoint.createAccount(command);
+  }
+
+  getJournalEntries(year: number, month: number): Observable<JournalEntry[]> {
+    return this.journalEntriesEndpoint.getByPeriod(year, month);
+  }
+
+  reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry> {
+    return this.journalEntriesEndpoint.reverse(id, command);
   }
 }

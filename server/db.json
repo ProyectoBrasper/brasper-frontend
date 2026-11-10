@@ -119,6 +119,14 @@
     {"id":20,"code":"65","name":"Otros gastos de gestión","type":"EXPENSE","active":true},
     {"id":21,"code":"455","name":"Cuentas por pagar a socios","type":"LIABILITY","active":true}
   ],
+  "journal-entries": [
+    {"id":201,"entryDate":"2026-10-30","description":"Invoice issued","source":"INVOICE_ISSUED","sourceId":8,"reversed":false,"reversalOfId":null,"lines":[{"accountCode":"12","debit":118000,"credit":0,"projectId":null},{"accountCode":"70","debit":0,"credit":100000,"projectId":2},{"accountCode":"40111","debit":0,"credit":18000,"projectId":null}]},
+    {"id":202,"entryDate":"2026-10-28","description":"Invoice issued","source":"INVOICE_ISSUED","sourceId":7,"reversed":false,"reversalOfId":null,"lines":[{"accountCode":"12","debit":295000,"credit":0,"projectId":null},{"accountCode":"70","debit":0,"credit":250000,"projectId":4},{"accountCode":"40111","debit":0,"credit":45000,"projectId":null}]},
+    {"id":203,"entryDate":"2026-10-02","description":"Expense","source":"EXPENSE","sourceId":1,"reversed":false,"reversalOfId":null,"lines":[{"accountCode":"60","debit":120000,"credit":0,"projectId":1},{"accountCode":"40111","debit":21600,"credit":0,"projectId":null},{"accountCode":"42","debit":0,"credit":141600,"projectId":null}]},
+    {"id":204,"entryDate":"2026-10-31","description":"Provisión honorarios contables","source":"MANUAL","sourceId":null,"reversed":false,"reversalOfId":null,"lines":[{"accountCode":"63","debit":3500,"credit":0,"projectId":null},{"accountCode":"42","debit":0,"credit":3500,"projectId":null}]},
+    {"id":205,"entryDate":"2026-10-29","description":"Imputación errónea de servicio","source":"MANUAL","sourceId":null,"reversed":true,"reversalOfId":null,"lines":[{"accountCode":"63","debit":1200,"credit":0,"projectId":null},{"accountCode":"42","debit":0,"credit":1200,"projectId":null}]},
+    {"id":206,"entryDate":"2026-10-29","description":"Reversal of: Imputación errónea de servicio","source":"REVERSAL","sourceId":205,"reversed":false,"reversalOfId":205,"lines":[{"accountCode":"63","debit":0,"credit":1200,"projectId":null},{"accountCode":"42","debit":1200,"credit":0,"projectId":null}]}
+  ],
   "tax-parameters": [
     {"id":1,"effectiveFrom":"2026-01-01","igv":0.18,"detraction":0.12,"retention":0.03,"incomeTaxPrepayment":0.015}
   ],
