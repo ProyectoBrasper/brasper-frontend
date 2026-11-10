@@ -127,6 +127,9 @@
     {"id":205,"entryDate":"2026-10-29","description":"Imputación errónea de servicio","source":"MANUAL","sourceId":null,"reversed":true,"reversalOfId":null,"lines":[{"accountCode":"63","debit":1200,"credit":0,"projectId":null},{"accountCode":"42","debit":0,"credit":1200,"projectId":null}]},
     {"id":206,"entryDate":"2026-10-29","description":"Reversal of: Imputación errónea de servicio","source":"REVERSAL","sourceId":205,"reversed":false,"reversalOfId":205,"lines":[{"accountCode":"63","debit":0,"credit":1200,"projectId":null},{"accountCode":"42","debit":1200,"credit":0,"projectId":null}]}
   ],
+  "tax-returns": [
+    {"id":1,"year":2026,"month":9,"outputIgv":48600,"inputIgv":30200,"carriedCredit":0,"incomeTaxPrepayment":4050,"currency":"PEN","status":"PAID","paidOn":"2026-10-14","bankAccountId":1}
+  ],
   "tax-parameters": [
     {"id":1,"effectiveFrom":"2026-01-01","igv":0.18,"detraction":0.12,"retention":0.03,"incomeTaxPrepayment":0.015}
   ],
@@ -208,7 +211,7 @@
     {"id":11,"bankAccountId":3,"occurredOn":"2026-10-07","direction":"INFLOW","amount":16992,"concept":"Detracción F001-00000047","source":"INVOICE_PAYMENT","sourceId":8},
     {"id":12,"bankAccountId":1,"occurredOn":"2026-10-09","direction":"OUTFLOW","amount":1150,"concept":"Seguro SCTR (CF-006)","source":"FIXED_COST_PAYMENT","sourceId":6},
     {"id":13,"bankAccountId":2,"occurredOn":"2026-10-09","direction":"OUTFLOW","amount":420,"concept":"Hosting y software (CF-008)","source":"FIXED_COST_PAYMENT","sourceId":8},
-    {"id":14,"bankAccountId":1,"occurredOn":"2026-10-14","direction":"OUTFLOW","amount":22450,"concept":"Pago IGV y renta setiembre","source":"TAX_PAYMENT","sourceId":null},
+    {"id":14,"bankAccountId":1,"occurredOn":"2026-10-14","direction":"OUTFLOW","amount":22450,"concept":"Pago IGV y renta setiembre","source":"TAX_PAYMENT","sourceId":1},
     {"id":15,"bankAccountId":3,"occurredOn":"2026-10-14","direction":"INFLOW","amount":21240,"concept":"Detracción F001-00000050","source":"INVOICE_PAYMENT","sourceId":9},
     {"id":16,"bankAccountId":1,"occurredOn":"2026-10-15","direction":"OUTFLOW","amount":20000,"concept":"Pago parcial Electro Andes","source":"PAYABLE_PAYMENT","sourceId":1},
     {"id":17,"bankAccountId":2,"occurredOn":"2026-10-15","direction":"OUTFLOW","amount":8000,"concept":"Pago honorarios instalador — Marco Antonio Huamán Ríos","source":"EXPENSE","sourceId":3},

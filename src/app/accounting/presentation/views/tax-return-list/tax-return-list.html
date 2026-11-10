@@ -1,0 +1,131 @@
+<app-page-header
+  [title]="'nav.taxReturns' | translate"
+  [subtitle]="'taxReturns.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.taxReturns' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+</app-page-header>
+
+<p class="info">
+  <mat-icon>info</mat-icon>
+  <span>{{ 'taxReturns.fixedNote' | translate }}</span>
+</p>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="layout">
+  @let current = taxReturn();
+  <section class="card main">
+    @if (current) {
+      <div class="card-head">
+        <div class="title">
+          <h2>{{ 'taxReturns.returnOf' | translate: { period: label(period()) } }}</h2>
+          <app-status-chip [status]="current.status" labelPrefix="taxReturnStatus." />
+        </div>
+        @if (canWrite() && !current.isPaid()) {
+          <button mat-flat-button type="button" (click)="onPay(current)">
+            <mat-icon>payments</mat-icon>
+            {{ 'taxReturns.registerPayment' | translate }}
+          </button>
+        }
+      </div>
+
+      <dl class="figures">
+        <div class="row">
+          <dt>{{ 'taxReturns.outputIgv' | translate }}</dt>
+          <dd>{{ current.outputIgv | number: '1.2-2' }}</dd>
+        </div>
+        <div class="row minus">
+          <dt>{{ 'taxReturns.inputIgv' | translate }}</dt>
+          <dd>{{ current.inputIgv | number: '1.2-2' }}</dd>
+        </div>
+        <div class="row minus">
+          <dt>{{ 'taxReturns.carriedCredit' | translate }}</dt>
+          <dd>{{ current.carriedCredit | number: '1.2-2' }}</dd>
+        </div>
+        <div class="row subtotal">
+          <dt>{{ 'taxReturns.igvPayable' | translate }}</dt>
+          <dd>{{ current.igvPayable | number: '1.2-2' }}</dd>
+        </div>
+        <div class="row">
+          <dt>
+            {{ 'taxReturns.incomeTaxPrepayment' | translate }}
+            @if (prepaymentRate() !== null) {
+              ({{ prepaymentRate() | percent: '1.0-2' }})
+            }
+          </dt>
+          <dd>{{ current.incomeTaxPrepayment | number: '1.2-2' }}</dd>
+        </div>
+      </dl>
+      <div class="total">
+        <span>{{ 'taxReturns.totalPayable' | translate }}</span>
+        <strong>S/ {{ current.totalPayable | number: '1.2-2' }}</strong>
+      </div>
+      @if (current.nextCarriedCredit() > 0) {
+        <p class="credit-note">{{ 'taxReturns.leavesCredit' | translate: { amount: (current.nextCarriedCredit() | number: '1.2-2') } }}</p>
+      }
+      <p class="paid-on">
+        <mat-icon aria-hidden="true">calendar_today</mat-icon>
+        @if (current.paidOn) {
+          {{ 'taxReturns.paidOnWith' | translate: { date: (current.paidOn | date: 'dd/MM/yyyy'), account: accountLabel(current) || '—' } }}
+        } @else {
+          {{ 'taxReturns.notPaid' | translate }}
+        }
+      </p>
+    } @else if (!loading()) {
+      <div class="empty">
+        <mat-icon aria-hidden="true">description</mat-icon>
+        <h2>{{ 'taxReturns.noReturn' | translate: { period: label(period()) } }}</h2>
+        <p>{{ 'taxReturns.prepareHelp' | translate }}</p>
+        @if (canWrite()) {
+          @if (!previous()) {
+            <p class="notice" role="note">
+              <mat-icon>warning</mat-icon>
+              <span>{{ 'taxReturns.noPreviousNotice' | translate: { period: label(period().previous()) } }}</span>
+            </p>
+          }
+          <button mat-flat-button type="button" (click)="onPrepare()" [disabled]="loading()">
+            <mat-icon>calculate</mat-icon>
+            {{ 'taxReturns.prepare' | translate }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  @let before = previous();
+  <aside class="card side">
+    <div class="side-head">
+      <h3>{{ 'taxReturns.previousPeriod' | translate: { period: label(period().previous()) } }}</h3>
+      @if (before) {
+        <app-status-chip [status]="before.status" labelPrefix="taxReturnStatus." />
+      }
+    </div>
+    @if (before) {
+      <span class="side-label">{{ (before.isPaid() ? 'taxReturns.totalPaid' : 'taxReturns.totalPayable') | translate }}</span>
+      <p class="side-amount">S/ {{ before.totalPayable | number: '1.2-2' }}</p>
+      @if (before.paidOn) {
+        <p class="side-detail">
+          <mat-icon aria-hidden="true">verified</mat-icon>
+          {{ 'taxReturns.paidOnDate' | translate: { date: (before.paidOn | date: 'dd/MM/yyyy') } }}
+        </p>
+      }
+      <p class="side-breakdown">
+        {{ 'taxReturns.igvShort' | translate }} S/ {{ before.igvPayable | number: '1.2-2' }}<br />
+        {{ 'taxReturns.incomeTaxShort' | translate }} S/ {{ before.incomeTaxPrepayment | number: '1.2-2' }}<br />
+        {{ 'taxReturns.creditLeft' | translate }} S/ {{ before.nextCarriedCredit() | number: '1.2-2' }}
+      </p>
+    } @else {
+      <p class="side-empty">{{ 'taxReturns.noPrevious' | translate }}</p>
+    }
+  </aside>
+</div>
