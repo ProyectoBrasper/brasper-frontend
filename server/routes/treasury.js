@@ -1,6 +1,5 @@
 // Treasury fake routes. Reads are for finance roles only (backend #120); writes are ADMIN and ACCOUNTING. Same
-// rules, order of checks and Spanish messages as the backend (messages_es.properties). Partner writes come with
-// their screen.
+// rules, order of checks and Spanish messages as the backend (messages_es.properties).
 const { weekExists } = require('./cash-flow-week');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
@@ -397,12 +396,83 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
   // Anything else on /loans stays behind the finance roles.
   server.use('/api/v1/loans', requireRoles(...READERS));
 
-  // Partners: same read roles. Registering partners and their contributions come with the partners screen.
-  server.get('/api/v1/partners/:id', requireRoles(...READERS), (req, res, next) => {
-    if (!db.get('partners').find({ id: Number(req.params.id) }).value()) {
-      return problem(res, 404, 'Not Found', 'Socio no encontrado.');
-    }
-    next();
+  // ---------- Partners and contributions ----------
+  const partners = () => db.get('partners');
+  const findPartner = (id) => partners().find({ id: Number(id) }).value();
+  const PARTNER_NOT_FOUND = 'Socio no encontrado.';
+  /** Stored partner → PartnerResource: the total adds every contribution as a plain number, like the backend. */
+  const partnerResource = (partner) => ({
+    id: partner.id,
+    fullName: partner.fullName,
+    role: partner.role ?? null,
+    totalContributed: sumCents(partner.contributions ?? [], 'amount') / 100,
+    contributions: partner.contributions ?? [],
   });
+  /** Contribution ids are global, like the backend table. */
+  const nextContributionId = () =>
+    Math.max(0, ...partners().value().flatMap((partner) => (partner.contributions ?? []).map((c) => c.id))) + 1;
+  const optionalText = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+
+  server.get('/api/v1/partners', requireRoles(...READERS), (req, res) => {
+    res.json(partners().sortBy('id').value().map(partnerResource));
+  });
+
+  server.get('/api/v1/partners/:id', requireRoles(...READERS), (req, res) => {
+    const partner = findPartner(req.params.id);
+    if (!partner) return problem(res, 404, 'Not Found', PARTNER_NOT_FOUND);
+    res.json(partnerResource(partner));
+  });
+
+  // Register a partner: @Valid (name 1–200, role up to 100), then a name already in use (exact, after trimming) is a 409.
+  server.post('/api/v1/partners', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
+    const role = optionalText(body.role);
+    if (!fullName || fullName.length > 200) {
+      return problem(res, 400, 'Bad Request', 'El nombre es obligatorio (hasta 200 caracteres).');
+    }
+    if ((role ?? '').length > 100) return problem(res, 400, 'Bad Request', 'El cargo admite hasta 100 caracteres.');
+    if (partners().find({ fullName }).value()) return problem(res, 409, 'Conflict', 'Ya existe un socio con ese nombre.');
+    const partner = { id: nextId('partners'), fullName, role, contributions: [] };
+    partners().push(partner).write();
+    res.status(201).json(partnerResource(partner));
+  });
+
+  // Contribution: @Valid fields (400), the partner (404), only PEN (422), then the account when given (404). With an
+  // account it posts a cash inflow there (concept in English, like the backend CashPostingEventHandler); without
+  // one, or for an expense paid out of pocket, no cash moves. It answers with the whole partner (201).
+  server.post('/api/v1/partners/:id/contributions', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.contributedOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha del aporte no es válida.');
+    if (!validAmount(body.amount)) return problem(res, 400, 'Bad Request', 'El monto del aporte debe ser mayor a 0, con hasta 2 decimales.');
+    if (!['PEN', 'USD'].includes(body.currency)) return problem(res, 400, 'Bad Request', 'Moneda no válida.');
+    if ((optionalText(body.concept) ?? '').length > 500) {
+      return problem(res, 400, 'Bad Request', 'El concepto admite hasta 500 caracteres.');
+    }
+    const partner = findPartner(req.params.id);
+    if (!partner) return problem(res, 404, 'Not Found', PARTNER_NOT_FOUND);
+    if (body.currency !== 'PEN') return problem(res, 422, 'Unprocessable Entity', 'Por ahora los importes solo pueden ser en PEN.');
+    const account = body.bankAccountId == null ? null : findAccount(body.bankAccountId);
+    if (body.bankAccountId != null && !account) {
+      return problem(res, 404, 'Not Found', 'No se encontró la cuenta bancaria del aporte.');
+    }
+    const contribution = {
+      id: nextContributionId(),
+      contributedOn: body.contributedOn,
+      amount: body.amount,
+      currency: body.currency,
+      reimbursable: body.reimbursable === true,
+      bankAccountId: account ? account.id : null,
+      expenseId: null,
+      concept: optionalText(body.concept),
+    };
+    partners().find({ id: partner.id }).assign({ contributions: [...(partner.contributions ?? []), contribution] }).write();
+    if (account) {
+      postMovement(account, contribution.contributedOn, 'INFLOW', contribution.amount, 'Partner contribution',
+        'PARTNER_CONTRIBUTION', contribution.id);
+    }
+    res.status(201).json(partnerResource(findPartner(partner.id)));
+  });
+  // Anything else on /partners stays behind the finance roles.
   server.use('/api/v1/partners', requireRoles(...READERS));
 };

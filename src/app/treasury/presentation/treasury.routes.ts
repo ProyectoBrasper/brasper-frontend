@@ -9,6 +9,7 @@ const payableForm = () => import('./views/payable-form/payable-form').then((m) =
 const loanList = () => import('./views/loan-list/loan-list').then((m) => m.LoanList);
 const loanForm = () => import('./views/loan-form/loan-form').then((m) => m.LoanForm);
 const loanDetail = () => import('./views/loan-detail/loan-detail').then((m) => m.LoanDetail);
+const partnerList = () => import('./views/partner-list/partner-list').then((m) => m.PartnerList);
 const bankAccountDetail = () =>
   import('./views/bank-account-detail/bank-account-detail').then((m) => m.BankAccountDetail);
 
@@ -16,7 +17,7 @@ const canWrite = { canActivate: [roleGuard], data: { roles: AREA_ROLES.treasuryW
 
 /**
  * Treasury context routes (docs/uml-frontend/00-app.puml), lazy loaded under `/treasury` (finance roles read;
- * admin and accounting write). Partners come in the next PR.
+ * admin and accounting write).
  */
 export const treasuryRoutes: Routes = [
   { path: '', redirectTo: 'bank-accounts', pathMatch: 'full' },
@@ -29,4 +30,5 @@ export const treasuryRoutes: Routes = [
   { path: 'loans', loadComponent: loanList, title: 'Brasper' },
   { path: 'loans/new', loadComponent: loanForm, title: 'Brasper', ...canWrite },
   { path: 'loans/:id', loadComponent: loanDetail, title: 'Brasper' },
+  { path: 'partners', loadComponent: partnerList, title: 'Brasper' },
 ];

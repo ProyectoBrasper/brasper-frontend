@@ -692,5 +692,32 @@
     "payHintReceived": "El total de la cuota sale de esta cuenta.",
     "payHintGranted": "El total de la cuota ingresa a esta cuenta.",
     "negativeBalancePayNotice": "Esta cuenta quedaría con saldo negativo ({{balance}}). Puedes registrar el pago igual."
+  },
+  "partners": {
+    "subtitle": "Aportes de los socios a la empresa",
+    "new": "Registrar socio",
+    "empty": "Aún no hay socios registrados.",
+    "totalContributed": "Total aportado",
+    "registerContribution": "Registrar aporte",
+    "registerContributionFor": "Registrar aporte de {{name}}",
+    "periodContributions": "Aportes del período",
+    "date": "Fecha",
+    "partner": "Socio",
+    "concept": "Concepto",
+    "conceptOptional": "Concepto (opcional)",
+    "amount": "Monto",
+    "reimbursable": "Reembolsable",
+    "reimbursableHint": "Si la empresa se lo devolverá: es una deuda con el socio, no capital.",
+    "destination": "Destino",
+    "periodTotal": "Total del período",
+    "noContributions": "No hay aportes en este período.",
+    "expensePaid": "Pago del gasto #{{id}} (sin cuenta bancaria)",
+    "noAccount": "Sin cuenta bancaria",
+    "account": "Cuenta de destino",
+    "accountHint": "Cuenta en soles donde ingresa el dinero.",
+    "expenseNote": "Si el socio pagó un gasto con su dinero, regístralo en Gastos con el medio de pago \"Aporte de socio\".",
+    "fullName": "Nombre completo",
+    "fullNameHint": "Debe ser único.",
+    "roleOptional": "Cargo (opcional)"
   }
 }

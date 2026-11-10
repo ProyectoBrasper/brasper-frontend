@@ -130,8 +130,8 @@
     {"id":7,"spentOn":"2026-10-27","projectId":1,"supplierId":1,"category":"OTHER","description":"Compra duplicada","voucherType":"INVOICE","voucherNumber":"E001-2210","taxableBase":5000,"igv":900,"total":5900,"currency":"PEN","paymentMethod":"BANK_ACCOUNT","bankAccountId":1,"partnerId":null,"paymentStatus":"PENDING","annulled":true}
   ],
   "partners": [
-    {"id":1,"fullName":"Roberto Salas Lazo","role":"Socio fundador","totalContributed":60000},
-    {"id":2,"fullName":"Mariela Cuba Núñez","role":"Socia","totalContributed":25000}
+    {"id":1,"fullName":"Roberto Salas Lazo","role":"Socio fundador","contributions":[{"id":1,"contributedOn":"2026-03-01","amount":40000,"currency":"PEN","reimbursable":false,"bankAccountId":2,"expenseId":null,"concept":"Aporte de capital"},{"id":2,"contributedOn":"2026-07-12","amount":17600,"currency":"PEN","reimbursable":true,"bankAccountId":1,"expenseId":null,"concept":"Préstamo del socio para capital de trabajo"},{"id":3,"contributedOn":"2026-10-25","amount":2400,"currency":"PEN","reimbursable":true,"bankAccountId":null,"expenseId":6,"concept":"Materiales menores para 002BR-FEB-2026"}]},
+    {"id":2,"fullName":"Mariela Cuba Núñez","role":"Socia","contributions":[{"id":4,"contributedOn":"2026-03-05","amount":25000,"currency":"PEN","reimbursable":false,"bankAccountId":2,"expenseId":null,"concept":"Aporte de capital"}]}
   ],
   "employees": [
     {"id":1,"fullName":"Carla Mendoza Rojas","dni":"41234561","position":"Gerente administrativa","monthlySalary":8500,"currency":"PEN","hiredOn":"2024-01-02","terminatedOn":null,"active":true},
@@ -197,7 +197,10 @@
     {"id":31,"bankAccountId":2,"occurredOn":"2026-09-10","direction":"OUTFLOW","amount":25750,"concept":"Loan installment: BBVA — capital de trabajo","source":"LOAN_INSTALLMENT","sourceId":6},
     {"id":32,"bankAccountId":2,"occurredOn":"2026-10-10","direction":"OUTFLOW","amount":25500,"concept":"Loan installment: BBVA — capital de trabajo","source":"LOAN_INSTALLMENT","sourceId":7},
     {"id":33,"bankAccountId":1,"occurredOn":"2026-08-05","direction":"OUTFLOW","amount":30000,"concept":"Loan disbursement: Ing. Walter Soto (contratista)","source":"LOAN_DISBURSEMENT","sourceId":2},
-    {"id":34,"bankAccountId":1,"occurredOn":"2026-09-05","direction":"INFLOW","amount":10000,"concept":"Loan installment: Ing. Walter Soto (contratista)","source":"LOAN_INSTALLMENT","sourceId":9}
+    {"id":34,"bankAccountId":1,"occurredOn":"2026-09-05","direction":"INFLOW","amount":10000,"concept":"Loan installment: Ing. Walter Soto (contratista)","source":"LOAN_INSTALLMENT","sourceId":9},
+    {"id":35,"bankAccountId":2,"occurredOn":"2026-03-01","direction":"INFLOW","amount":40000,"concept":"Partner contribution","source":"PARTNER_CONTRIBUTION","sourceId":1},
+    {"id":36,"bankAccountId":1,"occurredOn":"2026-07-12","direction":"INFLOW","amount":17600,"concept":"Partner contribution","source":"PARTNER_CONTRIBUTION","sourceId":2},
+    {"id":37,"bankAccountId":2,"occurredOn":"2026-03-05","direction":"INFLOW","amount":25000,"concept":"Partner contribution","source":"PARTNER_CONTRIBUTION","sourceId":4}
   ],
   "loans": [
     {"id":1,"type":"RECEIVED","counterparty":"BBVA — capital de trabajo","principal":200000,"currency":"PEN","interestRate":0.12,"disbursedOn":"2026-03-10","bankAccountId":2,"status":"PARTIALLY_PAID","installments":[{"id":1,"dueOn":"2026-04-10","principal":25000,"interest":2000,"paid":true,"paidOn":"2026-04-10"},{"id":2,"dueOn":"2026-05-10","principal":25000,"interest":1750,"paid":true,"paidOn":"2026-05-10"},{"id":3,"dueOn":"2026-06-10","principal":25000,"interest":1500,"paid":true,"paidOn":"2026-06-10"},{"id":4,"dueOn":"2026-07-10","principal":25000,"interest":1250,"paid":true,"paidOn":"2026-07-10"},{"id":5,"dueOn":"2026-08-10","principal":25000,"interest":1000,"paid":true,"paidOn":"2026-08-10"},{"id":6,"dueOn":"2026-09-10","principal":25000,"interest":750,"paid":true,"paidOn":"2026-09-10"},{"id":7,"dueOn":"2026-10-10","principal":25000,"interest":500,"paid":true,"paidOn":"2026-10-10"},{"id":8,"dueOn":"2026-11-10","principal":25000,"interest":250,"paid":false,"paidOn":null}]},

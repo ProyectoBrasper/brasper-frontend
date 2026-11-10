@@ -17,12 +17,13 @@ import { countByStatus, outstandingBalance } from '../domain/services/payable-fi
 import { PayInstallmentCommand, RegisterLoanCommand, ScheduleInstallmentCommand } from '../domain/model/loan.commands';
 import { Loan, LoanType } from '../domain/model/loan.entity';
 import { countByType } from '../domain/services/loan-figures';
+import { RegisterContributionCommand, RegisterPartnerCommand } from '../domain/model/partner.commands';
 import { Partner } from '../domain/model/partner.entity';
 import { TreasuryApi } from '../infrastructure/treasury-api';
 
 /**
  * Treasury context state: bank accounts (also read by Billing, Expenses and Staff), their monthly movements,
- * payables, loans with their installments and partners. Contributions come with their screen.
+ * payables, loans with their installments and partners with their contributions.
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryStore {
@@ -209,6 +210,24 @@ export class TreasuryStore {
     );
   }
 
+  /** Registers a partner; the backend answers with it (a name already in use is a 409). */
+  registerPartner(command: RegisterPartnerCommand): void {
+    this.run(this.treasuryApi.registerPartner(command), 'Failed to register partner', (partner) =>
+      this.upsertPartner(partner),
+    );
+  }
+
+  /**
+   * Registers a contribution. The backend answers with the partner and its new total, and posts a cash inflow in the
+   * chosen account, so the balances are re-read.
+   */
+  registerContribution(partnerId: number, command: RegisterContributionCommand): void {
+    this.run(this.treasuryApi.registerContribution(partnerId, command), 'Failed to register contribution', (partner) => {
+      this.upsertPartner(partner);
+      this.loadBankAccounts();
+    });
+  }
+
   getBankAccountById(id: number | null): BankAccount | undefined {
     return id === null ? undefined : this.bankAccountsSignal().find((account) => account.id === id);
   }
@@ -226,6 +245,14 @@ export class TreasuryStore {
       accounts.some((a) => a.id === account.id)
         ? accounts.map((a) => (a.id === account.id ? account : a))
         : [...accounts, account],
+    );
+  }
+
+  private upsertPartner(partner: Partner): void {
+    this.partnersSignal.update((partners) =>
+      partners.some((p) => p.id === partner.id)
+        ? partners.map((p) => (p.id === partner.id ? partner : p))
+        : [...partners, partner],
     );
   }
 

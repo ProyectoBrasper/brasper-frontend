@@ -8,6 +8,7 @@ import { CashMovement } from '../domain/model/cash-movement.entity';
 import { OpenBankAccountCommand } from '../domain/model/open-bank-account.command';
 import { PayInstallmentCommand, RegisterLoanCommand, ScheduleInstallmentCommand } from '../domain/model/loan.commands';
 import { Loan } from '../domain/model/loan.entity';
+import { RegisterContributionCommand, RegisterPartnerCommand } from '../domain/model/partner.commands';
 import { Partner } from '../domain/model/partner.entity';
 import { BankAccountsApiEndpoint } from './bank-accounts-api-endpoint';
 import { LoansApiEndpoint } from './loans-api-endpoint';
@@ -19,7 +20,7 @@ import { Payable } from '../domain/model/payable.entity';
 
 /**
  * Treasury context facade: bank accounts (open, movements, adjustments, transfers), payables (pay, reschedule),
- * loans (list, register, schedule and pay installments) and partners. Contributions come with their screen.
+ * loans (list, register, schedule and pay installments) and partners (register, contributions).
  */
 @Injectable({ providedIn: 'root' })
 export class TreasuryApi extends BaseApi {
@@ -91,5 +92,13 @@ export class TreasuryApi extends BaseApi {
 
   getPartners(): Observable<Partner[]> {
     return this.partnersEndpoint.getAll();
+  }
+
+  registerPartner(command: RegisterPartnerCommand): Observable<Partner> {
+    return this.partnersEndpoint.register(command);
+  }
+
+  registerContribution(partnerId: number, command: RegisterContributionCommand): Observable<Partner> {
+    return this.partnersEndpoint.registerContribution(partnerId, command);
   }
 }
