@@ -9,12 +9,13 @@ import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount, LedgerAccountType } from '../domain/model/ledger-account.entity';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
+import { TrialBalance } from '../domain/model/trial-balance';
 import { countByType, sortByCode } from '../domain/services/ledger-account-figures';
 import { AccountingApi } from '../infrastructure/accounting-api';
 
 /**
- * Accounting context state: the chart of accounts, the journal entries of a month and the tax parameters read by the
- * invoice and expense previews. Trial balance, tax returns and fixed assets come with their screens.
+ * Accounting context state: the chart of accounts, the journal entries and the trial balance of a month, and the tax
+ * parameters read by the invoice and expense previews. Tax returns and fixed assets come with their screens.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingStore {
@@ -25,6 +26,9 @@ export class AccountingStore {
   private readonly taxParametersSignal = signal<TaxParameters | null>(null);
   private readonly ledgerAccountsSignal = signal<LedgerAccount[]>([]);
   private readonly journalEntriesSignal = signal<JournalEntry[]>([]);
+  private readonly trialBalanceSignal = signal<TrialBalance | null>(null);
+  /** Month of the trial balance shown (to drop late answers). */
+  private trialBalancePeriod: Period | null = null;
   /** Month whose entries are shown (to drop late answers and reload after a reversal). */
   private journalPeriod: Period | null = null;
   /** Requests in flight; several can run at once. */
@@ -37,6 +41,8 @@ export class AccountingStore {
   readonly ledgerAccounts = this.ledgerAccountsSignal.asReadonly();
   /** Entries of the shown month, by date and number (as the backend returns them). */
   readonly journalEntries = this.journalEntriesSignal.asReadonly();
+  /** Trial balance of the shown month; null while it loads. */
+  readonly trialBalance = this.trialBalanceSignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
   /** Admin and accounting write; management only reads (backend rule). */
@@ -96,6 +102,18 @@ export class AccountingStore {
     this.run(this.accountingApi.reverseJournalEntry(id, command), 'Failed to reverse journal entry', () => {
       if (this.journalPeriod) {
         this.loadJournalEntries(this.journalPeriod);
+      }
+    });
+  }
+
+  /** Loads what every account moved in one month. */
+  loadTrialBalance(period: Period): void {
+    this.trialBalancePeriod = period;
+    this.trialBalanceSignal.set(null);
+    this.run(this.accountingApi.getTrialBalance(period.year, period.month), 'Failed to load trial balance', (balance) => {
+      // Ignore a late answer for a month the user already left.
+      if (this.trialBalancePeriod === period) {
+        this.trialBalanceSignal.set(balance);
       }
     });
   }

@@ -811,5 +811,18 @@
     "notBalancedTitle": "El asiento no cuadra:",
     "notBalancedHelp": "el total del debe debe ser igual al del haber. Cada línea lleva debe o haber, no ambos. Mínimo 2 líneas.",
     "register": "Registrar asiento"
+  },
+  "trialBalance": {
+    "subtitle": "Sumas del mes por cuenta",
+    "note": "Muestra lo que cada cuenta movió en el mes, no su saldo desde el inicio. Incluye los asientos revertidos y sus reversas, que se anulan en el saldo.",
+    "code": "Código",
+    "account": "Cuenta",
+    "debit": "Debe (S/)",
+    "credit": "Haber (S/)",
+    "balance": "Saldo (S/)",
+    "totals": "Totales",
+    "balanced": "Cuadrado",
+    "unbalanced": "No cuadra",
+    "empty": "No hay movimientos en este período."
   }
 }

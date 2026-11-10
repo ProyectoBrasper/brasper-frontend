@@ -811,5 +811,18 @@
     "notBalancedTitle": "The entry does not balance:",
     "notBalancedHelp": "the total debit must equal the total credit. Each line takes a debit or a credit, not both. At least 2 lines.",
     "register": "Register entry"
+  },
+  "trialBalance": {
+    "subtitle": "Monthly sums by account",
+    "note": "It shows what each account moved in the month, not its balance since the start. It includes reversed entries and their reversals, which cancel out in the balance.",
+    "code": "Code",
+    "account": "Account",
+    "debit": "Debit (S/)",
+    "credit": "Credit (S/)",
+    "balance": "Balance (S/)",
+    "totals": "Totals",
+    "balanced": "Balanced",
+    "unbalanced": "Unbalanced",
+    "empty": "There are no movements in this period."
   }
 }

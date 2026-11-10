@@ -1,5 +1,5 @@
 // Accounting fake routes: GET /tax-parameters?date= (rates in force on a date; 404 without body when
-// none, like the backend), the chart of accounts and the journal entries (list by month, manual entry, reversal). Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
+// none, like the backend), the chart of accounts, the journal entries (list by month, manual entry, reversal) and the trial balance. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
 // ACCOUNTING. Same rules, order of checks and Spanish messages as the backend. The rest comes with its screens.
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
@@ -169,6 +169,38 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     res.status(201).json(entryResource(reversal));
   });
   server.use('/api/v1/journal-entries', requireRoles(...READERS));
+
+  // GET /ledger-accounts/trial-balance?year=&month= (both required): like LedgerQueryService.trialBalance, the debit and
+  // credit each account moved in that month (reversed entries and reversals included), only accounts with movements,
+  // by "code|currency"; the name comes from the chart (the code when the account is not in it). No totals.
+  server.get('/api/v1/ledger-accounts/trial-balance', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!Number.isInteger(year) || year < 1 || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    }
+    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+    const totals = new Map();
+    for (const entry of entries().filter((e) => e.entryDate.startsWith(prefix)).value()) {
+      for (const line of entry.lines) {
+        const key = `${line.accountCode}|PEN`;
+        const total = totals.get(key) ?? { accountCode: line.accountCode, debit: 0, credit: 0 };
+        total.debit += Math.round(line.debit * 100);
+        total.credit += Math.round(line.credit * 100);
+        totals.set(key, total);
+      }
+    }
+    const names = new Map(ledgerAccounts().value().map((account) => [account.code, account.name]));
+    const lines = [...totals.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([, total]) => ({
+        accountCode: total.accountCode,
+        accountName: names.get(total.accountCode) ?? total.accountCode,
+        debit: money(total.debit),
+        credit: money(total.credit),
+      }));
+    res.json({ year, month, lines });
+  });
 
   server.get('/api/v1/tax-parameters', requireRoles(...READERS), (req, res) => {
     const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date ?? '') ? req.query.date : new Date().toISOString().slice(0, 10);
