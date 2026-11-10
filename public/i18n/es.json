@@ -824,5 +824,43 @@
     "balanced": "Cuadrado",
     "unbalanced": "No cuadra",
     "empty": "No hay movimientos en este período."
+  },
+  "taxReturnStatus": {
+    "DRAFT": "Borrador",
+    "FILED": "Presentada",
+    "PAID": "Pagada"
+  },
+  "taxReturns": {
+    "subtitle": "IGV y pago a cuenta de renta del período",
+    "fixedNote": "Las cifras se calculan con los asientos del mes al preparar la declaración y quedan fijas: prepárala cuando el mes ya tenga todos sus asientos.",
+    "returnOf": "Declaración {{period}}",
+    "registerPayment": "Registrar pago",
+    "markAsPaid": "Marcar como pagada",
+    "outputIgv": "IGV de ventas",
+    "inputIgv": "IGV de compras",
+    "carriedCredit": "Crédito fiscal arrastrado",
+    "igvPayable": "IGV a pagar",
+    "incomeTaxPrepayment": "(+) Pago a cuenta de renta",
+    "totalPayable": "Total a pagar",
+    "totalPaid": "Total pagado",
+    "leavesCredit": "Deja un crédito fiscal de S/ {{amount}} para el mes siguiente.",
+    "paidOnWith": "Pagada el {{date}} · {{account}}",
+    "paidOnDate": "Pagada el {{date}}",
+    "notPaid": "Fecha de pago: —",
+    "noReturn": "No hay declaración de {{period}}",
+    "prepareHelp": "Prepárala para calcular el IGV y el pago a cuenta de renta con los asientos del mes.",
+    "noPreviousNotice": "{{period}} no tiene declaración: el crédito fiscal arrastrado saldrá en 0.",
+    "prepare": "Preparar declaración",
+    "previousPeriod": "Período anterior · {{period}}",
+    "noPrevious": "Sin declaración.",
+    "igvShort": "IGV:",
+    "incomeTaxShort": "Renta:",
+    "creditLeft": "Crédito que deja:",
+    "payTitle": "Pagar la declaración de {{period}}",
+    "paidOn": "Fecha de pago",
+    "account": "Cuenta de pago",
+    "accountHint": "Obligatoria: el total sale de esta cuenta.",
+    "nothingToPay": "No hay nada que pagar: solo se marcará como pagada, sin asiento ni salida de caja.",
+    "negativeBalanceNotice": "Esta cuenta quedaría con saldo negativo (S/ {{balance}}). Puedes registrar el pago igual."
   }
 }

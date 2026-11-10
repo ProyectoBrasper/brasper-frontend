@@ -824,5 +824,43 @@
     "balanced": "Balanced",
     "unbalanced": "Unbalanced",
     "empty": "There are no movements in this period."
+  },
+  "taxReturnStatus": {
+    "DRAFT": "Draft",
+    "FILED": "Filed",
+    "PAID": "Paid"
+  },
+  "taxReturns": {
+    "subtitle": "IGV and income tax prepayment of the period",
+    "fixedNote": "The figures are computed from the month entries when the return is prepared and stay fixed: prepare it once the month has all its entries.",
+    "returnOf": "Return {{period}}",
+    "registerPayment": "Register payment",
+    "markAsPaid": "Mark as paid",
+    "outputIgv": "Sales IGV",
+    "inputIgv": "Purchases IGV",
+    "carriedCredit": "Carried tax credit",
+    "igvPayable": "IGV payable",
+    "incomeTaxPrepayment": "(+) Income tax prepayment",
+    "totalPayable": "Total payable",
+    "totalPaid": "Total paid",
+    "leavesCredit": "It leaves a tax credit of S/ {{amount}} for the next month.",
+    "paidOnWith": "Paid on {{date}} · {{account}}",
+    "paidOnDate": "Paid on {{date}}",
+    "notPaid": "Payment date: —",
+    "noReturn": "There is no return for {{period}}",
+    "prepareHelp": "Prepare it to compute the IGV and the income tax prepayment from the month entries.",
+    "noPreviousNotice": "{{period}} has no return: the carried tax credit will be 0.",
+    "prepare": "Prepare return",
+    "previousPeriod": "Previous period · {{period}}",
+    "noPrevious": "No return.",
+    "igvShort": "IGV:",
+    "incomeTaxShort": "Income tax:",
+    "creditLeft": "Credit it leaves:",
+    "payTitle": "Pay the return of {{period}}",
+    "paidOn": "Payment date",
+    "account": "Payment account",
+    "accountHint": "Required: the total leaves this account.",
+    "nothingToPay": "There is nothing to pay: it will only be marked as paid, with no entry nor cash outflow.",
+    "negativeBalanceNotice": "This account would end up with a negative balance (S/ {{balance}}). You can still register the payment."
   }
 }

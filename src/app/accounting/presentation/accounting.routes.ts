@@ -10,12 +10,13 @@ const journalEntryForm = () =>
   import('./views/journal-entry-form/journal-entry-form').then((m) => m.JournalEntryForm);
 const trialBalanceView = () =>
   import('./views/trial-balance-view/trial-balance-view').then((m) => m.TrialBalanceView);
+const taxReturnList = () => import('./views/tax-return-list/tax-return-list').then((m) => m.TaxReturnList);
 
 const canWrite = { canActivate: [roleGuard], data: { roles: AREA_ROLES.accountingWrite } };
 
 /**
  * Accounting context routes (docs/uml-frontend/00-app.puml), lazy loaded under `/accounting` (admin, accounting and
- * management read; admin and accounting write). Tax returns, tax parameters and fixed assets come in the next PRs.
+ * management read; admin and accounting write). Tax parameters and fixed assets come in the next PRs.
  */
 export const accountingRoutes: Routes = [
   { path: '', redirectTo: 'ledger-accounts', pathMatch: 'full' },
@@ -23,4 +24,5 @@ export const accountingRoutes: Routes = [
   { path: 'journal-entries', loadComponent: journalEntryList, title: 'Brasper' },
   { path: 'journal-entries/new', loadComponent: journalEntryForm, title: 'Brasper', ...canWrite },
   { path: 'trial-balance', loadComponent: trialBalanceView, title: 'Brasper' },
+  { path: 'tax-returns', loadComponent: taxReturnList, title: 'Brasper' },
 ];

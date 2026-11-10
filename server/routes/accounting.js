@@ -1,5 +1,5 @@
 // Accounting fake routes: GET /tax-parameters?date= (rates in force on a date; 404 without body when
-// none, like the backend), the chart of accounts, the journal entries (list by month, manual entry, reversal) and the trial balance. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
+// none, like the backend), the chart of accounts, the journal entries (list by month, manual entry, reversal), the trial balance and the tax returns. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
 // ACCOUNTING. Same rules, order of checks and Spanish messages as the backend. The rest comes with its screens.
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
@@ -201,6 +201,142 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
       }));
     res.json({ year, month, lines });
   });
+
+  // ---------- Tax returns ----------
+  // Stored: { id, year, month, outputIgv, inputIgv, carriedCredit, incomeTaxPrepayment, currency, status, paidOn,
+  // bankAccountId }; the resource adds igvPayable and totalPayable like the backend TaxReturn.
+  const returns = () => db.get('tax-returns');
+  const cents = (amount) => Math.round(amount * 100);
+  const igvPayableCents = (r) => Math.max(0, cents(r.outputIgv) - cents(r.inputIgv) - cents(r.carriedCredit));
+  const nextCarriedCreditCents = (r) => Math.max(0, cents(r.inputIgv) + cents(r.carriedCredit) - cents(r.outputIgv));
+  const returnResource = (r) => {
+    const igv = igvPayableCents(r);
+    return {
+      id: r.id,
+      year: r.year,
+      month: r.month,
+      outputIgv: money(cents(r.outputIgv)),
+      inputIgv: money(cents(r.inputIgv)),
+      carriedCredit: money(cents(r.carriedCredit)),
+      igvPayable: money(igv),
+      incomeTaxPrepayment: money(cents(r.incomeTaxPrepayment)),
+      totalPayable: money(igv + cents(r.incomeTaxPrepayment)),
+      status: r.status,
+      paidOn: r.paidOn ?? null,
+      bankAccountId: r.bankAccountId ?? null,
+    };
+  };
+  const latestFirst = (a, b) => b.year - a.year || b.month - a.month;
+
+  server.get('/api/v1/tax-returns/history', requireRoles(...READERS), (req, res) => {
+    res.json([...returns().value()].sort(latestFirst).map(returnResource));
+  });
+
+  server.get('/api/v1/tax-returns', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    }
+    const found = returns().find({ year, month }).value();
+    if (!found) return problem(res, 404, 'Not Found', 'No se encontró la declaración de impuestos.');
+    res.json(returnResource(found));
+  });
+
+  // Prepare, like TaxCommandService: a month already prepared is a 409. Output and input IGV are the credit and debit
+  // of 40111 in the month, sales the credit minus debit of 70; the carried credit is what the previous return left;
+  // the prepayment is the sales times the rate in force at the end of the month (1.5 % without parameters). Draft.
+  server.post('/api/v1/tax-returns', requireRoles(...WRITERS), (req, res) => {
+    const { year, month } = req.body ?? {};
+    if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'El año (2000–2100) y el mes (1–12) son obligatorios.');
+    }
+    if (returns().find({ year, month }).value()) {
+      return problem(res, 409, 'Conflict', 'Ya existe una declaración de impuestos para este periodo.');
+    }
+    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+    let output = 0;
+    let input = 0;
+    let sales = 0;
+    for (const entry of entries().filter((e) => e.entryDate.startsWith(prefix)).value()) {
+      for (const line of entry.lines) {
+        if (line.accountCode === '40111') {
+          output += cents(line.credit);
+          input += cents(line.debit);
+        } else if (line.accountCode === '70') {
+          sales += cents(line.credit) - cents(line.debit);
+        }
+      }
+    }
+    const previous = month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
+    const before = returns().find(previous).value();
+    const carried = before ? nextCarriedCreditCents(before) : 0;
+    const monthEnd = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+    const rate = taxParametersAt(db, monthEnd)?.incomeTaxPrepayment ?? 0.015;
+    const prepayment = sales > 0 ? Math.round(sales * rate) : 0;
+    const taxReturn = {
+      id: nextId('tax-returns'),
+      year,
+      month,
+      outputIgv: output / 100,
+      inputIgv: input / 100,
+      carriedCredit: carried / 100,
+      incomeTaxPrepayment: prepayment / 100,
+      currency: 'PEN',
+      status: 'DRAFT',
+      paidOn: null,
+      bankAccountId: null,
+    };
+    returns().push(taxReturn).write();
+    res.status(201).json(returnResource(taxReturn));
+  });
+
+  // Pay: @Valid (400), the return (404), already paid (409), the account (400). Filed and paid at once; with
+  // something to pay it posts the entry (D 40111 IGV, D 4017 prepayment, H 10 total, TAX_RETURN) and the cash
+  // outflow "Tax return payment" (TAX_PAYMENT), like CashPostingEventHandler. 200.
+  server.post('/api/v1/tax-returns/:id/payment', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.paidOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de pago no es válida.');
+    if (body.bankAccountId == null) return problem(res, 400, 'Bad Request', 'Indica la cuenta de pago.');
+    const taxReturn = returns().find({ id: Number(req.params.id) }).value();
+    if (!taxReturn) return problem(res, 404, 'Not Found', 'No se encontró la declaración de impuestos.');
+    if (taxReturn.status === 'PAID') return problem(res, 409, 'Conflict', 'La declaración de impuestos ya está pagada.');
+    const account = db.get('bank-accounts').find({ id: Number(body.bankAccountId) }).value();
+    if (!account) return problem(res, 400, 'Bad Request', 'No se encontró la cuenta bancaria.');
+    const igv = igvPayableCents(taxReturn);
+    const prepayment = cents(taxReturn.incomeTaxPrepayment);
+    const total = igv + prepayment;
+    if (total > 0) {
+      const lines = [];
+      if (igv > 0) lines.push({ accountCode: '40111', debit: igv / 100, credit: 0, projectId: null });
+      if (prepayment > 0) lines.push({ accountCode: '4017', debit: prepayment / 100, credit: 0, projectId: null });
+      lines.push({ accountCode: '10', debit: 0, credit: total / 100, projectId: null });
+      entries().push({
+        id: nextId('journal-entries'),
+        entryDate: body.paidOn,
+        description: `IGV and income tax prepayment ${taxReturn.year}-${String(taxReturn.month).padStart(2, '0')}`,
+        source: 'TAX_RETURN',
+        sourceId: taxReturn.id,
+        reversed: false,
+        reversalOfId: null,
+        lines,
+      }).write();
+      db.get('cash-movements').push({
+        id: nextId('cash-movements'),
+        bankAccountId: account.id,
+        occurredOn: body.paidOn,
+        direction: 'OUTFLOW',
+        amount: total / 100,
+        concept: 'Tax return payment',
+        source: 'TAX_PAYMENT',
+        sourceId: taxReturn.id,
+      }).write();
+      db.get('bank-accounts').find({ id: account.id }).assign({ currentBalance: (cents(account.currentBalance) - total) / 100 }).write();
+    }
+    returns().find({ id: taxReturn.id }).assign({ status: 'PAID', paidOn: body.paidOn, bankAccountId: account.id }).write();
+    res.json(returnResource(returns().find({ id: taxReturn.id }).value()));
+  });
+  server.use('/api/v1/tax-returns', requireRoles(...READERS));
 
   server.get('/api/v1/tax-parameters', requireRoles(...READERS), (req, res) => {
     const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date ?? '') ? req.query.date : new Date().toISOString().slice(0, 10);

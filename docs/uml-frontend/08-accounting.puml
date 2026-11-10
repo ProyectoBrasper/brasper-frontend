@@ -214,10 +214,24 @@ package "app" {
         +igvPayable: number
         +incomeTaxPrepayment: number
         +totalPayable: number
+        +currency: string
         +status: TaxReturnStatus
         +paidOn: string | null
+        +bankAccountId: number | null
+        +period(): Period
+        +isPaid(): boolean
+        +nextCarriedCredit(): number
       }
       TaxReturn ..|> app.shared.domain.model.BaseEntity : implements
+      note right of TaxReturn
+        Se prepara con los asientos del mes (IGV ventas = haber 40111, compras = debe 40111,
+        ventas = haber − debe 70) y el crédito que dejó el mes anterior; las cifras quedan fijas
+        (no hay recalcular ni borrar). Pagar la pasa de DRAFT a PAID (FILED en el mismo paso).
+      end note
+      class PayTaxReturnCommand <<Command>> {
+        +paidOn: string
+        +bankAccountId: number
+      }
 
       enum TaxReturnStatus {
         DRAFT
@@ -308,7 +322,11 @@ package "app" {
         +totalPayable: number
         +status: string
         +paidOn: string | null
+        +bankAccountId: number | null
       }
+      note right of TaxReturnResource
+        Los montos llegan como MoneyResource {amount, currency}.
+      end note
       class TaxParametersResource <<Resource>> {
         +id: number
         +igv: number
@@ -390,9 +408,9 @@ package "app" {
         GET /ledger-accounts/trial-balance?year=&month= (ambos obligatorios).
       end note
       class TaxReturnsApiEndpoint {
-        +getByPeriod(year: number, month: number): Observable<TaxReturn | null>
+        +getHistory(): Observable<TaxReturn[]>
         +prepare(year: number, month: number): Observable<TaxReturn>
-        +pay(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
+        +pay(id: number, command: PayTaxReturnCommand): Observable<TaxReturn>
       }
       class TaxParametersApiEndpoint {
         +getAt(date: string): Observable<TaxParameters | null>
@@ -415,9 +433,9 @@ package "app" {
         +registerJournalEntry(command: RegisterJournalEntryCommand): Observable<JournalEntry>
         +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry>
         +getTrialBalance(year: number, month: number): Observable<TrialBalance>
-        +getTaxReturn(year: number, month: number): Observable<TaxReturn | null>
+        +getTaxReturns(): Observable<TaxReturn[]>
         +prepareTaxReturn(year: number, month: number): Observable<TaxReturn>
-        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
+        +payTaxReturn(id: number, command: PayTaxReturnCommand): Observable<TaxReturn>
         +getTaxParametersAt(date: string): Observable<TaxParameters | null>
         +setTaxParameters(parameters: TaxParameters): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
@@ -444,7 +462,7 @@ package "app" {
       LedgerAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       JournalEntriesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       TrialBalanceApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
-      TaxReturnsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      TaxReturnsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
       TaxParametersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       FixedAssetsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       AccountingApi --|> app.shared.infrastructure.BaseApi : extends
@@ -469,7 +487,7 @@ package "app" {
         -ledgerAccountsSignal: WritableSignal<LedgerAccount[]>
         -journalEntriesSignal: WritableSignal<JournalEntry[]>
         -trialBalanceSignal: WritableSignal<TrialBalance | null>
-        -taxReturnSignal: WritableSignal<TaxReturn | null>
+        -taxReturnsSignal: WritableSignal<TaxReturn[]>
         -taxParametersSignal: WritableSignal<TaxParameters | null>
         -fixedAssetsSignal: WritableSignal<FixedAsset[]>
         -pendingSignal: WritableSignal<number>
@@ -477,7 +495,7 @@ package "app" {
         +ledgerAccounts: Signal<LedgerAccount[]>
         +journalEntries: Signal<JournalEntry[]>
         +trialBalance: Signal<TrialBalance | null>
-        +taxReturn: Signal<TaxReturn | null>
+        +taxReturns: Signal<TaxReturn[]>
         +taxParameters: Signal<TaxParameters | null>
         +fixedAssets: Signal<FixedAsset[]>
         +loading: Signal<boolean>
@@ -491,9 +509,9 @@ package "app" {
         +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): void
         +getLedgerAccountByCode(code: string): LedgerAccount | undefined
         +loadTrialBalance(period: Period): void
-        +loadTaxReturn(year: number, month: number): void
-        +prepareTaxReturn(year: number, month: number): void
-        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): void
+        +loadTaxReturns(): void
+        +prepareTaxReturn(period: Period): void
+        +payTaxReturn(id: number, command: PayTaxReturnCommand, onPaid?: () => void): void
         +loadTaxParameters(): void
         +setTaxParameters(parameters: TaxParameters): void
         +loadFixedAssets(): void
@@ -546,10 +564,11 @@ package "app" {
         class PayTaxReturnDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<PayTaxReturnDialog>
-          -treasuryStore: TreasuryStore
-          +data: {taxReturn: TaxReturn}
+          +data: {taxReturn: TaxReturn, label: string, bankAccounts: BankAccount[]}
+          +accounts: BankAccount[]
+          +nothingToPay: boolean
           +paymentForm: FormGroup
-          +bankAccounts: Signal<BankAccount[]>
+          +negativeBalance: Signal<number | null>
           +onSave(): void
           +onCancel(): void
         }
@@ -607,11 +626,14 @@ package "app" {
         }
         class TaxReturnList <<Component>> {
           -accountingStore: AccountingStore
+          -treasuryStore: TreasuryStore
           -dialog: MatDialog
           +period: WritableSignal<Period>
-          +taxReturn: Signal<TaxReturn | null>
+          +taxReturn: Signal<TaxReturn | undefined>
+          +previous: Signal<TaxReturn | undefined>
+          +prepaymentRate: Signal<number | null>
           +onPrepare(): void
-          +onPay(): void
+          +onPay(taxReturn: TaxReturn): void
         }
         class TaxParametersForm <<Component>> {
           -formBuilder: FormBuilder
@@ -655,7 +677,7 @@ package "app" {
       FixedAssetForm --|> app.shared.presentation.BaseForm : extends
       JournalEntryForm --> JournalLinesEditor : contains
       TaxReturnList --> PayTaxReturnDialog : opens
-      PayTaxReturnDialog --> app.treasury.application.TreasuryStore : reads bank accounts
+      TaxReturnList --> app.treasury.application.TreasuryStore : reads and refreshes bank accounts
       JournalEntryList --> app.shared.presentation.components.PeriodSelector : contains
       TrialBalanceView --> app.shared.presentation.components.PeriodSelector : contains
       TaxReturnList --> app.shared.presentation.components.PeriodSelector : contains
@@ -676,6 +698,9 @@ note bottom
   Asientos: GET /journal-entries?year=&month= (por fecha y número), filas expandibles con sus líneas;
   revertir POST /{id}/reversal {reversedOn} responde con la reversa (puede caer en otro mes): se relee el mes.
   La fecha de la reversa no puede ser anterior a la del asiento (regla solo de la UI).
+  Declaraciones: GET /tax-returns/history (más reciente primero) da el mes y el anterior; POST /tax-returns
+  {year, month} prepara (409 si ya existe; aviso si el mes anterior no tiene, el crédito saldría 0); POST
+  /{id}/payment {paidOn, bankAccountId}: asiento TAX_RETURN y salida de caja "Tax return payment" si hay total.
   Balance de comprobación: sumas del mes por cuenta con saldo = debe − haber (negativo en rojo), totales y chip
   Cuadrado / No cuadra; la API falsa lo calcula desde los asientos guardados, como el backend.
   Asiento manual (POST /journal-entries, source MANUAL): solo cuentas activas, proyecto opcional (el backend

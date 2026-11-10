@@ -9,13 +9,15 @@ import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount, LedgerAccountType } from '../domain/model/ledger-account.entity';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
+import { PayTaxReturnCommand } from '../domain/model/tax-return.commands';
+import { TaxReturn } from '../domain/model/tax-return.entity';
 import { TrialBalance } from '../domain/model/trial-balance';
 import { countByType, sortByCode } from '../domain/services/ledger-account-figures';
 import { AccountingApi } from '../infrastructure/accounting-api';
 
 /**
- * Accounting context state: the chart of accounts, the journal entries and the trial balance of a month, and the tax
- * parameters read by the invoice and expense previews. Tax returns and fixed assets come with their screens.
+ * Accounting context state: the chart of accounts, the journal entries and the trial balance of a month, the tax
+ * returns and the tax parameters read by the invoice and expense previews. Fixed assets come with their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingStore {
@@ -27,6 +29,7 @@ export class AccountingStore {
   private readonly ledgerAccountsSignal = signal<LedgerAccount[]>([]);
   private readonly journalEntriesSignal = signal<JournalEntry[]>([]);
   private readonly trialBalanceSignal = signal<TrialBalance | null>(null);
+  private readonly taxReturnsSignal = signal<TaxReturn[]>([]);
   /** Month of the trial balance shown (to drop late answers). */
   private trialBalancePeriod: Period | null = null;
   /** Month whose entries are shown (to drop late answers and reload after a reversal). */
@@ -43,6 +46,8 @@ export class AccountingStore {
   readonly journalEntries = this.journalEntriesSignal.asReadonly();
   /** Trial balance of the shown month; null while it loads. */
   readonly trialBalance = this.trialBalanceSignal.asReadonly();
+  /** Every tax return, latest first (the backend history). */
+  readonly taxReturns = this.taxReturnsSignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
   /** Admin and accounting write; management only reads (backend rule). */
@@ -118,6 +123,28 @@ export class AccountingStore {
     });
   }
 
+  loadTaxReturns(): void {
+    this.run(this.accountingApi.getTaxReturns(), 'Failed to load tax returns', (returns) => this.taxReturnsSignal.set(returns));
+  }
+
+  /** Prepares the return of a month; its figures come from the journal of that month and stay fixed. */
+  prepareTaxReturn(period: Period): void {
+    this.run(this.accountingApi.prepareTaxReturn(period.year, period.month), 'Failed to prepare tax return', (taxReturn) =>
+      this.upsertTaxReturn(taxReturn),
+    );
+  }
+
+  /**
+   * Pays a return. The backend posts its entry and takes the cash out of the chosen account, so `onPaid` lets the
+   * caller re-read the balances (they belong to Treasury).
+   */
+  payTaxReturn(id: number, command: PayTaxReturnCommand, onPaid?: () => void): void {
+    this.run(this.accountingApi.payTaxReturn(id, command), 'Failed to pay tax return', (taxReturn) => {
+      this.upsertTaxReturn(taxReturn);
+      onPaid?.();
+    });
+  }
+
   /** The account of a code, for the name shown next to it (undefined while the chart loads). */
   getLedgerAccountByCode(code: string): LedgerAccount | undefined {
     return this.ledgerAccountsSignal().find((account) => account.code === code);
@@ -125,6 +152,14 @@ export class AccountingStore {
 
   countLedgerAccountsByType(type: LedgerAccountType | null): number {
     return countByType(this.ledgerAccountsSignal(), type);
+  }
+
+  private upsertTaxReturn(taxReturn: TaxReturn): void {
+    this.taxReturnsSignal.update((returns) =>
+      [...returns.filter((r) => r.id !== taxReturn.id), taxReturn].sort(
+        (a, b) => b.year - a.year || b.month - a.month,
+      ),
+    );
   }
 
   clearError(): void {

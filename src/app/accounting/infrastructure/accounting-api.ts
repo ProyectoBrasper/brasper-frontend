@@ -7,16 +7,19 @@ import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
 import { LedgerAccount } from '../domain/model/ledger-account.entity';
 import { TaxParameters } from '../domain/model/tax-parameters.entity';
+import { PayTaxReturnCommand } from '../domain/model/tax-return.commands';
+import { TaxReturn } from '../domain/model/tax-return.entity';
 import { TrialBalance } from '../domain/model/trial-balance';
 import { JournalEntriesApiEndpoint } from './journal-entries-api-endpoint';
 import { LedgerAccountsApiEndpoint } from './ledger-accounts-api-endpoint';
 import { TaxParametersApiEndpoint } from './tax-parameters-api-endpoint';
+import { TaxReturnsApiEndpoint } from './tax-returns-api-endpoint';
 import { TrialBalanceApiEndpoint } from './trial-balance-api-endpoint';
 
 /**
  * Accounting context facade: the chart of accounts, the journal entries of a month (manual ones and reversals) and the tax
- * parameters that Billing and Expenses read for their amount previews, and the trial balance of a month. Tax returns
- * and fixed assets come with their screens.
+ * parameters that Billing and Expenses read for their amount previews, the trial balance of a month and the tax
+ * returns. Fixed assets come with their screen.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingApi extends BaseApi {
@@ -25,6 +28,7 @@ export class AccountingApi extends BaseApi {
   private readonly ledgerAccountsEndpoint = new LedgerAccountsApiEndpoint(this.http);
   private readonly journalEntriesEndpoint = new JournalEntriesApiEndpoint(this.http);
   private readonly trialBalanceEndpoint = new TrialBalanceApiEndpoint(this.http);
+  private readonly taxReturnsEndpoint = new TaxReturnsApiEndpoint(this.http);
 
   /** Parameters in force on `date` (`yyyy-MM-dd`), or null when none are configured. */
   getTaxParametersAt(date: string): Observable<TaxParameters | null> {
@@ -53,5 +57,17 @@ export class AccountingApi extends BaseApi {
 
   getTrialBalance(year: number, month: number): Observable<TrialBalance> {
     return this.trialBalanceEndpoint.getByPeriod(year, month);
+  }
+
+  getTaxReturns(): Observable<TaxReturn[]> {
+    return this.taxReturnsEndpoint.getHistory();
+  }
+
+  prepareTaxReturn(year: number, month: number): Observable<TaxReturn> {
+    return this.taxReturnsEndpoint.prepare(year, month);
+  }
+
+  payTaxReturn(id: number, command: PayTaxReturnCommand): Observable<TaxReturn> {
+    return this.taxReturnsEndpoint.pay(id, command);
   }
 }
