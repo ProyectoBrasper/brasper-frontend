@@ -1,0 +1,168 @@
+<app-page-header
+  [title]="'nav.journalEntries' | translate"
+  [subtitle]="'journalEntries.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.journalEntries' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+</app-page-header>
+
+<p class="info">
+  <mat-icon>info</mat-icon>
+  <span>{{ 'journalEntries.automaticNote' | translate }}</span>
+</p>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table" [dataSource]="dataSource()" multiTemplateDataRows>
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef class="icon-col"><span class="cdk-visually-hidden">{{ 'journalEntries.lines' | translate }}</span></th>
+        <td mat-cell *matCellDef="let entry" class="icon-col">
+          <button
+            mat-icon-button
+            type="button"
+            (click)="toggle(entry); $event.stopPropagation()"
+            [attr.aria-expanded]="isExpanded(entry)"
+            [attr.aria-label]="'journalEntries.showLines' | translate: { id: entry.id }"
+          >
+            <mat-icon>{{ isExpanded(entry) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>{{ 'journalEntries.number' | translate }}</th>
+        <td mat-cell *matCellDef="let entry" class="strong">{{ entry.id }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="entryDate">
+        <th mat-header-cell *matHeaderCellDef>{{ 'journalEntries.date' | translate }}</th>
+        <td mat-cell *matCellDef="let entry">{{ entry.entryDate | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>{{ 'journalEntries.description' | translate }}</th>
+        <td mat-cell *matCellDef="let entry" class="description" [title]="description(entry)">{{ description(entry) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="source">
+        <th mat-header-cell *matHeaderCellDef>{{ 'journalEntries.source' | translate }}</th>
+        <td mat-cell *matCellDef="let entry">
+          <span class="tag" [class.manual]="entry.isManual()">{{ 'entrySource.' + entry.source | translate }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="totalDebit">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'journalEntries.debitPen' | translate }}</th>
+        <td mat-cell *matCellDef="let entry" class="amount">{{ entry.totalDebit | number: '1.2-2' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="totalCredit">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'journalEntries.creditPen' | translate }}</th>
+        <td mat-cell *matCellDef="let entry" class="amount">{{ entry.totalCredit | number: '1.2-2' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef class="center">{{ 'journalEntries.status' | translate }}</th>
+        <td mat-cell *matCellDef="let entry" class="center">
+          @if (entry.reversed) {
+            <span class="reversed-chip"><mat-icon aria-hidden="true">undo</mat-icon>{{ 'journalEntries.reversed' | translate }}</span>
+          } @else {
+            <span class="muted">—</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="icon-col"><span class="cdk-visually-hidden">{{ 'common.actions' | translate }}</span></th>
+        <td mat-cell *matCellDef="let entry" class="icon-col">
+          @if (entry.canBeReversed()) {
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onReverse(entry); $event.stopPropagation()"
+              [matTooltip]="'journalEntries.reverse' | translate"
+              [attr.aria-label]="'journalEntries.reverseFor' | translate: { id: entry.id }"
+            >
+              <mat-icon>undo</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <!-- The lines of the expanded entry, in one cell across the row. -->
+      <ng-container matColumnDef="detail">
+        <td mat-cell *matCellDef="let entry" [attr.colspan]="columns().length" class="detail-cell">
+          @if (isExpanded(entry)) {
+            <div class="detail">
+              <p class="detail-title">
+                <mat-icon aria-hidden="true">list_alt</mat-icon>{{ 'journalEntries.linesOf' | translate: { id: entry.id } }}
+              </p>
+              <table class="lines">
+                <thead>
+                  <tr>
+                    <th>{{ 'journalEntries.account' | translate }}</th>
+                    <th>{{ 'journalEntries.project' | translate }}</th>
+                    <th class="amount">{{ 'journalEntries.debit' | translate }}</th>
+                    <th class="amount">{{ 'journalEntries.credit' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of entry.lines; track $index) {
+                    <tr>
+                      <td><span class="mono code">{{ line.accountCode }}</span> {{ accountName(line.accountCode) }}</td>
+                      <td [class.mono]="line.projectId !== null" [class.muted]="line.projectId === null">
+                        {{ line.projectId === null ? '—' : projectCode(line.projectId) }}
+                      </td>
+                      <td class="amount" [class.muted]="line.debit === 0">{{ line.debit === 0 ? '—' : (line.debit | number: '1.2-2') }}</td>
+                      <td class="amount" [class.muted]="line.credit === 0">{{ line.credit === 0 ? '—' : (line.credit | number: '1.2-2') }}</td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  @let sums = totals(entry);
+                  <tr [class.balanced]="entry.isBalanced()" [class.unbalanced]="!entry.isBalanced()">
+                    <td colspan="2">
+                      <span class="balance-label">
+                        <mat-icon aria-hidden="true">{{ entry.isBalanced() ? 'check_circle' : 'error' }}</mat-icon>
+                        {{ (entry.isBalanced() ? 'journalEntries.balanced' : 'journalEntries.unbalanced') | translate }}
+                      </span>
+                    </td>
+                    <td class="amount">{{ sums.debit | number: '1.2-2' }}</td>
+                    <td class="amount">{{ sums.credit | number: '1.2-2' }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+      <tr
+        mat-row
+        *matRowDef="let entry; columns: columns()"
+        class="entry-row"
+        [class.expanded]="isExpanded(entry)"
+        [class.reversed]="entry.reversed"
+        (click)="toggle(entry)"
+      ></tr>
+      <tr mat-row *matRowDef="let entry; columns: ['detail']" class="detail-row" [class.open]="isExpanded(entry)"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="columns().length">
+          {{ (loading() ? 'common.loading' : 'journalEntries.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[20, 50]" [pageSize]="20" />
+</section>
