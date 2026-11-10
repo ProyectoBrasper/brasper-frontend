@@ -263,35 +263,54 @@ package "app" {
       class Partner <<Entity>> {
         - #id: number
         - #fullName: string
-        - #role: string
+        - #role: string | null
         - #totalContributed: number
+        - #contributions: PartnerContribution[]
         +id: number
         +fullName: string
-        +role: string
+        +role: string | null
         +totalContributed: number
+        +contributions: PartnerContribution[]
       }
       Partner ..|> app.shared.domain.model.BaseEntity : implements
 
       class PartnerContribution <<Entity>> {
         - #id: number
-        - #partnerId: number
         - #contributedOn: string
         - #amount: number
+        - #currency: string
         - #reimbursable: boolean
         - #bankAccountId: number | null
         - #expenseId: number | null
-        - #concept: string
+        - #concept: string | null
         +id: number
-        +partnerId: number
         +contributedOn: string
         +amount: number
+        +currency: string
         +reimbursable: boolean
         +bankAccountId: number | null
         +expenseId: number | null
-        +concept: string
+        +concept: string | null
       }
       PartnerContribution ..|> app.shared.domain.model.BaseEntity : implements
-      Partner "1" <-- "*" PartnerContribution : references partnerId
+      Partner "1" *-- "*" PartnerContribution : contains
+
+      class RegisterPartnerCommand <<Command>> {
+        +fullName: string
+        +role: string | null
+      }
+      class RegisterContributionCommand <<Command>> {
+        +contributedOn: string
+        +amount: number
+        +currency: string
+        +reimbursable: boolean
+        +bankAccountId: number
+        +concept: string | null
+      }
+      note right of RegisterContributionCommand
+        El backend deja la cuenta opcional; la UI la exige porque sin cuenta (ni gasto)
+        el aporte no mueve caja ni genera asiento. Con cuenta: ingreso "Partner contribution".
+      end note
 
       class TransferFundsCommand <<Command>> {
         +fromAccountId: number
@@ -368,18 +387,19 @@ package "app" {
       class PartnerResource <<Resource>> {
         +id: number
         +fullName: string
-        +role: string
+        +role: string | null
         +totalContributed: number
+        +contributions: PartnerContributionResource[]
       }
       class PartnerContributionResource <<Resource>> {
         +id: number
-        +partnerId: number
         +contributedOn: string
         +amount: number
+        +currency: string
         +reimbursable: boolean
         +bankAccountId: number | null
         +expenseId: number | null
-        +concept: string
+        +concept: string | null
       }
       class BankAccountsResponse <<Response>> {
       }
@@ -388,8 +408,6 @@ package "app" {
       class LoansResponse <<Response>> {
       }
       class PartnersResponse <<Response>> {
-      }
-      class PartnerContributionsResponse <<Response>> {
       }
 
       class BankAccountAssembler <<Assembler>> {
@@ -414,11 +432,6 @@ package "app" {
         +toEntitiesFromResponse(response: PartnersResponse): Partner[]
         +toEntityFromResource(resource: PartnerResource): Partner
         +toResourceFromEntity(entity: Partner): PartnerResource
-      }
-      class PartnerContributionAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: PartnerContributionsResponse): PartnerContribution[]
-        +toEntityFromResource(resource: PartnerContributionResource): PartnerContribution
-        +toResourceFromEntity(entity: PartnerContribution): PartnerContributionResource
       }
 
       note top of BankAccountsApiEndpoint
@@ -464,18 +477,19 @@ package "app" {
         préstamo completo; no existe un GET de cuotas.
       end note
       class PartnersApiEndpoint {
+        +register(command: RegisterPartnerCommand): Observable<Partner>
+        +registerContribution(partnerId: number, command: RegisterContributionCommand): Observable<Partner>
       }
-      class PartnerContributionsApiEndpoint {
-        +getByPeriod(year: number, month: number): Observable<PartnerContribution[]>
-        +register(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
-      }
+      note right of PartnersApiEndpoint
+        Los aportes llegan dentro de cada socio (GET /partners); no hay GET de aportes por
+        período: PartnerList filtra el mes en el front. Ambos POST responden con el socio.
+      end note
 
       class TreasuryApi {
         -bankAccountsEndpoint: BankAccountsApiEndpoint
         -payablesEndpoint: PayablesApiEndpoint
         -loansEndpoint: LoansApiEndpoint
         -partnersEndpoint: PartnersApiEndpoint
-        -partnerContributionsEndpoint: PartnerContributionsApiEndpoint
         +getBankAccounts(): Observable<BankAccount[]>
         +openBankAccount(command: OpenBankAccountCommand): Observable<BankAccount>
         +getBankAccountById(id: number): Observable<BankAccount>
@@ -492,9 +506,8 @@ package "app" {
         +scheduleInstallment(loanId: number, command: ScheduleInstallmentCommand): Observable<Loan>
         +payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): Observable<Loan>
         +getPartners(): Observable<Partner[]>
-        +registerPartner(partner: Partner): Observable<Partner>
-        +registerContribution(partnerId: number, contribution: PartnerContribution): Observable<PartnerContribution>
-        +getContributionsByPeriod(year: number, month: number): Observable<PartnerContribution[]>
+        +registerPartner(command: RegisterPartnerCommand): Observable<Partner>
+        +registerContribution(partnerId: number, command: RegisterContributionCommand): Observable<Partner>
       }
 
       BankAccountResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -507,30 +520,27 @@ package "app" {
       PayablesResponse ..|> app.shared.infrastructure.BaseResponse : implements
       LoansResponse ..|> app.shared.infrastructure.BaseResponse : implements
       PartnersResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      PartnerContributionsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       BankAccountAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PayableAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       LoanAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       PartnerAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      PartnerContributionAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       BankAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PayablesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       LoansApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       PartnersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      PartnerContributionsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       TreasuryApi --|> app.shared.infrastructure.BaseApi : extends
       TreasuryApi --> BankAccountsApiEndpoint : delegates to
       TreasuryApi --> PayablesApiEndpoint : delegates to
       TreasuryApi --> LoansApiEndpoint : delegates to
       TreasuryApi --> PartnersApiEndpoint : delegates to
-      TreasuryApi --> PartnerContributionsApiEndpoint : delegates to
       BankAccountsApiEndpoint --> BankAccountAssembler : uses
       BankAccountsApiEndpoint --> CashMovementAssembler : uses
       PayablesApiEndpoint --> PayableAssembler : uses
       LoansApiEndpoint --> LoanAssembler : uses
       LoansApiEndpoint ..> RegisterLoanCommand : sends
       PartnersApiEndpoint --> PartnerAssembler : uses
-      PartnerContributionsApiEndpoint --> PartnerContributionAssembler : uses
+      PartnersApiEndpoint ..> RegisterPartnerCommand : sends
+      PartnersApiEndpoint ..> RegisterContributionCommand : sends
       BankAccountsApiEndpoint ..> TransferFundsCommand : sends
       BankAccountsApiEndpoint ..> RegisterAdjustmentCommand : sends
     }
@@ -543,7 +553,6 @@ package "app" {
         -payablesSignal: WritableSignal<Payable[]>
         -loansSignal: WritableSignal<Loan[]>
         -partnersSignal: WritableSignal<Partner[]>
-        -contributionsSignal: WritableSignal<PartnerContribution[]>
         -loadingSignal: WritableSignal<boolean>
         -errorSignal: WritableSignal<string | null>
         +bankAccounts: Signal<BankAccount[]>
@@ -555,7 +564,6 @@ package "app" {
         +outstandingPayables: Signal<number>
         +loans: Signal<Loan[]>
         +partners: Signal<Partner[]>
-        +contributions: Signal<PartnerContribution[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +loadBankAccounts(): void
@@ -577,8 +585,8 @@ package "app" {
         +payInstallment(loanId: number, installmentId: number, command: PayInstallmentCommand): void
         +getLoanById(id: number): Loan | undefined
         +loadPartners(): void
-        +registerPartner(partner: Partner): void
-        +registerContribution(partnerId: number, contribution: PartnerContribution): void
+        +registerPartner(command: RegisterPartnerCommand): void
+        +registerContribution(partnerId: number, command: RegisterContributionCommand): void
         +getBankAccountById(id: number): BankAccount | undefined
       }
       TreasuryStore --> TreasuryApi : uses
@@ -587,7 +595,6 @@ package "app" {
       TreasuryStore --> Payable : manages
       TreasuryStore --> Loan : manages
       TreasuryStore --> Partner : manages
-      TreasuryStore --> PartnerContribution : manages
     }
 
     package "presentation" {
@@ -651,8 +658,16 @@ package "app" {
         class RegisterContributionDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<RegisterContributionDialog>
-          +data: {partner: Partner, accounts: BankAccount[]}
+          +data: {partner: Partner, bankAccounts: BankAccount[]}
+          +accounts: BankAccount[]
           +contributionForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class RegisterPartnerDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<RegisterPartnerDialog>
+          +partnerForm: FormGroup
           +onSave(): void
           +onCancel(): void
         }
@@ -768,9 +783,11 @@ package "app" {
           -dialog: MatDialog
           +partners: Signal<Partner[]>
           +period: WritableSignal<Period>
-          +contributions: Signal<PartnerContribution[]>
+          +rows: Signal<{partner: Partner, contribution: PartnerContribution}[]>
+          +periodTotal: Signal<number>
+          +destination(contribution: PartnerContribution): string
+          +onRegisterPartner(): void
           +onRegisterContribution(partner: Partner): void
-          +onAdd(): void
         }
       }
 
@@ -795,6 +812,7 @@ package "app" {
       LoanDetail --> ScheduleInstallmentDialog : opens
       LoanDetail --> PayInstallmentDialog : opens
       PartnerList --> RegisterContributionDialog : opens
+      PartnerList --> RegisterPartnerDialog : opens
       BankAccountDetail --> app.shared.presentation.components.PeriodSelector : contains
       PartnerList --> app.shared.presentation.components.PeriodSelector : contains
       PayableList --> app.shared.presentation.components.StatusChip : contains
@@ -838,6 +856,10 @@ note bottom
   revisa). Pagar cuota: siempre la cuota entera; cuenta en la moneda del préstamo (la del préstamo primero,
   cualquiera vale), fecha libre; la caja va al revés del desembolso ("Loan installment: <contraparte>") y la
   UI solo avisa si deja la cuenta en negativo. El backend no dice con qué cuenta se pagó cada cuota.
+  Socios (GET /partners, aportes dentro): POST /partners {fullName único (409), role opcional}; POST
+  /partners/{id}/contributions: campos 400, socio 404, USD 422, cuenta 404. Un aporte reembolsable es deuda
+  con el socio (H 455), si no es capital (H 50). Un gasto pagado por el socio no crea el aporte en el
+  backend (brecha conocida); el seed trae el de DATOS.md (gasto #6) con expenseId y sin cuenta.
   json-server: rutas propias en server/routes/treasury.js con las reglas y mensajes del backend.
 end note
 @enduml

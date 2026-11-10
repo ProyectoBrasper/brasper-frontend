@@ -692,5 +692,32 @@
     "payHintReceived": "The installment total leaves this account.",
     "payHintGranted": "The installment total comes into this account.",
     "negativeBalancePayNotice": "This account would end up with a negative balance ({{balance}}). You can still register the payment."
+  },
+  "partners": {
+    "subtitle": "What the partners put into the company",
+    "new": "Register partner",
+    "empty": "There are no partners yet.",
+    "totalContributed": "Total contributed",
+    "registerContribution": "Register contribution",
+    "registerContributionFor": "Register a contribution from {{name}}",
+    "periodContributions": "Contributions of the period",
+    "date": "Date",
+    "partner": "Partner",
+    "concept": "Concept",
+    "conceptOptional": "Concept (optional)",
+    "amount": "Amount",
+    "reimbursable": "Reimbursable",
+    "reimbursableHint": "When the company will pay it back: it is a debt to the partner, not capital.",
+    "destination": "Destination",
+    "periodTotal": "Total of the period",
+    "noContributions": "There are no contributions in this period.",
+    "expensePaid": "Paid expense #{{id}} (no bank account)",
+    "noAccount": "No bank account",
+    "account": "Destination account",
+    "accountHint": "PEN account the money goes into.",
+    "expenseNote": "If the partner paid an expense with their own money, register it in Expenses with the \"Partner contribution\" payment method.",
+    "fullName": "Full name",
+    "fullNameHint": "It must be unique.",
+    "roleOptional": "Role (optional)"
   }
 }
