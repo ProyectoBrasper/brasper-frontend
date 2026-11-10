@@ -1,5 +1,5 @@
 // Accounting fake routes: GET /tax-parameters?date= (rates in force on a date; 404 without body when
-// none, like the backend), the chart of accounts, the journal entries (list by month, manual entry, reversal), the trial balance and the tax returns. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
+// none, like the backend), its history and POST (admin only), the chart of accounts, the journal entries (list by month, manual entry, reversal), the trial balance and the tax returns. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
 // ACCOUNTING. Same rules, order of checks and Spanish messages as the backend. The rest comes with its screens.
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
@@ -337,6 +337,31 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     res.json(returnResource(returns().find({ id: taxReturn.id }).value()));
   });
   server.use('/api/v1/tax-returns', requireRoles(...READERS));
+
+  // Each change is a new row; the history comes latest effective date first.
+  server.get('/api/v1/tax-parameters/history', requireRoles(...READERS), (req, res) => {
+    res.json([...db.get('tax-parameters').value()].sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom)));
+  });
+
+  // New rates from a date, admin only (TaxParametersController): @Valid fractions 0–1 (400), then a date already
+  // used is a 409. Stored with 4 decimals, like the numeric(14,4) columns.
+  server.post('/api/v1/tax-parameters', requireRoles('ROLE_ADMIN'), (req, res) => {
+    const body = req.body ?? {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.effectiveFrom ?? '')) {
+      return problem(res, 400, 'Bad Request', 'La fecha de vigencia no es válida.');
+    }
+    const rates = ['igv', 'detraction', 'retention', 'incomeTaxPrepayment'];
+    if (!rates.every((rate) => typeof body[rate] === 'number' && body[rate] >= 0 && body[rate] <= 1)) {
+      return problem(res, 400, 'Bad Request', 'Las tasas deben estar entre 0 y 1.');
+    }
+    if (db.get('tax-parameters').find({ effectiveFrom: body.effectiveFrom }).value()) {
+      return problem(res, 409, 'Conflict', 'Ya existen parámetros de impuestos para esa fecha de vigencia.');
+    }
+    const parameters = { id: nextId('tax-parameters'), effectiveFrom: body.effectiveFrom };
+    for (const rate of rates) parameters[rate] = Math.round(body[rate] * 10000) / 10000;
+    db.get('tax-parameters').push(parameters).write();
+    res.status(201).json(parameters);
+  });
 
   server.get('/api/v1/tax-parameters', requireRoles(...READERS), (req, res) => {
     const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date ?? '') ? req.query.date : new Date().toISOString().slice(0, 10);

@@ -33,4 +33,6 @@ export const AREA_ROLES = {
   treasuryWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
   /** Add ledger accounts, register and reverse entries, prepare and pay tax returns, fixed assets (management reads). */
   accountingWrite: [Role.ROLE_ADMIN, Role.ROLE_ACCOUNTING],
+  /** Set new tax rates: admin only, unlike the rest of Accounting (backend rule). */
+  taxParametersWrite: [Role.ROLE_ADMIN],
 } as const satisfies Record<string, readonly Role[]>;
