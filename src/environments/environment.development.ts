@@ -15,6 +15,7 @@ export const environment = {
   platformProviderBankAccountsEndpointPath: '/bank-accounts',
   platformProviderPartnersEndpointPath: '/partners',
   platformProviderPayablesEndpointPath: '/payables',
+  platformProviderLoansEndpointPath: '/loans',
   platformProviderSuppliersEndpointPath: '/suppliers',
   platformProviderExpensesEndpointPath: '/expenses',
   platformProviderEmployeesEndpointPath: '/employees',

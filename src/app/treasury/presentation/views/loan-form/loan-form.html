@@ -1,0 +1,103 @@
+<app-page-header
+  [title]="'loans.new' | translate"
+  [subtitle]="'loans.formSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.loans' | translate, link: '/treasury/loans' },
+    { label: 'common.new' | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="loanForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'loans.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="type-field">
+    <span class="type-label" id="loan-type-label">{{ 'loans.type' | translate }}</span>
+    <mat-button-toggle-group formControlName="type" hideSingleSelectionIndicator aria-labelledby="loan-type-label">
+      @for (type of types; track type) {
+        <mat-button-toggle [value]="type">{{ 'loanType.' + type | translate }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+  <p class="type-help">{{ (isReceived() ? 'loans.helpReceived' : 'loans.helpGranted') | translate }}</p>
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'loans.counterparty' | translate }}</mat-label>
+      <input matInput formControlName="counterparty" maxlength="200" />
+      <mat-hint>{{ (isReceived() ? 'loans.counterpartyHintReceived' : 'loans.counterpartyHintGranted') | translate }}</mat-hint>
+      @if (isInvalidControl(loanForm, 'counterparty')) {
+        <mat-error>{{ errorMessageForControl(loanForm, 'counterparty') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'loans.principal' | translate }}</mat-label>
+      <span matTextPrefix>S/&nbsp;</span>
+      <input matInput class="amount" formControlName="principal" type="number" min="0" step="0.01" />
+      @if (isInvalidControl(loanForm, 'principal')) {
+        <mat-error>{{ errorMessageForControl(loanForm, 'principal') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'loans.interestRateAnnual' | translate }}</mat-label>
+      <input matInput class="amount" formControlName="interestRate" type="number" min="0" max="100" step="0.01" />
+      <span matTextSuffix>&nbsp;%</span>
+      <mat-hint>{{ 'loans.interestRateHint' | translate }}</mat-hint>
+      @if (isInvalidControl(loanForm, 'interestRate')) {
+        <mat-error>{{ errorMessageForControl(loanForm, 'interestRate') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'loans.disbursedOn' | translate }}</mat-label>
+      <input matInput formControlName="disbursedOn" [matDatepicker]="disbursedPicker" placeholder="dd/mm/aaaa" />
+      <mat-datepicker-toggle matIconSuffix [for]="disbursedPicker" />
+      <mat-datepicker #disbursedPicker />
+      @if (isInvalidControl(loanForm, 'disbursedOn')) {
+        <mat-error>{{ errorMessageForControl(loanForm, 'disbursedOn') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'loans.account' | translate }}</mat-label>
+      <mat-select formControlName="bankAccountId">
+        @for (account of accounts(); track account.id) {
+          <mat-option [value]="account.id">{{ accountLabel(account) }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>{{ (isReceived() ? 'loans.accountHintReceived' : 'loans.accountHintGranted') | translate }}</mat-hint>
+      @if (isInvalidControl(loanForm, 'bankAccountId')) {
+        <mat-error>{{ errorMessageForControl(loanForm, 'bankAccountId') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  @if (negativeBalance() !== null) {
+    <p class="notice" role="status">
+      <mat-icon>warning</mat-icon>
+      <span>{{ 'loans.negativeBalanceNotice' | translate: { balance: (negativeBalance() | money) } }}</span>
+    </p>
+  }
+
+  <p class="info">
+    <mat-icon>info</mat-icon>
+    {{ 'loans.installmentsNote' | translate }}
+  </p>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading()">
+      <mat-icon>save</mat-icon>
+      {{ 'common.save' | translate }}
+    </button>
+  </div>
+</form>

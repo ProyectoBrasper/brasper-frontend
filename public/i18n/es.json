@@ -573,6 +573,15 @@
     "PARTIALLY_PAID": "Pago parcial",
     "PAID": "Pagada"
   },
+  "loanType": {
+    "RECEIVED": "Recibido",
+    "GRANTED": "Otorgado"
+  },
+  "loanStatus": {
+    "PENDING": "Pendiente",
+    "PARTIALLY_PAID": "Pago parcial",
+    "PAID": "Pagado"
+  },
   "payables": {
     "subtitle": "Obligaciones pendientes por semana",
     "outstanding": "Saldo por pagar",
@@ -615,5 +624,37 @@
     "weekOption": "Semana {{number}} · {{from}} al {{to}}",
     "cashFlowNote": "Se usa para proyectar el flujo de caja.",
     "doubleCostNotice": "Si es una compra con comprobante, regístrala en Gastos como pendiente: su cuenta por pagar se crea sola. Registrarla también aquí contaría el costo dos veces en Contabilidad."
+  },
+  "loans": {
+    "subtitle": "Préstamos recibidos y otorgados",
+    "new": "Registrar préstamo",
+    "all": "Todos",
+    "filter": {
+      "RECEIVED": "Recibidos",
+      "GRANTED": "Otorgados"
+    },
+    "filterByType": "Filtrar por tipo",
+    "type": "Tipo",
+    "counterparty": "Contraparte",
+    "principal": "Capital",
+    "interestRate": "Tasa",
+    "rateValue": "{{rate}} % anual",
+    "disbursedOn": "Desembolso",
+    "account": "Cuenta",
+    "outstanding": "Saldo pendiente",
+    "status": "Estado",
+    "empty": "No hay préstamos de este tipo.",
+    "formSubtitle": "Dinero que la empresa recibió o entregó en préstamo",
+    "data": "Datos del préstamo",
+    "helpReceived": "La empresa recibe el dinero: ingresa a la cuenta elegida el día del desembolso.",
+    "helpGranted": "La empresa entrega el dinero: sale de la cuenta elegida el día del desembolso.",
+    "counterpartyHintReceived": "Quién presta el dinero, por ejemplo un banco.",
+    "counterpartyHintGranted": "A quién se le presta el dinero.",
+    "interestRateAnnual": "Tasa de interés anual",
+    "interestRateHint": "Solo informativa: el interés sale de las cuotas.",
+    "accountHintReceived": "Cuenta en soles donde ingresa el dinero.",
+    "accountHintGranted": "Cuenta en soles de donde sale el dinero.",
+    "negativeBalanceNotice": "Esta cuenta quedaría con saldo negativo ({{balance}}). Puedes registrar el préstamo igual.",
+    "installmentsNote": "Las cuotas se programan desde el detalle del préstamo."
   }
 }
