@@ -719,5 +719,31 @@
     "fullName": "Nombre completo",
     "fullNameHint": "Debe ser único.",
     "roleOptional": "Cargo (opcional)"
+  },
+  "ledgerAccountType": {
+    "ASSET": "Activo",
+    "LIABILITY": "Pasivo",
+    "EQUITY": "Patrimonio",
+    "REVENUE": "Ingreso",
+    "EXPENSE": "Gasto"
+  },
+  "ledgerAccountStatus": {
+    "ACTIVE": "Activa",
+    "INACTIVE": "Inactiva"
+  },
+  "ledgerAccounts": {
+    "subtitle": "Cuentas contables de la empresa",
+    "new": "Nueva cuenta",
+    "all": "Todas",
+    "filterByType": "Filtrar por tipo",
+    "code": "Código",
+    "name": "Nombre",
+    "type": "Tipo",
+    "status": "Estado",
+    "empty": "No hay cuentas de este tipo.",
+    "codeHint": "De 2 a 10 dígitos; no empieza con 0.",
+    "codePattern": "Usa de 2 a 10 dígitos, sin empezar con 0.",
+    "codeInUse": "Ya existe una cuenta contable con ese código.",
+    "typeHint": "Se propone por el primer dígito (1–3 activo, 4 pasivo, 5 patrimonio, 6 gasto, 7 ingreso); puedes cambiarlo."
   }
 }

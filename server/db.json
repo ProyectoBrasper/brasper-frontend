@@ -96,6 +96,29 @@
     {"id":7,"series":"F001","correlative":53,"number":"F001-00000053","issuedOn":"2026-10-28","purchaseOrder":"OC-LA-0066","projectId":4,"clientId":4,"currency":"PEN","taxableBase":250000,"igv":45000,"total":295000,"retention":0,"detraction":35400,"hasRetention":false,"hasDetraction":true,"selfDetraction":true,"advance":false,"netAmount":259600,"collectedAmount":0,"outstandingBalance":295000,"status":"PENDING","notes":null},
     {"id":8,"series":"F001","correlative":54,"number":"F001-00000054","issuedOn":"2026-10-30","purchaseOrder":"OC-RC-131","projectId":2,"clientId":2,"currency":"PEN","taxableBase":100000,"igv":18000,"total":118000,"retention":3540,"detraction":14160,"hasRetention":true,"hasDetraction":true,"selfDetraction":false,"advance":false,"netAmount":100300,"collectedAmount":0,"outstandingBalance":118000,"status":"PENDING","notes":null}
   ],
+  "ledger-accounts": [
+    {"id":1,"code":"10","name":"Efectivo y equivalentes de efectivo","type":"ASSET","active":true},
+    {"id":2,"code":"12","name":"Cuentas por cobrar comerciales","type":"ASSET","active":true},
+    {"id":3,"code":"33","name":"Inmuebles, maquinaria y equipo","type":"ASSET","active":true},
+    {"id":4,"code":"39","name":"Depreciación acumulada","type":"ASSET","active":true},
+    {"id":5,"code":"40111","name":"IGV - Cuenta propia","type":"LIABILITY","active":true},
+    {"id":6,"code":"42","name":"Cuentas por pagar comerciales","type":"LIABILITY","active":true},
+    {"id":7,"code":"45","name":"Obligaciones financieras","type":"LIABILITY","active":true},
+    {"id":8,"code":"50","name":"Capital","type":"EQUITY","active":true},
+    {"id":9,"code":"59","name":"Resultados acumulados","type":"EQUITY","active":true},
+    {"id":10,"code":"60","name":"Compras","type":"EXPENSE","active":true},
+    {"id":11,"code":"62","name":"Gastos de personal","type":"EXPENSE","active":true},
+    {"id":12,"code":"63","name":"Gastos de servicios prestados por terceros","type":"EXPENSE","active":true},
+    {"id":13,"code":"67","name":"Gastos financieros","type":"EXPENSE","active":true},
+    {"id":14,"code":"68","name":"Depreciación del ejercicio","type":"EXPENSE","active":true},
+    {"id":15,"code":"70","name":"Ventas","type":"REVENUE","active":true},
+    {"id":16,"code":"4017","name":"Impuesto a la renta","type":"LIABILITY","active":true},
+    {"id":17,"code":"122","name":"Anticipos de clientes","type":"LIABILITY","active":true},
+    {"id":18,"code":"16","name":"Préstamos por cobrar","type":"ASSET","active":true},
+    {"id":19,"code":"77","name":"Ingresos financieros","type":"REVENUE","active":true},
+    {"id":20,"code":"65","name":"Otros gastos de gestión","type":"EXPENSE","active":true},
+    {"id":21,"code":"455","name":"Cuentas por pagar a socios","type":"LIABILITY","active":true}
+  ],
   "tax-parameters": [
     {"id":1,"effectiveFrom":"2026-01-01","igv":0.18,"detraction":0.12,"retention":0.03,"incomeTaxPrepayment":0.015}
   ],

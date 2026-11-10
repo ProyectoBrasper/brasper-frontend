@@ -28,7 +28,7 @@ package "app" {
     +'expenses/**' -> loadChildren(expensesRoutes) [authenticationGuard]
     +'staff/**' -> loadChildren(staffRoutes) [authenticationGuard]
     +'treasury/**' -> loadChildren(treasuryRoutes) [roleGuard: ROLE_ADMIN, ROLE_ACCOUNTING, ROLE_MANAGEMENT]
-    +'accounting/**' -> loadChildren(accountingRoutes) [roleGuard: ROLE_ACCOUNTING, ROLE_ADMIN]
+    +'accounting/**' -> loadChildren(accountingRoutes) [roleGuard: ROLE_ADMIN, ROLE_ACCOUNTING, ROLE_MANAGEMENT]
     +'reports/**' -> loadChildren(reportingRoutes) [roleGuard: ROLE_MANAGEMENT, ROLE_ADMIN]
     +'**' -> PageNotFound
   }
