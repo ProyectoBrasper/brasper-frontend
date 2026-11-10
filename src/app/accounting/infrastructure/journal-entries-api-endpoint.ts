@@ -6,7 +6,7 @@ import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { BaseResource } from '../../shared/infrastructure/base-resource';
 import { BaseResponse } from '../../shared/infrastructure/base-response';
-import { ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
+import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
 import { EntrySource, JournalEntry, JournalLine } from '../domain/model/journal-entry.entity';
 
 /** Backend `MoneyResource`. */
@@ -41,6 +41,13 @@ export interface JournalEntryResource extends BaseResource {
 /** Envelope for a journal entry collection (the API returns a plain array). */
 export interface JournalEntriesResponse extends BaseResponse {
   journalEntries: JournalEntryResource[];
+}
+
+/** Body of `POST /journal-entries` (backend `RegisterJournalEntryResource`). */
+export interface RegisterJournalEntryRequest {
+  entryDate: string;
+  description: string;
+  lines: JournalLineResource[];
 }
 
 /** Body of `POST /journal-entries/{id}/reversal` (backend `ReverseJournalEntryResource`). */
@@ -108,7 +115,7 @@ export class JournalEntryAssembler implements BaseAssembler<JournalEntry, Journa
 /**
  * Client for `/journal-entries` (admin, accounting and management read; admin and accounting write): the entries of
  * a month (by date, then by number) and `POST /{id}/reversal`, which answers with the new reversal entry, not with
- * the reversed one. The manual entry comes with its form.
+ * the reversed one, and `POST` for a manual entry (in PEN; the backend sets its source to MANUAL).
  */
 export class JournalEntriesApiEndpoint extends BaseApiEndpoint<
   JournalEntry,
@@ -134,6 +141,25 @@ export class JournalEntriesApiEndpoint extends BaseApiEndpoint<
           : this.assembler.toEntitiesFromResponse(response),
       ),
       catchError(this.handleError('Failed to fetch journal entries')),
+    );
+  }
+
+  /** `POST /journal-entries`: answers with the new entry (unbalanced or one-sided lines are a 400). */
+  register(command: RegisterJournalEntryCommand): Observable<JournalEntry> {
+    const pen = (amount: number): MoneyResource => ({ amount, currency: 'PEN' });
+    const request: RegisterJournalEntryRequest = {
+      entryDate: command.entryDate,
+      description: command.description.trim(),
+      lines: command.lines.map((line) => ({
+        accountCode: line.accountCode,
+        debit: pen(line.debit),
+        credit: pen(line.credit),
+        projectId: line.projectId,
+      })),
+    };
+    return this.http.post<JournalEntryResource>(this.endpointUrl, request).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to register journal entry')),
     );
   }
 

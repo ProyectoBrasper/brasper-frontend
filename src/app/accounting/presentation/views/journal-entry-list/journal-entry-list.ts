@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, Injector, input, OnInit, signal, untracked, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProjectsStore } from '../../../../projects/application/projects.store';
 import { Period } from '../../../../shared/domain/model/period';
@@ -23,13 +24,15 @@ const today = new Date();
 /**
  * The journal of a month (`/accounting/journal-entries`): every entry with its totals, its source and whether it was
  * reversed; a row opens its lines. Automatic entries come from invoices, expenses and payments and can only be
- * reversed. Admin and accounting reverse; management only reads. The manual entry comes with its own form.
+ * reversed. Admin and accounting register manual entries and reverse; management only reads. `?year=&month=&open=`
+ * opens a month with one entry expanded (where the manual entry form lands after registering).
  */
 @Component({
   selector: 'app-journal-entry-list',
   imports: [
     DatePipe,
     DecimalPipe,
+    RouterLink,
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
@@ -43,11 +46,19 @@ const today = new Date();
   templateUrl: './journal-entry-list.html',
   styleUrl: './journal-entry-list.css',
 })
-export class JournalEntryList {
+export class JournalEntryList implements OnInit {
   private readonly accountingStore = inject(AccountingStore);
   private readonly projectsStore = inject(ProjectsStore);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
+  private readonly injector = inject(Injector);
+
+  /** Query parameters, bound by `withComponentInputBinding`. */
+  readonly year = input<string>();
+  readonly month = input<string>();
+  readonly open = input<string>();
+  /** Entry to expand when the first month arrives (the one just registered). */
+  private openAfterLoad: number | null = null;
 
   readonly period = signal(new Period(today.getFullYear(), today.getMonth() + 1));
   readonly expandedId = signal<number | null>(null);
@@ -79,13 +90,27 @@ export class JournalEntryList {
     if (this.projectsStore.projects().length === 0) {
       this.projectsStore.loadProjects();
     }
-    effect(() => {
-      const period = this.period();
-      untracked(() => {
-        this.expandedId.set(null);
-        this.accountingStore.loadJournalEntries(period);
-      });
-    });
+  }
+
+  ngOnInit(): void {
+    const year = Number(this.year());
+    const month = Number(this.month());
+    if (Number.isInteger(year) && year > 0 && Number.isInteger(month) && month >= 1 && month <= 12) {
+      this.period.set(new Period(year, month));
+    }
+    this.openAfterLoad = Number(this.open()) || null;
+    // Created here so the month from the query parameters is the first one loaded.
+    effect(
+      () => {
+        const period = this.period();
+        untracked(() => {
+          this.expandedId.set(this.openAfterLoad);
+          this.openAfterLoad = null;
+          this.accountingStore.loadJournalEntries(period);
+        });
+      },
+      { injector: this.injector },
+    );
   }
 
   /** What the entry is: the typed description for a manual one, the translated source and its document for an automatic one. */

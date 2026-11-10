@@ -24,3 +24,28 @@ export function entryLabel(entry: JournalEntry): { key: string; params: Record<s
   }
   return { key: 'entrySource.' + entry.source, params: {}, ref: entry.sourceId };
 }
+
+/** A line being typed: either side may still be empty. */
+export interface DraftLine {
+  debit: number | null;
+  credit: number | null;
+}
+
+/** Totals of the lines being typed and their difference (debit minus credit), in cents so they do not drift. */
+export function draftTotals(lines: readonly DraftLine[]): { debit: number; credit: number; difference: number } {
+  const debit = lines.reduce((sum, line) => sum + toCents(Number(line.debit) || 0), 0);
+  const credit = lines.reduce((sum, line) => sum + toCents(Number(line.credit) || 0), 0);
+  return { debit: debit / 100, credit: credit / 100, difference: (debit - credit) / 100 };
+}
+
+/**
+ * What a new line should carry to balance the entry: the difference, on the side that is short. Null when the
+ * entry already balances.
+ */
+export function balancingLine(lines: readonly DraftLine[]): { debit: number | null; credit: number | null } | null {
+  const { difference } = draftTotals(lines);
+  if (difference === 0) {
+    return null;
+  }
+  return difference > 0 ? { debit: null, credit: difference } : { debit: -difference, credit: null };
+}

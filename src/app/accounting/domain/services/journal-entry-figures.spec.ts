@@ -1,6 +1,6 @@
 import { EntrySource } from '../model/journal-entry.entity';
 import { entryFixture, octoberEntries } from '../../testing/journal-entry-fixtures';
-import { entryLabel, lineTotals } from './journal-entry-figures';
+import { balancingLine, draftTotals, entryLabel, lineTotals } from './journal-entry-figures';
 
 describe('journal entry figures', () => {
   it('adds up the lines of an entry (expense 203: 141,600 on each side)', () => {
@@ -38,5 +38,27 @@ describe('which entries can be reversed (backend: not a reversal nor a reversed 
 
   it('tells an unbalanced entry (never from the backend, but the footer would show it)', () => {
     expect(entryFixture({ totalCredit: 3499.99 }).isBalanced()).toBe(false);
+  });
+});
+
+describe('a manual entry being typed', () => {
+  it('adds up both sides, empty sides as zero, and gives the difference', () => {
+    expect(draftTotals([{ debit: 2000, credit: null }, { debit: null, credit: 1500 }])).toEqual({
+      debit: 2000,
+      credit: 1500,
+      difference: 500,
+    });
+    const cents = [{ debit: 0.1, credit: null }, { debit: 0.2, credit: null }, { debit: null, credit: 0.3 }];
+    expect(draftTotals(cents).difference).toBe(0);
+  });
+
+  it('proposes the difference on the side that is short for a new line', () => {
+    expect(balancingLine([{ debit: 2000, credit: null }, { debit: null, credit: 1500 }])).toEqual({ debit: null, credit: 500 });
+    expect(balancingLine([{ debit: null, credit: 3500 }])).toEqual({ debit: 3500, credit: null });
+  });
+
+  it('proposes nothing when the entry already balances', () => {
+    expect(balancingLine([{ debit: 3500, credit: null }, { debit: null, credit: 3500 }])).toBeNull();
+    expect(balancingLine([])).toBeNull();
   });
 });

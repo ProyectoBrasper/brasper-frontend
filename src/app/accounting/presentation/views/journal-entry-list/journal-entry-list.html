@@ -4,6 +4,12 @@
   [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.journalEntries' | translate }]"
 >
   <app-period-selector [(period)]="period" />
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/accounting/journal-entries/new">
+      <mat-icon>add</mat-icon>
+      {{ 'journalEntries.new' | translate }}
+    </a>
+  }
 </app-page-header>
 
 <p class="info">

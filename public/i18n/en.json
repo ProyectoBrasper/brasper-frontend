@@ -793,6 +793,23 @@
     "reverseHelp": "A new entry is posted with debit and credit swapped; this one is marked as reversed.",
     "automaticReverseNotice": "This is an automatic entry ({{source}}): reversing it does not change the document behind it.",
     "reversedOn": "Reversal date",
-    "reversedBeforeEntry": "It cannot be before the entry date."
+    "reversedBeforeEntry": "It cannot be before the entry date.",
+    "new": "New entry",
+    "formSubtitle": "Manual double-entry record",
+    "data": "Entry details",
+    "formLines": "Entry lines",
+    "linesCount": "{{count}} lines",
+    "noProject": "No project",
+    "accountRequired": "Choose an account.",
+    "oneSide": "Each line takes an amount on the debit or on the credit, not on both.",
+    "addLine": "Add line",
+    "removeLine": "Remove line",
+    "removeLineNumber": "Remove line {{number}}",
+    "totalDebit": "Total debit:",
+    "totalCredit": "Total credit:",
+    "difference": "Difference:",
+    "notBalancedTitle": "The entry does not balance:",
+    "notBalancedHelp": "the total debit must equal the total credit. Each line takes a debit or a credit, not both. At least 2 lines.",
+    "register": "Register entry"
   }
 }
