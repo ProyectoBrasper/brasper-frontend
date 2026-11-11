@@ -311,7 +311,7 @@ package "app" {
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +setPeriod(period: Period): void
-        +loadDashboard(): void
+        +loadDashboard(period: Period): void
         +loadWeeklyCashFlow(period: Period): void
         +loadMonthlyCashFlow(from: Period, to: Period): void
         +loadCashFlowProjection(from: string, weeks: number): void
@@ -331,9 +331,10 @@ package "app" {
       package "components" {
         class KpiCard <<Component>> {
           +label: InputSignal<string>
-          +value: InputSignal<number>
-          +currency: InputSignal<string>
-          +trend: InputSignal<'up' | 'down' | 'flat'>
+          +value: InputSignal<string>
+          +hint: InputSignal<string>
+          +icon: InputSignal<string>
+          +negative: InputSignal<boolean>
         }
         class CashFlowChart <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
@@ -358,15 +359,17 @@ package "app" {
         }
         class AlertsPanel <<Component>> {
           +alerts: InputSignal<string[]>
+          +items: Signal<DashboardAlert[]>
         }
       }
 
       package "views" {
         class DashboardView <<Component>> {
           -reportingStore: ReportingStore
+          +period: WritableSignal<Period>
           +dashboard: Signal<Dashboard | null>
           +cashFlow: Signal<CashFlowReport | null>
-          +ngOnInit(): void
+          +balancesOn: Signal<Date | null>
         }
         class CashFlowView <<Component>> {
           -reportingStore: ReportingStore
@@ -432,9 +435,10 @@ package "app" {
 note bottom
   Contexto de solo lectura: no hay create/update/delete, por eso los endpoints extienden
   ErrorHandlingEnabledBaseType (no BaseApiEndpoint) y los assemblers solo convierten Resource -> modelo.
-  DashboardView es la pantalla de inicio ('/dashboard'): KPIs (caja, por cobrar, por pagar,
-  utilidad acumulada, saldo proyectado), gráfico del flujo semanal y alertas (saldo proyectado
-  negativo, facturas vencidas, proyectos sobre presupuesto).
+  DashboardView es la pantalla de inicio de quienes leen reportes (el backend da 403 a ENGINEER, que entra a
+  proyectos), sin flechas de tendencia porque el backend no da comparación. KPIs (caja, por cobrar, por pagar,
+  utilidad acumulada, saldo proyectado, proyectos en ejecución), gráfico del flujo semanal y alertas
+  (códigos del backend: saldo proyectado negativo y proyectos sobre lo estimado).
   CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos. Son dos paneles alineados
   (ingresos y egresos; saldo final), cada uno con su eje: un doble eje sugeriría relaciones que no existen.
   Semanas proyectadas (projected = true) se pintan distinto a las reales.

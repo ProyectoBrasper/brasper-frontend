@@ -1,7 +1,9 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authenticationGuard } from './iam/application/authentication.guard';
+import { IamStore } from './iam/application/iam.store';
 import { roleGuard } from './iam/application/role.guard';
-import { AREA_ROLES } from './iam/domain/model/role';
+import { AREA_ROLES, homeFor } from './iam/domain/model/role';
 
 const signInForm = () =>
   import('./iam/presentation/views/sign-in-form/sign-in-form').then((m) => m.SignInForm);
@@ -18,14 +20,15 @@ const billingRoutes = () => import('./billing/presentation/billing.routes').then
 const accountingRoutes = () =>
   import('./accounting/presentation/accounting.routes').then((m) => m.accountingRoutes);
 const reportingRoutes = () => import('./reporting/presentation/reporting.routes').then((m) => m.reportingRoutes);
+const dashboardRoutes = () => import('./reporting/presentation/reporting.routes').then((m) => m.dashboardRoutes);
 
 /**
  * Root routes (docs/uml-frontend/00-app.puml). Each bounded context is lazy loaded with
  * `loadChildren` and protected with `authenticationGuard` / `roleGuard` as it is implemented.
- * Home is `/projects` until the dashboard is built (it is done last).
+ * Home depends on the role: the dashboard for those who can read it, the projects for the rest.
  */
 export const routes: Routes = [
-  { path: '', redirectTo: 'projects', pathMatch: 'full' },
+  { path: '', redirectTo: () => homeFor(inject(IamStore).currentRole()), pathMatch: 'full' },
   { path: 'sign-in', loadComponent: signInForm, title: 'Brasper' },
   {
     path: 'sign-up',
@@ -57,7 +60,8 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: AREA_ROLES.accounting },
   },
-  // Reports are read by admin, management and accounting, like the backend.
+  // The dashboard and the reports are read by admin, management and accounting, like the backend.
+  { path: 'dashboard', loadChildren: dashboardRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.reports } },
   { path: 'reports', loadChildren: reportingRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.reports } },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];

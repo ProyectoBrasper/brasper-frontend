@@ -1086,5 +1086,27 @@
     "changeDone": "Your password was updated.",
     "resetDone": "The password of {{name}} was updated.",
     "close": "Close"
+  },
+  "dashboard": {
+    "subtitle": "The financial summary of the month",
+    "today": "Today",
+    "onDate": "As of {{date}}",
+    "cashBalance": "Cash",
+    "receivables": "Receivables",
+    "payables": "Payables",
+    "netProfit": "Year-to-date profit",
+    "netProfitHint": "January to {{period}}",
+    "projected": "Projected balance",
+    "projectedHint": "At the end of {{period}}",
+    "projects": "Projects in progress",
+    "weeklyFlow": "Cash flow of the month",
+    "alerts": "Alerts",
+    "noAlerts": "No alerts this month.",
+    "seeReport": "See report",
+    "alert": {
+      "negativeBalance": "A week of the month closes with a negative balance.",
+      "costOverrun": "Project {{code}} went over its estimated cost.",
+      "unknown": "Alert: {{code}}"
+    }
   }
 }

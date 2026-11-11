@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { Period } from '../../shared/domain/model/period';
 import { BalanceSheet } from '../domain/model/balance-sheet';
+import { Dashboard } from '../domain/model/dashboard';
 import { IncomeStatement } from '../domain/model/income-statement';
 import { ProjectProfitability } from '../domain/model/project-profitability';
 import { ReportingApi } from '../infrastructure/reporting-api';
@@ -32,7 +33,7 @@ describe('ReportingStore — financial statements', () => {
   };
 
   beforeEach(() => {
-    api = { getIncomeStatement: vi.fn(), getBalanceSheet: vi.fn(), getPortfolioProfitability: vi.fn() };
+    api = { getIncomeStatement: vi.fn(), getBalanceSheet: vi.fn(), getPortfolioProfitability: vi.fn(), getDashboard: vi.fn() };
   });
 
   it('loads the income statement of a range', () => {
@@ -85,6 +86,20 @@ describe('ReportingStore — financial statements', () => {
     expect(api['getPortfolioProfitability']).toHaveBeenLastCalledWith(2026, 11);
     late.next([{} as ProjectProfitability]);
     expect(store.profitability()).toBe(current);
+  });
+
+  it('loads the dashboard of a month and drops a late answer', () => {
+    const summary = (cashBalance: number) =>
+      new Dashboard({ cashBalance, receivablesOutstanding: 0, payablesOutstanding: 0, netProfitYtd: 0, projectedClosingBalance: 0, projectsInProgress: 0, alerts: [] });
+    const late = new Subject<Dashboard>();
+    const current = summary(20);
+    api['getDashboard'].mockReturnValueOnce(late).mockReturnValueOnce(of(current));
+    const store = createStore();
+    store.loadDashboard(new Period(2026, 10));
+    store.loadDashboard(new Period(2026, 11));
+    expect(api['getDashboard']).toHaveBeenLastCalledWith(2026, 11);
+    late.next(summary(10));
+    expect(store.dashboard()).toBe(current);
   });
 
   it('shows the API error and leaves no statement', () => {

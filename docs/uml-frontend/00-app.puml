@@ -18,10 +18,10 @@ package "app" {
   }
 
   class routes <<Routes>> {
-    +'' -> redirect 'projects' (pasa a 'dashboard' cuando exista)
+    +'' -> redirect por rol (homeFor): 'dashboard' o 'projects'
     +'sign-in' -> SignInForm
     +'sign-up' -> SignUpForm [roleGuard: ROLE_ADMIN]
-    +'dashboard' -> DashboardView [authenticationGuard]
+    +'dashboard' -> loadChildren(dashboardRoutes) [roleGuard: ROLE_ADMIN, ROLE_MANAGEMENT, ROLE_ACCOUNTING]
     +'users' -> UserList [roleGuard: ROLE_ADMIN]
     +'projects/**' -> loadChildren(projectsRoutes) [authenticationGuard]
     +'billing/**' -> loadChildren(billingRoutes) [roleGuard: ROLE_ADMIN, ROLE_ACCOUNTING, ROLE_MANAGEMENT]

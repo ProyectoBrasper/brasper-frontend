@@ -6,10 +6,11 @@ const cashFlowView = () => import('./views/cash-flow-view/cash-flow-view').then(
 const incomeStatementView = () =>
   import('./views/income-statement-view/income-statement-view').then((m) => m.IncomeStatementView);
 const balanceSheetView = () => import('./views/balance-sheet-view/balance-sheet-view').then((m) => m.BalanceSheetView);
+const dashboardView = () => import('./views/dashboard-view/dashboard-view').then((m) => m.DashboardView);
 const projectProfitabilityView = () =>
   import('./views/project-profitability-view/project-profitability-view').then((m) => m.ProjectProfitabilityView);
 
-/** Only what the cash flow chart draws, so the rest of Chart.js stays out of the bundle. */
+/** Only what the cash flow chart draws, so the rest of Chart.js stays out of the bundle. Declared in this lazy file to keep it out of the initial load. */
 const charts = provideCharts({
   registerables: [BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip],
 });
@@ -25,3 +26,6 @@ export const reportingRoutes: Routes = [
   { path: 'balance-sheet', loadComponent: balanceSheetView, title: 'Brasper' },
   { path: 'project-profitability', loadComponent: projectProfitabilityView, title: 'Brasper' },
 ];
+
+/** The home page of those who read reports, at `/dashboard`. */
+export const dashboardRoutes: Routes = [{ path: '', loadComponent: dashboardView, title: 'Brasper', providers: [charts] }];

@@ -3,11 +3,12 @@ import { Observable } from 'rxjs';
 import { Period } from '../../shared/domain/model/period';
 import { BalanceSheet } from '../domain/model/balance-sheet';
 import { CashFlowReport } from '../domain/model/cash-flow-report';
+import { Dashboard } from '../domain/model/dashboard';
 import { IncomeStatement } from '../domain/model/income-statement';
 import { ProjectProfitability } from '../domain/model/project-profitability';
 import { ReportingApi } from '../infrastructure/reporting-api';
 
-/** Reporting context state: the reports the backend calculates. The rest come with their screens. */
+/** Reporting context state: the reports and the dashboard the backend calculates. */
 @Injectable({ providedIn: 'root' })
 export class ReportingStore {
   private readonly reportingApi = inject(ReportingApi);
@@ -16,11 +17,13 @@ export class ReportingStore {
   private readonly incomeStatementSignal = signal<IncomeStatement | null>(null);
   private readonly balanceSheetSignal = signal<BalanceSheet | null>(null);
   private readonly profitabilitySignal = signal<ProjectProfitability[]>([]);
+  private readonly dashboardSignal = signal<Dashboard | null>(null);
   /** Number of the last report of each kind asked for (to drop late answers). */
   private cashFlowRequest = 0;
   private incomeStatementRequest = 0;
   private balanceSheetRequest = 0;
   private profitabilityRequest = 0;
+  private dashboardRequest = 0;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
@@ -33,6 +36,8 @@ export class ReportingStore {
   readonly balanceSheet = this.balanceSheetSignal.asReadonly();
   /** Every project, whatever its status. */
   readonly profitability = this.profitabilitySignal.asReadonly();
+  /** The dashboard shown; null while it loads. */
+  readonly dashboard = this.dashboardSignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
 
@@ -79,6 +84,17 @@ export class ReportingStore {
     this.run(this.reportingApi.getPortfolioProfitability(period.year, period.month), 'Failed to load project profitability', (projects) => {
       if (this.profitabilityRequest === number) {
         this.profitabilitySignal.set(projects);
+      }
+    });
+  }
+
+  /** Loads the summary of a month. */
+  loadDashboard(period: Period): void {
+    const number = ++this.dashboardRequest;
+    this.dashboardSignal.set(null);
+    this.run(this.reportingApi.getDashboard(period.year, period.month), 'Failed to load dashboard', (dashboard) => {
+      if (this.dashboardRequest === number) {
+        this.dashboardSignal.set(dashboard);
       }
     });
   }

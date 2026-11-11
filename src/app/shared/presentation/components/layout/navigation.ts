@@ -14,7 +14,7 @@ export interface NavigationOption {
 
 /** All menu options, in display order. Labels are i18n keys. */
 export const NAVIGATION_OPTIONS: readonly NavigationOption[] = [
-  { link: '/dashboard', label: 'nav.dashboard', icon: 'space_dashboard', roles: [], group: 'operation' },
+  { link: '/dashboard', label: 'nav.dashboard', icon: 'space_dashboard', roles: AREA_ROLES.reports, group: 'operation' },
   { link: '/projects', label: 'nav.projects', icon: 'work', roles: [], group: 'operation' },
   { link: '/projects/clients', label: 'nav.clients', icon: 'group', roles: [], group: 'operation' },
   { link: '/billing/invoices', label: 'nav.invoices', icon: 'receipt_long', roles: AREA_ROLES.finance, group: 'operation' },

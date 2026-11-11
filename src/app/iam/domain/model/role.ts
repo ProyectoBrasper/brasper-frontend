@@ -36,3 +36,8 @@ export const AREA_ROLES = {
   /** Set new tax rates: admin only, unlike the rest of Accounting (backend rule). */
   taxParametersWrite: [Role.ROLE_ADMIN],
 } as const satisfies Record<string, readonly Role[]>;
+
+/** Page a role lands on: the dashboard for those who can read it (the backend answers 403 to the rest). */
+export function homeFor(role: Role | null): string {
+  return role !== null && (AREA_ROLES.reports as readonly Role[]).includes(role) ? 'dashboard' : 'projects';
+}
