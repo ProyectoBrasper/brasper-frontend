@@ -924,6 +924,35 @@
     "amountsPreview": "Vista previa",
     "previewNote": "IGV con las tasas vigentes desde {{date}}. El monto final lo calcula el sistema al registrar.",
     "previewNoteStandard": "No hay parámetros vigentes en esa fecha: se usa el IGV estándar de 18 %.",
-    "register": "Registrar activo"
+    "register": "Registrar activo",
+    "filterLabel": "Filtrar activos",
+    "inUse": "Vigentes",
+    "all": "Todos",
+    "actions": "Acciones",
+    "dispose": "Dar de baja",
+    "disposeOf": "Dar de baja {{description}}",
+    "depreciationTitle": "Depreciación del mes",
+    "charge": "Cargo del mes",
+    "assetsCount": "Activos con cargo",
+    "entryHint": "Asiento: Debe 68 Depreciación · Haber 39 Depreciación acumulada",
+    "post": "Contabilizar",
+    "noCharge": "Este mes no tiene depreciación pendiente.",
+    "futureNote": "Este mes aún no empieza.",
+    "monthOpenNotice": "El mes aún no termina. Si lo contabilizas ahora, un activo que registres después ya no recibirá este cargo.",
+    "reversedNotice": "El asiento de este mes fue revertido y el sistema no permite volver a contabilizarlo.",
+    "confirmTitle": "Contabilizar depreciación de {{period}}",
+    "confirmMessage": "Se registrará un asiento con fecha {{date}}: Debe 68 y Haber 39 por {{amount}}. Este mes no se podrá volver a contabilizar.",
+    "disposeTitle": "Dar de baja el activo",
+    "disposedOn": "Fecha de baja",
+    "disposedBeforeAcquisition": "No puede ser anterior a la fecha de adquisición.",
+    "disposeNotice": "La baja no se puede deshacer y no registra una venta: lo que falte depreciar se lleva a pérdida.",
+    "backdatedNotice": "La fecha cae en un mes anterior al actual: los meses ya contabilizados después de ella no se corrigen.",
+    "entryPreview": "Asiento que se registrará",
+    "debitAccumulated": "Debe 39 Depreciación acumulada",
+    "debitLoss": "Debe 65 Pérdida por baja",
+    "creditCost": "Haber 33 Costo del activo"
+  },
+  "fixedAssetDepreciation": {
+    "POSTED": "Ya contabilizada"
   }
 }

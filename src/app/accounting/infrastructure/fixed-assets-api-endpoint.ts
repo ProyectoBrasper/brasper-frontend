@@ -6,8 +6,10 @@ import { BaseApiEndpoint } from '../../shared/infrastructure/base-api-endpoint';
 import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { BaseResource } from '../../shared/infrastructure/base-resource';
 import { BaseResponse } from '../../shared/infrastructure/base-response';
-import { RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
+import { DisposeFixedAssetCommand, RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
 import { FixedAsset } from '../domain/model/fixed-asset.entity';
+import { JournalEntry } from '../domain/model/journal-entry.entity';
+import { JournalEntryAssembler, JournalEntryResource } from './journal-entries-api-endpoint';
 
 /** Backend `FixedAssetResource`; amounts are plain decimals, the depreciation figures as of today. */
 export interface FixedAssetResource extends BaseResource {
@@ -85,7 +87,7 @@ export class FixedAssetAssembler implements BaseAssembler<FixedAsset, FixedAsset
 
 /**
  * Client for `/fixed-assets` (admin, accounting and management read; admin and accounting write): the list and `POST`
- * to register one. The monthly depreciation and the disposal come with their screens.
+ * to register one, the monthly depreciation of every asset and the disposal of one.
  */
 export class FixedAssetsApiEndpoint extends BaseApiEndpoint<
   FixedAsset,
@@ -114,6 +116,23 @@ export class FixedAssetsApiEndpoint extends BaseApiEndpoint<
     return this.http.post<FixedAssetResource>(this.endpointUrl, request).pipe(
       map((resource) => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Failed to register fixed asset')),
+    );
+  }
+
+  /** `POST /fixed-assets/depreciation`: answers with the entries; a month already posted or with nothing due is a 409. */
+  runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]> {
+    const assembler = new JournalEntryAssembler();
+    return this.http.post<JournalEntryResource[]>(`${this.endpointUrl}/depreciation`, { year, month }).pipe(
+      map((resources) => resources.map((resource) => assembler.toEntityFromResource(resource))),
+      catchError(this.handleError('Failed to run depreciation')),
+    );
+  }
+
+  /** `POST /fixed-assets/{id}/disposal`: already disposed is a 409, a date before the acquisition a 400. */
+  dispose(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset> {
+    return this.http.post<FixedAssetResource>(`${this.endpointUrl}/${id}/disposal`, { disposedOn: command.disposedOn }).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to dispose fixed asset')),
     );
   }
 }

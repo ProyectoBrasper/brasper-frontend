@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
-import { RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
+import { DisposeFixedAssetCommand, RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
 import { FixedAsset } from '../domain/model/fixed-asset.entity';
 import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
 import { JournalEntry } from '../domain/model/journal-entry.entity';
@@ -90,5 +90,13 @@ export class AccountingApi extends BaseApi {
 
   registerFixedAsset(command: RegisterFixedAssetCommand): Observable<FixedAsset> {
     return this.fixedAssetsEndpoint.register(command);
+  }
+
+  disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset> {
+    return this.fixedAssetsEndpoint.dispose(id, command);
+  }
+
+  runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]> {
+    return this.fixedAssetsEndpoint.runMonthlyDepreciation(year, month);
   }
 }

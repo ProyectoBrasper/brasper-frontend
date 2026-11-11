@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Period } from '../../shared/domain/model/period';
-import { RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
+import { DisposeFixedAssetCommand, RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
 import { FixedAsset } from '../domain/model/fixed-asset.entity';
 import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
 import { JournalEntry } from '../domain/model/journal-entry.entity';
@@ -182,6 +182,20 @@ export class AccountingStore {
       this.fixedAssetsSignal.update((assets) => [...assets, asset]);
       void this.router.navigate(['/accounting/fixed-assets']);
     });
+  }
+
+  /** Writes an asset off; the backend answers with it and posts the disposal entry. */
+  disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): void {
+    this.run(this.accountingApi.disposeFixedAsset(id, command), 'Failed to dispose fixed asset', (disposed) =>
+      this.fixedAssetsSignal.update((assets) => assets.map((asset) => (asset.id === disposed.id ? disposed : asset))),
+    );
+  }
+
+  /** Posts the depreciation of a month and reads its entries again, so the screen knows it is posted. */
+  runMonthlyDepreciation(period: Period): void {
+    this.run(this.accountingApi.runMonthlyDepreciation(period.year, period.month), 'Failed to run depreciation', () =>
+      this.loadJournalEntries(period),
+    );
   }
 
   /** The account of a code, for the name shown next to it (undefined while the chart loads). */

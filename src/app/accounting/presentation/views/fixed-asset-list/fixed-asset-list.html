@@ -18,6 +18,65 @@
   </div>
 }
 
+<section class="depreciation">
+  <div class="depreciation-head">
+    <h2>{{ 'fixedAssets.depreciationTitle' | translate }}</h2>
+    <app-period-selector [(period)]="period" />
+    @if (posted()) {
+      <app-status-chip status="POSTED" labelPrefix="fixedAssetDepreciation." />
+    }
+  </div>
+
+  @if (future()) {
+    <p class="hint">{{ 'fixedAssets.futureNote' | translate }}</p>
+  } @else if (charge().total > 0) {
+    <div class="depreciation-body">
+      <dl class="figures">
+        <div>
+          <dt>{{ 'fixedAssets.charge' | translate }}</dt>
+          <dd class="amount strong">{{ charge().total | money }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'fixedAssets.assetsCount' | translate }}</dt>
+          <dd>{{ charge().assets }}</dd>
+        </div>
+      </dl>
+      @if (canWrite()) {
+        <button mat-flat-button type="button" [disabled]="!canPost()" (click)="onRunDepreciation()">
+          <mat-icon>playlist_add_check</mat-icon>
+          {{ 'fixedAssets.post' | translate }}
+        </button>
+      }
+    </div>
+    <p class="hint">{{ 'fixedAssets.entryHint' | translate }}</p>
+  } @else if (!posted()) {
+    <p class="hint">{{ 'fixedAssets.noCharge' | translate }}</p>
+  }
+
+  @if (reversed()) {
+    <p class="notice" role="note">
+      <mat-icon>warning</mat-icon>
+      <span>{{ 'fixedAssets.reversedNotice' | translate }}</span>
+    </p>
+  } @else if (monthOpen() && canWrite()) {
+    <p class="notice" role="note">
+      <mat-icon>schedule</mat-icon>
+      <span>{{ 'fixedAssets.monthOpenNotice' | translate }}</span>
+    </p>
+  }
+</section>
+
+<mat-button-toggle-group
+  class="filter"
+  hideSingleSelectionIndicator
+  [attr.aria-label]="'fixedAssets.filterLabel' | translate"
+  [value]="filter()"
+  (change)="filter.set($event.value)"
+>
+  <mat-button-toggle value="IN_USE">{{ 'fixedAssets.inUse' | translate }} ({{ inUseCount() }})</mat-button-toggle>
+  <mat-button-toggle value="ALL">{{ 'fixedAssets.all' | translate }} ({{ totalCount() }})</mat-button-toggle>
+</mat-button-toggle-group>
+
 <section class="table-card">
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
@@ -81,10 +140,27 @@
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let asset; columns: displayedColumns" [class.inactive]="asset.disposed"></tr>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>{{ 'fixedAssets.actions' | translate }}</th>
+        <td mat-cell *matCellDef="let asset">
+          @if (!asset.disposed) {
+            <button
+              mat-icon-button
+              type="button"
+              [matTooltip]="'fixedAssets.dispose' | translate"
+              [attr.aria-label]="'fixedAssets.disposeOf' | translate: { description: asset.description }"
+              (click)="onDispose(asset)"
+            >
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let asset; columns: displayedColumns()" [class.inactive]="asset.disposed"></tr>
       <tr class="mat-mdc-row empty-row" *matNoDataRow>
-        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns().length">
           {{ (loading() ? 'common.loading' : 'fixedAssets.empty') | translate }}
         </td>
       </tr>

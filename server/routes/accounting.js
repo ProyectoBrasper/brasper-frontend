@@ -458,6 +458,74 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     }).write();
     res.status(201).json(assetResource(asset));
   });
+  // Monthly depreciation, like FixedAssetCommandService: @Valid (400); per asset, the accumulated at the end of the month
+  // minus at the end of the month before; nothing due is a 409; then the entry D 68 / H 39 on the last day, whose
+  // source id encodes the month, so a month already posted (even if reversed) is a 409. Answers with the entries. 201.
+  server.post('/api/v1/fixed-assets/depreciation', requireRoles(...WRITERS), (req, res) => {
+    const { year, month } = req.body ?? {};
+    if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'El año (2000–2100) y el mes (1–12) son obligatorios.');
+    }
+    const monthEnd = (y, m) => new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+    const end = monthEnd(year, month);
+    const previousEnd = month === 1 ? monthEnd(year - 1, 12) : monthEnd(year, month - 1);
+    const total = assets().value().reduce((sum, asset) => {
+      const charge = accumulatedCents(asset, end) - accumulatedCents(asset, previousEnd);
+      return charge > 0 ? sum + charge : sum;
+    }, 0);
+    if (total === 0) return problem(res, 409, 'Conflict', 'No hay depreciación pendiente para este período.');
+    const sourceId = (year * 100 + month) * 10;
+    if (entries().find({ source: 'DEPRECIATION', sourceId }).value()) {
+      return problem(res, 409, 'Conflict', 'La depreciación de este período ya fue contabilizada.');
+    }
+    const entry = {
+      id: nextId('journal-entries'),
+      entryDate: end,
+      description: `Depreciation ${year}-${String(month).padStart(2, '0')}`,
+      source: 'DEPRECIATION',
+      sourceId,
+      reversed: false,
+      reversalOfId: null,
+      lines: [
+        { accountCode: '68', debit: total / 100, credit: 0, projectId: null },
+        { accountCode: '39', debit: 0, credit: total / 100, projectId: null },
+      ],
+    };
+    entries().push(entry).write();
+    res.status(201).json([entryResource(entry)]);
+  });
+
+  // Disposal: @Valid date (400), the asset (404), already disposed (409), before the acquisition (400). It posts D 39 the
+  // accumulated at that date, D 65 what was left and H 33 the cost; a zero side is left out. 200.
+  server.post('/api/v1/fixed-assets/:id/disposal', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    if (!ISO_DATE.test(body.disposedOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de baja no es válida.');
+    const asset = assets().find({ id: Number(req.params.id) }).value();
+    if (!asset) return problem(res, 404, 'Not Found', 'Activo fijo no encontrado.');
+    if (asset.disposedOn) return problem(res, 409, 'Conflict', 'El activo fijo ya fue dado de baja.');
+    if (body.disposedOn < asset.acquiredOn) {
+      return problem(res, 400, 'Bad Request', 'La fecha de baja no puede ser anterior a la de adquisición.');
+    }
+    assets().find({ id: asset.id }).assign({ disposedOn: body.disposedOn }).write();
+    const disposed = assets().find({ id: asset.id }).value();
+    const cost = cents(disposed.taxableBase);
+    const accumulated = accumulatedCents(disposed, body.disposedOn);
+    const lines = [];
+    if (accumulated > 0) lines.push({ accountCode: '39', debit: accumulated / 100, credit: 0, projectId: null });
+    if (cost > accumulated) lines.push({ accountCode: '65', debit: (cost - accumulated) / 100, credit: 0, projectId: null });
+    lines.push({ accountCode: '33', debit: 0, credit: cost / 100, projectId: null });
+    entries().push({
+      id: nextId('journal-entries'),
+      entryDate: body.disposedOn,
+      description: 'Fixed asset disposal',
+      source: 'FIXED_ASSET_DISPOSAL',
+      sourceId: disposed.id,
+      reversed: false,
+      reversalOfId: null,
+      lines,
+    }).write();
+    res.json(assetResource(disposed));
+  });
   server.use('/api/v1/fixed-assets', requireRoles(...READERS));
 };
 

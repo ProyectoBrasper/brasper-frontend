@@ -924,6 +924,35 @@
     "amountsPreview": "Preview",
     "previewNote": "IGV with the rates in force since {{date}}. The system calculates the final amount when registering.",
     "previewNoteStandard": "No parameters in force on that date: the standard 18 % IGV applies.",
-    "register": "Register asset"
+    "register": "Register asset",
+    "filterLabel": "Filter assets",
+    "inUse": "In use",
+    "all": "All",
+    "actions": "Actions",
+    "dispose": "Dispose",
+    "disposeOf": "Dispose of {{description}}",
+    "depreciationTitle": "Monthly depreciation",
+    "charge": "Charge of the month",
+    "assetsCount": "Assets charged",
+    "entryHint": "Entry: Debit 68 Depreciation · Credit 39 Accumulated depreciation",
+    "post": "Post",
+    "noCharge": "This month has no depreciation due.",
+    "futureNote": "This month has not started yet.",
+    "monthOpenNotice": "The month is not over. If you post it now, an asset you register later will not receive this charge.",
+    "reversedNotice": "The entry of this month was reversed and the system does not allow posting it again.",
+    "confirmTitle": "Post depreciation of {{period}}",
+    "confirmMessage": "An entry dated {{date}} will be posted: Debit 68 and Credit 39 for {{amount}}. This month cannot be posted again.",
+    "disposeTitle": "Dispose of the asset",
+    "disposedOn": "Disposal date",
+    "disposedBeforeAcquisition": "It cannot be before the acquisition date.",
+    "disposeNotice": "A disposal cannot be undone and records no sale: what is left to depreciate becomes a loss.",
+    "backdatedNotice": "The date falls in a month before the current one: months already posted after it are not corrected.",
+    "entryPreview": "Entry to be posted",
+    "debitAccumulated": "Debit 39 Accumulated depreciation",
+    "debitLoss": "Debit 65 Loss on disposal",
+    "creditCost": "Credit 33 Asset cost"
+  },
+  "fixedAssetDepreciation": {
+    "POSTED": "Already posted"
   }
 }
