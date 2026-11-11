@@ -1,6 +1,7 @@
 // Reporting fake routes. Read: ADMIN, MANAGEMENT, ACCOUNTING. Like the backend, the reports are calculated from what the
 // other modules stored. The rest comes with its screens.
 const { weeksOf, weekOf, weekContaining } = require('./cash-flow-week');
+const { taxParametersAt } = require('./accounting');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_MANAGEMENT', 'ROLE_ACCOUNTING'];
 
@@ -334,6 +335,56 @@ module.exports = (server, { db, problem, requireRoles }) => {
       difference: difference / 100,
       balanced: difference === 0,
     });
+  });
+
+  // ---------- Project profitability ----------
+  /** ProjectProfitabilityQueryService.build and ProjectProfitability, in cents. */
+  const profitabilityOf = (project, igv, year, month) => {
+    const budget = cents(project.budget);
+    const expenses = db.get('expenses').value().filter((e) => e.projectId === project.id && !e.annulled);
+    const actual = expenses.reduce((sum, e) => sum + cents(e.taxableBase), 0);
+    const byCategory = {};
+    for (const expense of expenses) byCategory[expense.category] = (byCategory[expense.category] ?? 0) + cents(expense.taxableBase);
+    const estimated = db.get('cost-estimates').value()
+      .filter((estimate) => estimate.projectId === project.id)
+      .reduce((sum, estimate) => sum + cents(estimate.estimatedAmount), 0);
+    const commission = Math.round(budget * (1 + igv) * project.salesCommissionRate);
+    const gross = Math.round((budget - actual - commission) * project.participation);
+    const progress = db.get('progress-records').value().find((r) => r.projectId === project.id && r.year === year && r.month === month)?.percentage ?? 0;
+    const invoices = db.get('invoices').value().filter((i) => i.projectId === project.id && i.status !== 'VOIDED');
+    const invoiceIds = new Set(invoices.map((i) => i.id));
+    const collected = db.get('invoice-payments').value()
+      .filter((p) => invoiceIds.has(p.invoiceId) && p.type !== 'RETENTION_CERTIFICATE')
+      .reduce((sum, p) => sum + cents(p.amount), 0);
+    return {
+      projectId: project.id,
+      code: project.code,
+      name: project.name,
+      clientName: db.get('clients').find({ id: project.clientId }).value()?.businessName ?? null,
+      status: project.status,
+      currency: project.currency,
+      budget: budget / 100,
+      estimatedCost: estimated / 100,
+      actualCost: actual / 100,
+      actualCostByCategory: inSolesMap(byCategory),
+      costDeviation: (actual - estimated) / 100,
+      salesCommission: commission / 100,
+      grossProfit: gross / 100,
+      margin: budget === 0 ? 0 : Math.round((gross / budget) * 10000) / 10000,
+      accumulatedProgress: project.accumulatedProgress,
+      recognizedProfitInPeriod: Math.round(gross * progress) / 100,
+      invoiced: invoices.reduce((sum, i) => sum + cents(i.total), 0) / 100,
+      collected: collected / 100,
+    };
+  };
+
+  // GET /reports/projects/profitability?year=&month=: every project, whatever its status.
+  server.get('/api/v1/reports/projects/profitability', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!validPeriod(year, month)) return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    const igv = taxParametersAt(db, todayInLima())?.igv ?? 0.18;
+    res.json(db.get('projects').value().map((project) => profitabilityOf(project, igv, year, month)));
   });
   server.use('/api/v1/reports', requireRoles(...READERS));
 };

@@ -1037,5 +1037,36 @@
     },
     "differenceAlert": "Assets and liabilities plus equity differ by {{amount}}.",
     "resultNote": "There is no year-end closing yet: the unclosed result adds up all profit since the start."
+  },
+  "profitability": {
+    "subtitle": "Actual cost against the estimate and profit of each project",
+    "filterLabel": "Filter projects",
+    "filter": {
+      "ACTIVE": "Active",
+      "OVER_ESTIMATE": "Over estimate",
+      "ALL": "All"
+    },
+    "detail": "Detail",
+    "showDetail": "Show detail of {{code}}",
+    "project": "Project",
+    "status": "Status",
+    "budget": "Budget",
+    "estimatedCost": "Estimated cost",
+    "actualCost": "Actual cost",
+    "costDeviation": "Deviation",
+    "overEstimate": "Over estimate",
+    "grossProfit": "Gross profit (at budget)",
+    "margin": "Margin",
+    "progress": "Progress",
+    "recognized": "Recognized in {{period}}",
+    "costByCategory": "Actual cost by category",
+    "noCosts": "No costs recorded",
+    "billing": "Commission and billing",
+    "salesCommission": "Sales commission",
+    "invoiced": "Invoiced",
+    "collected": "Collected",
+    "outstanding": "Outstanding",
+    "empty": "No projects for this filter.",
+    "grossProfitNote": "Gross profit takes the whole budget minus the actual cost to date and the commission, times the company share. A project in progress still has costs to spend, so the final result will be lower."
   }
 }
