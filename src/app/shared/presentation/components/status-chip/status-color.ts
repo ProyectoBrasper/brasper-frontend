@@ -4,6 +4,7 @@ export type StatusColor = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
 const COLORS: Record<string, StatusColor> = {
   ACTIVE: 'success',
   ACTUAL: 'success',
+  BALANCED: 'success',
   COLLECTED: 'success',
   PAID: 'success',
   POSTED: 'success',
@@ -23,6 +24,7 @@ const COLORS: Record<string, StatusColor> = {
   CANCELLED: 'danger',
   VOIDED: 'danger',
   ANNULLED: 'danger',
+  UNBALANCED: 'danger',
   OVERDUE: 'danger',
 };
 

@@ -1,7 +1,9 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Period } from '../../shared/domain/model/period';
+import { BalanceSheet } from '../domain/model/balance-sheet';
 import { CashFlowReport } from '../domain/model/cash-flow-report';
+import { IncomeStatement } from '../domain/model/income-statement';
 import { ReportingApi } from '../infrastructure/reporting-api';
 
 /** Reporting context state: the reports the backend calculates. The rest come with their screens. */
@@ -10,14 +12,22 @@ export class ReportingStore {
   private readonly reportingApi = inject(ReportingApi);
 
   private readonly cashFlowSignal = signal<CashFlowReport | null>(null);
-  /** Number of the last cash flow asked for (to drop late answers). */
+  private readonly incomeStatementSignal = signal<IncomeStatement | null>(null);
+  private readonly balanceSheetSignal = signal<BalanceSheet | null>(null);
+  /** Number of the last report of each kind asked for (to drop late answers). */
   private cashFlowRequest = 0;
+  private incomeStatementRequest = 0;
+  private balanceSheetRequest = 0;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
 
   /** The cash flow shown; null while it loads. */
   readonly cashFlow = this.cashFlowSignal.asReadonly();
+  /** The income statement shown; null while it loads. */
+  readonly incomeStatement = this.incomeStatementSignal.asReadonly();
+  /** The balance sheet shown; null while it loads. */
+  readonly balanceSheet = this.balanceSheetSignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
 
@@ -34,6 +44,28 @@ export class ReportingStore {
   /** Loads `weeks` weeks starting with the one that contains `from` (`yyyy-MM-dd`). */
   loadCashFlowProjection(from: string, weeks: number): void {
     this.loadCashFlow(this.reportingApi.getCashFlowProjection(from, weeks));
+  }
+
+  /** Loads the results of a range of months, both ends included. */
+  loadIncomeStatement(from: Period, to: Period): void {
+    const number = ++this.incomeStatementRequest;
+    this.incomeStatementSignal.set(null);
+    this.run(this.reportingApi.getIncomeStatement(from.year, from.month, to.year, to.month), 'Failed to load income statement', (statement) => {
+      if (this.incomeStatementRequest === number) {
+        this.incomeStatementSignal.set(statement);
+      }
+    });
+  }
+
+  /** Loads the position at the end of a month. */
+  loadBalanceSheet(period: Period): void {
+    const number = ++this.balanceSheetRequest;
+    this.balanceSheetSignal.set(null);
+    this.run(this.reportingApi.getBalanceSheet(period.year, period.month), 'Failed to load balance sheet', (sheet) => {
+      if (this.balanceSheetRequest === number) {
+        this.balanceSheetSignal.set(sheet);
+      }
+    });
   }
 
   clearError(): void {

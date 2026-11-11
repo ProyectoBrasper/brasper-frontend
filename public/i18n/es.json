@@ -1003,5 +1003,39 @@
     "flowsPanel": "Ingresos y egresos",
     "balancePanel": "Saldo final",
     "projectedKey": "Tono claro y línea punteada: en curso o proyectado"
+  },
+  "incomeStatement": {
+    "subtitle": "De los ingresos a la utilidad neta del período",
+    "from": "Desde",
+    "to": "Hasta",
+    "revenue": "Ingresos",
+    "directCosts": "(−) Costos directos",
+    "grossProfit": "Utilidad bruta",
+    "operatingExpenses": "(−) Gastos operativos",
+    "operatingProfit": "Utilidad operativa",
+    "financialExpenses": "(−) Gastos financieros",
+    "profitBeforeTax": "Utilidad antes de impuestos",
+    "incomeTax": "(−) Impuesto a la renta",
+    "netProfit": "Utilidad neta",
+    "incomeTaxNote": "El sistema aún no registra el impuesto a la renta del ejercicio, así que la utilidad neta es antes de ese impuesto."
+  },
+  "balanceSheet": {
+    "subtitle": "Activos, pasivos y patrimonio al cierre del mes",
+    "asOf": "Al {{date}}",
+    "assets": "Activos",
+    "liabilities": "Pasivos",
+    "equity": "Patrimonio",
+    "totalAssets": "Total activos",
+    "totalLiabilities": "Total pasivos",
+    "totalEquity": "Total patrimonio",
+    "totalLiabilitiesAndEquity": "Total pasivos y patrimonio",
+    "result": "Resultado sin cerrar",
+    "empty": "Sin saldos a esta fecha.",
+    "status": {
+      "BALANCED": "Cuadrado",
+      "UNBALANCED": "No cuadra"
+    },
+    "differenceAlert": "Activos y pasivos más patrimonio difieren en {{amount}}.",
+    "resultNote": "Aún no hay cierre de ejercicio: el resultado sin cerrar acumula toda la utilidad desde el inicio."
   }
 }

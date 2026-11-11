@@ -59,13 +59,18 @@ const periodAt = (index: number) => new Period(Math.floor(index / 12), (index % 
  * Keeps a range valid after moving one end (the backend answers 400 otherwise): the other end follows when they would
  * cross or span more than the maximum.
  */
-export function clampMonthRange(from: Period, to: Period, moved: 'from' | 'to'): { from: Period; to: Period } {
+export function clampMonthRange(
+  from: Period,
+  to: Period,
+  moved: 'from' | 'to',
+  maxMonths: number = MAX_CASH_FLOW_MONTHS,
+): { from: Period; to: Period } {
   const span = monthIndex(to) - monthIndex(from);
-  if (span >= 0 && span < MAX_CASH_FLOW_MONTHS) {
+  if (span >= 0 && span < maxMonths) {
     return { from, to };
   }
   if (moved === 'from') {
-    return { from, to: span < 0 ? from : periodAt(monthIndex(from) + MAX_CASH_FLOW_MONTHS - 1) };
+    return { from, to: span < 0 ? from : periodAt(monthIndex(from) + maxMonths - 1) };
   }
-  return { from: span < 0 ? to : periodAt(monthIndex(to) - MAX_CASH_FLOW_MONTHS + 1), to };
+  return { from: span < 0 ? to : periodAt(monthIndex(to) - maxMonths + 1), to };
 }

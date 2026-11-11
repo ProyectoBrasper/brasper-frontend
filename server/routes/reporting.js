@@ -245,5 +245,95 @@ module.exports = (server, { db, problem, requireRoles }) => {
     while (list.length < weeks) list.push(weekContaining(shiftDay(list.at(-1).endDate, 1)));
     res.json(buildWeekly(list));
   });
+
+  // ---------- Financial statements ----------
+  /** LedgerQueryService.balances: net of each account, signed by its normal side (assets and expenses debit). */
+  const accountBalances = (accepts) => {
+    const types = new Map(db.get('ledger-accounts').value().map((account) => [account.code, account.type]));
+    const net = new Map();
+    for (const entry of db.get('journal-entries').value()) {
+      if (!accepts(entry.entryDate)) continue;
+      for (const line of entry.lines) {
+        net.set(line.accountCode, (net.get(line.accountCode) ?? 0) + cents(line.debit) - cents(line.credit));
+      }
+    }
+    return new Map([...net].map(([code, amount]) => [code, ['ASSET', 'EXPENSE'].includes(types.get(code)) ? amount : -amount]));
+  };
+  const sumOf = (balances, accepts) => [...balances].reduce((sum, [code, amount]) => (accepts(code) ? sum + amount : sum), 0);
+  const groupOf = (balances, accepts) => {
+    const group = {};
+    for (const [code, amount] of [...balances].sort(([a], [b]) => (a < b ? -1 : 1))) {
+      if (accepts(code) && amount !== 0) group[code] = amount;
+    }
+    return group;
+  };
+  const inSolesMap = (group) => Object.fromEntries(Object.entries(group).map(([code, amount]) => [code, amount / 100]));
+  const lastDay = (year, month) => new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+  const firstDay = (year, month) => `${year}-${String(month).padStart(2, '0')}-01`;
+  const validPeriod = (year, month) => Number.isInteger(year) && year >= 1 && Number.isInteger(month) && month >= 1 && month <= 12;
+
+  // GET /reports/income-statement: FinancialStatementsQueryService groups by code: 7 revenue, 60 direct, 67 financial,
+  // the rest of 6 operating, 8 income tax. The first month must not come after the last (400).
+  server.get('/api/v1/reports/income-statement', requireRoles(...READERS), (req, res) => {
+    const [fromYear, fromMonth, toYear, toMonth] = ['fromYear', 'fromMonth', 'toYear', 'toMonth'].map((key) => Number(req.query[key]));
+    if (!validPeriod(fromYear, fromMonth) || !validPeriod(toYear, toMonth)) {
+      return problem(res, 400, 'Bad Request', 'fromYear, fromMonth, toYear y toMonth son obligatorios (mes de 1 a 12).');
+    }
+    if (fromYear * 12 + fromMonth > toYear * 12 + toMonth) {
+      return problem(res, 400, 'Bad Request', 'The first month must not come after the last month');
+    }
+    const [start, end] = [firstDay(fromYear, fromMonth), lastDay(toYear, toMonth)];
+    const movements = accountBalances((date) => date >= start && date <= end);
+    const revenue = sumOf(movements, (code) => code.startsWith('7'));
+    const directCosts = sumOf(movements, (code) => code.startsWith('60'));
+    const operatingExpenses = sumOf(movements, (code) => code.startsWith('6') && !code.startsWith('60') && !code.startsWith('67'));
+    const financialExpenses = sumOf(movements, (code) => code.startsWith('67'));
+    const incomeTax = sumOf(movements, (code) => code.startsWith('8'));
+    const grossProfit = revenue - directCosts;
+    const operatingProfit = grossProfit - operatingExpenses;
+    const profitBeforeTax = operatingProfit - financialExpenses;
+    res.json({
+      fromYear,
+      fromMonth,
+      toYear,
+      toMonth,
+      revenue: revenue / 100,
+      directCosts: directCosts / 100,
+      grossProfit: grossProfit / 100,
+      operatingExpenses: operatingExpenses / 100,
+      operatingProfit: operatingProfit / 100,
+      financialExpenses: financialExpenses / 100,
+      profitBeforeTax: profitBeforeTax / 100,
+      incomeTax: incomeTax / 100,
+      netProfit: (profitBeforeTax - incomeTax) / 100,
+    });
+  });
+
+  // GET /reports/balance-sheet: balances up to the end of the month; 1 to 3 assets, 4 liabilities, 5 equity, and RESULT
+  // (revenue minus expenses and income tax), since there is no period closing.
+  server.get('/api/v1/reports/balance-sheet', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!validPeriod(year, month)) return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    const asOf = lastDay(year, month);
+    const balances = accountBalances((date) => date <= asOf);
+    const assets = groupOf(balances, (code) => '123'.includes(code[0]));
+    const liabilities = groupOf(balances, (code) => code.startsWith('4'));
+    const equity = groupOf(balances, (code) => code.startsWith('5'));
+    equity.RESULT = sumOf(balances, (code) => code.startsWith('7')) - sumOf(balances, (code) => code.startsWith('6') || code.startsWith('8'));
+    const totalOf = (group) => Object.values(group).reduce((sum, amount) => sum + amount, 0);
+    const difference = totalOf(assets) - totalOf(liabilities) - totalOf(equity);
+    res.json({
+      asOf,
+      assets: inSolesMap(assets),
+      liabilities: inSolesMap(liabilities),
+      equity: inSolesMap(equity),
+      totalAssets: totalOf(assets) / 100,
+      totalLiabilities: totalOf(liabilities) / 100,
+      totalEquity: totalOf(equity) / 100,
+      difference: difference / 100,
+      balanced: difference === 0,
+    });
+  });
   server.use('/api/v1/reports', requireRoles(...READERS));
 };

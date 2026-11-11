@@ -1003,5 +1003,39 @@
     "flowsPanel": "Inflows and outflows",
     "balancePanel": "Closing balance",
     "projectedKey": "Light shade and dashed line: in progress or projected"
+  },
+  "incomeStatement": {
+    "subtitle": "From revenue to net profit of the period",
+    "from": "From",
+    "to": "To",
+    "revenue": "Revenue",
+    "directCosts": "(−) Direct costs",
+    "grossProfit": "Gross profit",
+    "operatingExpenses": "(−) Operating expenses",
+    "operatingProfit": "Operating profit",
+    "financialExpenses": "(−) Financial expenses",
+    "profitBeforeTax": "Profit before tax",
+    "incomeTax": "(−) Income tax",
+    "netProfit": "Net profit",
+    "incomeTaxNote": "The system does not record the income tax of the year yet, so net profit is before that tax."
+  },
+  "balanceSheet": {
+    "subtitle": "Assets, liabilities and equity at the end of the month",
+    "asOf": "As of {{date}}",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "equity": "Equity",
+    "totalAssets": "Total assets",
+    "totalLiabilities": "Total liabilities",
+    "totalEquity": "Total equity",
+    "totalLiabilitiesAndEquity": "Total liabilities and equity",
+    "result": "Unclosed result",
+    "empty": "No balances on this date.",
+    "status": {
+      "BALANCED": "Balanced",
+      "UNBALANCED": "Does not balance"
+    },
+    "differenceAlert": "Assets and liabilities plus equity differ by {{amount}}.",
+    "resultNote": "There is no year-end closing yet: the unclosed result adds up all profit since the start."
   }
 }

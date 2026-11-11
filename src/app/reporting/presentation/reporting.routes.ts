@@ -3,6 +3,9 @@ import { BarController, BarElement, CategoryScale, LinearScale, LineController, 
 import { provideCharts } from 'ng2-charts';
 
 const cashFlowView = () => import('./views/cash-flow-view/cash-flow-view').then((m) => m.CashFlowView);
+const incomeStatementView = () =>
+  import('./views/income-statement-view/income-statement-view').then((m) => m.IncomeStatementView);
+const balanceSheetView = () => import('./views/balance-sheet-view/balance-sheet-view').then((m) => m.BalanceSheetView);
 
 /** Only what the cash flow chart draws, so the rest of Chart.js stays out of the bundle. */
 const charts = provideCharts({
@@ -16,4 +19,6 @@ const charts = provideCharts({
 export const reportingRoutes: Routes = [
   { path: '', redirectTo: 'cash-flow', pathMatch: 'full' },
   { path: 'cash-flow', loadComponent: cashFlowView, title: 'Brasper', providers: [charts] },
+  { path: 'income-statement', loadComponent: incomeStatementView, title: 'Brasper' },
+  { path: 'balance-sheet', loadComponent: balanceSheetView, title: 'Brasper' },
 ];

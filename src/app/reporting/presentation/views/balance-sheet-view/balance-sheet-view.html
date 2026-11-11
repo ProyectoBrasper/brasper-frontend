@@ -1,0 +1,65 @@
+@let current = sheet();
+<app-page-header
+  [title]="'nav.balanceSheet' | translate"
+  [subtitle]="'balanceSheet.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.balanceSheet' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (current) {
+    <app-status-chip [status]="current.balanced ? 'BALANCED' : 'UNBALANCED'" labelPrefix="balanceSheet.status." />
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (current) {
+  @if (!current.balanced) {
+    <div class="page-alert" role="alert">
+      <mat-icon>warning</mat-icon>
+      <span>{{ 'balanceSheet.differenceAlert' | translate: { amount: (current.difference | money) } }}</span>
+    </div>
+  }
+
+  <p class="as-of">{{ 'balanceSheet.asOf' | translate: { date: (current.asOf | date: 'dd/MM/yyyy') } }}</p>
+
+  <div class="columns">
+    <app-statement-section
+      [title]="'balanceSheet.assets' | translate"
+      [rows]="assets()"
+      [total]="current.totalAssets"
+      [totalLabel]="'balanceSheet.totalAssets' | translate"
+    />
+    <div class="stack">
+      <app-statement-section
+        [title]="'balanceSheet.liabilities' | translate"
+        [rows]="liabilities()"
+        [total]="current.totalLiabilities"
+        [totalLabel]="'balanceSheet.totalLiabilities' | translate"
+      />
+      <app-statement-section
+        [title]="'balanceSheet.equity' | translate"
+        [rows]="equity()"
+        [total]="current.totalEquity"
+        [totalLabel]="'balanceSheet.totalEquity' | translate"
+      />
+      <p class="grand-total">
+        <span>{{ 'balanceSheet.totalLiabilitiesAndEquity' | translate }}</span>
+        <strong>{{ current.totalLiabilitiesAndEquity() | money }}</strong>
+      </p>
+    </div>
+  </div>
+
+  <p class="note">
+    <mat-icon>info</mat-icon>
+    <span>{{ 'balanceSheet.resultNote' | translate }}</span>
+  </p>
+}
