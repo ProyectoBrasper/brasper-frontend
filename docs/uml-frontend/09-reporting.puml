@@ -55,10 +55,6 @@ package "app" {
       CashFlowReport *-- "1..*" CashFlowLine : contains
 
       class IncomeStatement <<ReadModel>> {
-        - #fromYear: number
-        - #fromMonth: number
-        - #toYear: number
-        - #toMonth: number
         - #revenue: number
         - #directCosts: number
         - #grossProfit: number
@@ -68,10 +64,6 @@ package "app" {
         - #profitBeforeTax: number
         - #incomeTax: number
         - #netProfit: number
-        +fromYear: number
-        +fromMonth: number
-        +toYear: number
-        +toMonth: number
         +revenue: number
         +directCosts: number
         +grossProfit: number
@@ -92,6 +84,7 @@ package "app" {
         - #totalLiabilities: number
         - #totalEquity: number
         - #difference: number
+        - #balanced: boolean
         +asOf: string
         +assets: Record<string, number>
         +liabilities: Record<string, number>
@@ -100,7 +93,8 @@ package "app" {
         +totalLiabilities: number
         +totalEquity: number
         +difference: number
-        +isBalanced(): boolean
+        +balanced: boolean
+        +totalLiabilitiesAndEquity(): number
       }
 
       class ProjectProfitability <<ReadModel>> {
@@ -325,7 +319,7 @@ package "app" {
         +loadMonthlyCashFlow(from: Period, to: Period): void
         +loadCashFlowProjection(from: string, weeks: number): void
         +loadIncomeStatement(from: Period, to: Period): void
-        +loadBalanceSheet(): void
+        +loadBalanceSheet(period: Period): void
         +loadPortfolioProfitability(): void
         +loadProjectProfitability(projectId: number): void
       }
@@ -362,8 +356,9 @@ package "app" {
         }
         class StatementSection <<Component>> {
           +title: InputSignal<string>
-          +items: InputSignal<Record<string, number>>
+          +rows: InputSignal<StatementRow[]>
           +total: InputSignal<number>
+          +totalLabel: InputSignal<string>
         }
         class AlertsPanel <<Component>> {
           +alerts: InputSignal<string[]>
@@ -393,13 +388,19 @@ package "app" {
           -reportingStore: ReportingStore
           +from: WritableSignal<Period>
           +to: WritableSignal<Period>
-          +incomeStatement: Signal<IncomeStatement | null>
-          +onRangeChange(): void
+          +statement: Signal<IncomeStatement | null>
+          +rows: Signal<IncomeStatementRow[]>
+          +onFromChange(from: Period): void
+          +onToChange(to: Period): void
         }
         class BalanceSheetView <<Component>> {
           -reportingStore: ReportingStore
-          +balanceSheet: Signal<BalanceSheet | null>
-          +onPeriodChange(period: Period): void
+          -accountingStore: AccountingStore
+          +period: WritableSignal<Period>
+          +sheet: Signal<BalanceSheet | null>
+          +assets: Signal<StatementRow[]>
+          +liabilities: Signal<StatementRow[]>
+          +equity: Signal<StatementRow[]>
         }
         class ProjectProfitabilityView <<Component>> {
           -reportingStore: ReportingStore
@@ -423,7 +424,6 @@ package "app" {
       DashboardView --> AlertsPanel : contains
       CashFlowView --> CashFlowChart : contains
       CashFlowView --> CashFlowTable : contains
-      IncomeStatementView --> StatementSection : contains
       BalanceSheetView --> StatementSection : contains
       DashboardView --> app.shared.presentation.components.PeriodSelector : contains
       CashFlowView --> app.shared.presentation.components.PeriodSelector : contains
@@ -443,7 +443,9 @@ note bottom
   CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos. Son dos paneles alineados
   (ingresos y egresos; saldo final), cada uno con su eje: un doble eje sugeriría relaciones que no existen.
   Semanas proyectadas (projected = true) se pintan distinto a las reales.
-  API falsa: /reports/cash-flow/weekly, /monthly y /projection se calculan desde lo guardado en db.json, igual que el backend
+  El balance llega por código de cuenta: los nombres salen del plan de cuentas (AccountingStore).
+  API falsa: /reports/income-statement y /reports/balance-sheet se calculan desde los asientos;
+  /reports/cash-flow/weekly, /monthly y /projection se calculan desde lo guardado en db.json, igual que el backend
   (CashFlowCalculator). La etiqueta de cada semana la arma el front: el backend la envía en inglés.
   El estado de la columna (Real, En curso, Proyectada) sale de las fechas.
 end note

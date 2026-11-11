@@ -75,6 +75,12 @@ describe('clampMonthRange (backend: from not after to, at most 24 months)', () =
     expect(months(clampMonthRange(new Period(2026, 6), new Period(2026, 5), 'to'))).toEqual([2026, 5, 2026, 5]);
   });
 
+  it('allows any span without a maximum, but the ends still cannot cross', () => {
+    const unlimited = Number.POSITIVE_INFINITY;
+    expect(months(clampMonthRange(new Period(2020, 1), new Period(2027, 12), 'from', unlimited))).toEqual([2020, 1, 2027, 12]);
+    expect(months(clampMonthRange(new Period(2027, 2), new Period(2027, 1), 'from', unlimited))).toEqual([2027, 2, 2027, 2]);
+  });
+
   it('shortens the other end when the range would span more than 24 months', () => {
     expect(months(clampMonthRange(new Period(2025, 12), new Period(2027, 12), 'from'))).toEqual([2025, 12, 2027, 11]);
     expect(months(clampMonthRange(new Period(2026, 1), new Period(2028, 1), 'to'))).toEqual([2026, 2, 2028, 1]);
