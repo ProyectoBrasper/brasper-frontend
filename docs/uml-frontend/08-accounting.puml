@@ -274,16 +274,25 @@ package "app" {
         - #taxableBase: number
         - #igv: number
         - #total: number
+        - #currency: string
         - #usefulLifeMonths: number
+        - #expenseId: number | null
+        - #disposedOn: string | null
+        - #monthlyDepreciation: number
+        - #accumulatedDepreciation: number
         - #bookValue: number
-        - #disposed: boolean
         +id: number
         +description: string
         +acquiredOn: string
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +usefulLifeMonths: number
+        +expenseId: number | null
+        +disposedOn: string | null
+        +monthlyDepreciation: number
+        +accumulatedDepreciation: number
         +bookValue: number
         +disposed: boolean
       }
@@ -353,9 +362,13 @@ package "app" {
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +usefulLifeMonths: number
+        +expenseId: number | null
+        +disposedOn: string | null
+        +monthlyDepreciation: number
+        +accumulatedDepreciation: number
         +bookValue: number
-        +disposed: boolean
       }
       class LedgerAccountsResponse <<Response>> {
       }
@@ -429,6 +442,7 @@ package "app" {
         +set(command: SetTaxParametersCommand): Observable<TaxParameters>
       }
       class FixedAssetsApiEndpoint {
+        +register(command: RegisterFixedAssetCommand): Observable<FixedAsset>
         +dispose(id: number): Observable<FixedAsset>
         +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
       }
@@ -453,7 +467,7 @@ package "app" {
         +getTaxParametersHistory(): Observable<TaxParameters[]>
         +setTaxParameters(command: SetTaxParametersCommand): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
-        +registerFixedAsset(asset: FixedAsset): Observable<FixedAsset>
+        +registerFixedAsset(command: RegisterFixedAssetCommand): Observable<FixedAsset>
         +disposeFixedAsset(id: number): Observable<FixedAsset>
         +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
       }
@@ -531,7 +545,7 @@ package "app" {
         +setTaxParameters(command: SetTaxParametersCommand, onSaved?: () => void): void
         +canSetTaxParameters: Signal<boolean>
         +loadFixedAssets(): void
-        +registerFixedAsset(asset: FixedAsset): void
+        +registerFixedAsset(command: RegisterFixedAssetCommand): void
         +disposeFixedAsset(id: number): void
         +runMonthlyDepreciation(year: number, month: number): void
       }
@@ -666,18 +680,21 @@ package "app" {
         class FixedAssetList <<Component>> {
           -accountingStore: AccountingStore
           -dialog: MatDialog
-          -router: Router
           +displayedColumns: string[]
           +dataSource: Signal<MatTableDataSource<FixedAsset>>
           +onDispose(id: number): void
           +onRunDepreciation(): void
-          +onAdd(): void
         }
         class FixedAssetForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          -expensesStore: ExpensesStore
           -router: Router
           +assetForm: FormGroup
+          +expenses: Signal<Expense[]>
+          +fromExpense: Signal<boolean>
+          +parameters: Signal<TaxParameters | undefined>
+          +preview: Signal<FixedAssetPreview>
           +onSubmit(): void
           +onCancel(): void
         }

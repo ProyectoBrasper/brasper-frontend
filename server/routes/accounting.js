@@ -1,5 +1,5 @@
 // Accounting fake routes: GET /tax-parameters?date= (rates in force on a date; 404 without body when
-// none, like the backend), its history and POST (admin only), the chart of accounts, the journal entries (list by month, manual entry, reversal), the trial balance and the tax returns. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
+// none, like the backend), its history and POST (admin only), the chart of accounts, the journal entries (list by month, manual entry, reversal), the trial balance, the tax returns and the fixed assets. Read: ADMIN, ACCOUNTING, MANAGEMENT; write: ADMIN,
 // ACCOUNTING. Same rules, order of checks and Spanish messages as the backend. The rest comes with its screens.
 const READERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_MANAGEMENT'];
 const WRITERS = ['ROLE_ADMIN', 'ROLE_ACCOUNTING'];
@@ -369,6 +369,96 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     if (!parameters) return res.status(404).end();
     res.json(parameters);
   });
+
+  // ---------- Fixed assets ----------
+  // Stored: { id, description, acquiredOn, taxableBase, igv, total, currency, usefulLifeMonths, expenseId, disposedOn };
+  // the resource adds the depreciation figures as of today (Lima), like FixedAssetResourceAssembler.
+  const assets = () => db.get('fixed-assets');
+  const todayInLima = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+  const monthsBetween = (from, to) =>
+    (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7));
+  const monthlyCents = (asset) => Math.round(cents(asset.taxableBase) / asset.usefulLifeMonths);
+  /** FixedAsset.accumulatedDepreciationAt: whole calendar months since acquisition, up to the disposal and the useful life. */
+  const accumulatedCents = (asset, date) => {
+    const end = asset.disposedOn && asset.disposedOn < date ? asset.disposedOn : date;
+    const months = Math.max(0, Math.min(asset.usefulLifeMonths, monthsBetween(asset.acquiredOn, end)));
+    const base = cents(asset.taxableBase);
+    return months === asset.usefulLifeMonths ? base : Math.min(base, monthlyCents(asset) * months);
+  };
+  const assetResource = (asset) => {
+    const accumulated = accumulatedCents(asset, todayInLima());
+    return {
+      ...asset,
+      monthlyDepreciation: monthlyCents(asset) / 100,
+      accumulatedDepreciation: accumulated / 100,
+      bookValue: (cents(asset.taxableBase) - accumulated) / 100,
+    };
+  };
+
+  server.get('/api/v1/fixed-assets', requireRoles(...READERS), (req, res) => {
+    res.json(assets().value().map(assetResource));
+  });
+
+  server.get('/api/v1/fixed-assets/:id', requireRoles(...READERS), (req, res) => {
+    const asset = assets().find({ id: Number(req.params.id) }).value();
+    if (!asset) return problem(res, 404, 'Not Found', 'Activo fijo no encontrado.');
+    res.json(assetResource(asset));
+  });
+
+  // Register, like FixedAssetCommandService: @Valid (400), a currency other than PEN (422), the IGV with the rate in
+  // force on the acquisition date (18 % without parameters). It posts D 33 / H 59 or, with expenseId, H the 60 or 63
+  // that expense charged, with its project; without that line it falls back to 59. expenseId is not checked. 201.
+  server.post('/api/v1/fixed-assets', requireRoles(...WRITERS), (req, res) => {
+    const body = req.body ?? {};
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    if (!description || description.length > 300) {
+      return problem(res, 400, 'Bad Request', 'La descripción es obligatoria (hasta 300 caracteres).');
+    }
+    if (!ISO_DATE.test(body.acquiredOn ?? '')) return problem(res, 400, 'Bad Request', 'La fecha de adquisición no es válida.');
+    if (!validMoney({ amount: body.taxableBase, currency: body.currency }) || body.taxableBase <= 0) {
+      return problem(res, 400, 'Bad Request', 'La base debe ser mayor que 0, con hasta 2 decimales, y la moneda válida.');
+    }
+    if (!Number.isInteger(body.usefulLifeMonths) || body.usefulLifeMonths < 1 || body.usefulLifeMonths > 600) {
+      return problem(res, 400, 'Bad Request', 'La vida útil debe estar entre 1 y 600 meses.');
+    }
+    if (body.currency !== 'PEN') return problem(res, 422, 'Unprocessable Entity', 'Por ahora los activos fijos solo se registran en PEN.');
+    const base = cents(body.taxableBase);
+    const igv = Math.round(base * (taxParametersAt(db, body.acquiredOn)?.igv ?? 0.18));
+    const expenseId = body.expenseId == null ? null : Number(body.expenseId);
+    const asset = {
+      id: nextId('fixed-assets'),
+      description,
+      acquiredOn: body.acquiredOn,
+      taxableBase: base / 100,
+      igv: igv / 100,
+      total: (base + igv) / 100,
+      currency: 'PEN',
+      usefulLifeMonths: body.usefulLifeMonths,
+      expenseId,
+      disposedOn: null,
+    };
+    const originalCost = expenseId === null ? undefined : entries()
+      .filter((e) => e.source === 'EXPENSE' && e.sourceId === expenseId)
+      .flatMap((e) => e.lines)
+      .find((line) => line.debit > 0 && ['60', '63'].includes(line.accountCode))
+      .value();
+    assets().push(asset).write();
+    entries().push({
+      id: nextId('journal-entries'),
+      entryDate: asset.acquiredOn,
+      description: 'Fixed asset acquisition',
+      source: 'FIXED_ASSET_ACQUISITION',
+      sourceId: asset.id,
+      reversed: false,
+      reversalOfId: null,
+      lines: [
+        { accountCode: '33', debit: asset.taxableBase, credit: 0, projectId: null },
+        { accountCode: originalCost?.accountCode ?? '59', debit: 0, credit: asset.taxableBase, projectId: originalCost?.projectId ?? null },
+      ],
+    }).write();
+    res.status(201).json(assetResource(asset));
+  });
+  server.use('/api/v1/fixed-assets', requireRoles(...READERS));
 };
 
 module.exports.taxParametersAt = taxParametersAt;

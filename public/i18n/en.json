@@ -891,5 +891,39 @@
     "history": "History",
     "status": "Status",
     "emptyHistory": "There are no rates registered yet."
+  },
+  "fixedAssetStatus": {
+    "ACTIVE": "In use",
+    "DISPOSED": "Disposed"
+  },
+  "fixedAssets": {
+    "subtitle": "Company assets and their straight-line depreciation",
+    "new": "Register asset",
+    "formSubtitle": "The system calculates the IGV and the total from the base",
+    "empty": "No fixed assets registered yet.",
+    "bookValueNote": "Accumulated depreciation and book value are as of today, counting the current month even if it is not posted yet.",
+    "description": "Description",
+    "acquiredOn": "Acquisition date",
+    "acquired": "Acquired",
+    "taxableBase": "Taxable base",
+    "igv": "IGV",
+    "total": "Total",
+    "usefulLife": "Useful life (months)",
+    "usefulLifeShort": "Useful life",
+    "months": "{{months}} months",
+    "monthlyDepreciation": "Monthly depreciation",
+    "bookValue": "Book value",
+    "status": "Status",
+    "fromExpense": "Expense #{{id}}",
+    "data": "Asset details",
+    "origin": "Origin",
+    "expense": "Does it come from an expense?",
+    "noExpense": "No, the company already owned it",
+    "originExpense": "The cost moves from the expense to the asset, so it is not counted twice in results. The IGV stays as the expense recorded it.",
+    "originOwned": "It is posted against Retained earnings (59). If you bought it with an expense, choose it so the cost is not counted twice.",
+    "amountsPreview": "Preview",
+    "previewNote": "IGV with the rates in force since {{date}}. The system calculates the final amount when registering.",
+    "previewNoteStandard": "No parameters in force on that date: the standard 18 % IGV applies.",
+    "register": "Register asset"
   }
 }

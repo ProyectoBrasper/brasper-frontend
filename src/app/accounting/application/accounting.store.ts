@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AREA_ROLES } from '../../iam/domain/model/role';
 import { Period } from '../../shared/domain/model/period';
+import { RegisterFixedAssetCommand } from '../domain/model/fixed-asset.commands';
+import { FixedAsset } from '../domain/model/fixed-asset.entity';
 import { RegisterJournalEntryCommand, ReverseJournalEntryCommand } from '../domain/model/journal-entry.commands';
 import { JournalEntry } from '../domain/model/journal-entry.entity';
 import { CreateLedgerAccountCommand } from '../domain/model/ledger-account.commands';
@@ -18,8 +20,7 @@ import { AccountingApi } from '../infrastructure/accounting-api';
 
 /**
  * Accounting context state: the chart of accounts, the journal entries and the trial balance of a month, the tax
- * returns, the tax parameters read by the invoice and expense previews and their history. Fixed assets come with
- * their screen.
+ * returns, the tax parameters read by the invoice and expense previews and their history, and the fixed assets.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountingStore {
@@ -33,6 +34,7 @@ export class AccountingStore {
   private readonly journalEntriesSignal = signal<JournalEntry[]>([]);
   private readonly trialBalanceSignal = signal<TrialBalance | null>(null);
   private readonly taxReturnsSignal = signal<TaxReturn[]>([]);
+  private readonly fixedAssetsSignal = signal<FixedAsset[]>([]);
   /** Month of the trial balance shown (to drop late answers). */
   private trialBalancePeriod: Period | null = null;
   /** Month whose entries are shown (to drop late answers and reload after a reversal). */
@@ -53,6 +55,8 @@ export class AccountingStore {
   readonly trialBalance = this.trialBalanceSignal.asReadonly();
   /** Every tax return, latest first (the backend history). */
   readonly taxReturns = this.taxReturnsSignal.asReadonly();
+  /** Every fixed asset, disposed ones included. */
+  readonly fixedAssets = this.fixedAssetsSignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
   /** Admin and accounting write; management only reads (backend rule). */
@@ -165,6 +169,18 @@ export class AccountingStore {
     this.run(this.accountingApi.payTaxReturn(id, command), 'Failed to pay tax return', (taxReturn) => {
       this.upsertTaxReturn(taxReturn);
       onPaid?.();
+    });
+  }
+
+  loadFixedAssets(): void {
+    this.run(this.accountingApi.getFixedAssets(), 'Failed to load fixed assets', (assets) => this.fixedAssetsSignal.set(assets));
+  }
+
+  /** Registers an asset and goes back to the list; the backend adds the IGV and posts the acquisition entry. */
+  registerFixedAsset(command: RegisterFixedAssetCommand): void {
+    this.run(this.accountingApi.registerFixedAsset(command), 'Failed to register fixed asset', (asset) => {
+      this.fixedAssetsSignal.update((assets) => [...assets, asset]);
+      void this.router.navigate(['/accounting/fixed-assets']);
     });
   }
 

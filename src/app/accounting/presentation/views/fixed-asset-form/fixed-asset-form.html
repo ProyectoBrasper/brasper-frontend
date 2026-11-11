@@ -1,0 +1,110 @@
+<app-page-header
+  [title]="'fixedAssets.new' | translate"
+  [subtitle]="'fixedAssets.formSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.fixedAssets' | translate, link: '/accounting/fixed-assets' },
+    { label: 'common.new' | translate }
+  ]"
+/>
+
+<form class="layout" [formGroup]="assetForm" (ngSubmit)="onSubmit()" novalidate>
+  <div class="main">
+    @if (error()) {
+      <div class="page-alert" role="alert">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <section class="form-card">
+      <h2 class="form-card-title"><mat-icon>receipt_long</mat-icon>{{ 'fixedAssets.origin' | translate }}</h2>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'fixedAssets.expense' | translate }}</mat-label>
+        <mat-select formControlName="expenseId">
+          <mat-option [value]="null">{{ 'fixedAssets.noExpense' | translate }}</mat-option>
+          @for (expense of expenses(); track expense.id) {
+            <mat-option [value]="expense.id">
+              {{ expense.spentOn | date: 'dd/MM/yyyy' }} · {{ expense.description || expense.voucherNumber }} ·
+              {{ expense.taxableBase | money: expense.currency }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <p class="note">
+        <mat-icon>info</mat-icon>
+        {{ (fromExpense() ? 'fixedAssets.originExpense' : 'fixedAssets.originOwned') | translate }}
+      </p>
+    </section>
+
+    <section class="form-card">
+      <h2 class="form-card-title"><mat-icon>inventory_2</mat-icon>{{ 'fixedAssets.data' | translate }}</h2>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'fixedAssets.description' | translate }}</mat-label>
+        <input matInput formControlName="description" maxlength="300" />
+        @if (isInvalidControl(assetForm, 'description')) {
+          <mat-error>{{ errorMessageForControl(assetForm, 'description') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="fields">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'fixedAssets.acquiredOn' | translate }}</mat-label>
+          <input matInput formControlName="acquiredOn" [matDatepicker]="datePicker" placeholder="dd/mm/aaaa" />
+          <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+          <mat-datepicker #datePicker />
+          @if (isInvalidControl(assetForm, 'acquiredOn')) {
+            <mat-error>{{ errorMessageForControl(assetForm, 'acquiredOn') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'fixedAssets.taxableBase' | translate }}</mat-label>
+          <input matInput class="amount" type="number" min="0" step="0.01" formControlName="taxableBase" />
+          @if (isInvalidControl(assetForm, 'taxableBase')) {
+            <mat-error>{{ errorMessageForControl(assetForm, 'taxableBase') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'fixedAssets.usefulLife' | translate }}</mat-label>
+          <input matInput class="amount" type="number" min="1" max="600" step="1" formControlName="usefulLifeMonths" />
+          @if (isInvalidControl(assetForm, 'usefulLifeMonths')) {
+            <mat-error>{{ errorMessageForControl(assetForm, 'usefulLifeMonths') }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+      <button mat-flat-button type="submit" [disabled]="loading()">
+        <mat-icon>save</mat-icon>
+        {{ 'fixedAssets.register' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <aside class="preview form-card">
+    <h2 class="form-card-title"><mat-icon>calculate</mat-icon>{{ 'fixedAssets.amountsPreview' | translate }}</h2>
+    <dl class="amounts">
+      <dt>{{ 'fixedAssets.taxableBase' | translate }}</dt>
+      <dd>{{ taxableBase() | money }}</dd>
+      <dt>{{ 'fixedAssets.igv' | translate }}</dt>
+      <dd>{{ preview().igv | money }}</dd>
+      <dt class="strong total">{{ 'fixedAssets.total' | translate }}</dt>
+      <dd class="strong total">{{ preview().total | money }}</dd>
+      <dt>{{ 'fixedAssets.monthlyDepreciation' | translate }}</dt>
+      <dd>{{ preview().monthlyDepreciation | money }}</dd>
+    </dl>
+    <p class="note">
+      <mat-icon>info</mat-icon>
+      @if (parameters(); as rates) {
+        {{ 'fixedAssets.previewNote' | translate: { date: (rates.effectiveFrom | date: 'dd/MM/yyyy') } }}
+      } @else {
+        {{ 'fixedAssets.previewNoteStandard' | translate }}
+      }
+    </p>
+  </aside>
+</form>
