@@ -3,6 +3,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { Period } from '../../shared/domain/model/period';
 import { BalanceSheet } from '../domain/model/balance-sheet';
 import { IncomeStatement } from '../domain/model/income-statement';
+import { ProjectProfitability } from '../domain/model/project-profitability';
 import { ReportingApi } from '../infrastructure/reporting-api';
 import { ReportingStore } from './reporting.store';
 
@@ -31,7 +32,7 @@ describe('ReportingStore — financial statements', () => {
   };
 
   beforeEach(() => {
-    api = { getIncomeStatement: vi.fn(), getBalanceSheet: vi.fn() };
+    api = { getIncomeStatement: vi.fn(), getBalanceSheet: vi.fn(), getPortfolioProfitability: vi.fn() };
   });
 
   it('loads the income statement of a range', () => {
@@ -72,6 +73,18 @@ describe('ReportingStore — financial statements', () => {
     store.loadBalanceSheet(new Period(2026, 11));
     late.next(sheet('2026-10-31'));
     expect(store.balanceSheet()).toBe(current);
+  });
+
+  it('loads the projects of a month and drops a late answer', () => {
+    const late = new Subject<ProjectProfitability[]>();
+    const current: ProjectProfitability[] = [];
+    api['getPortfolioProfitability'].mockReturnValueOnce(late).mockReturnValueOnce(of(current));
+    const store = createStore();
+    store.loadPortfolioProfitability(new Period(2026, 10));
+    store.loadPortfolioProfitability(new Period(2026, 11));
+    expect(api['getPortfolioProfitability']).toHaveBeenLastCalledWith(2026, 11);
+    late.next([{} as ProjectProfitability]);
+    expect(store.profitability()).toBe(current);
   });
 
   it('shows the API error and leaves no statement', () => {

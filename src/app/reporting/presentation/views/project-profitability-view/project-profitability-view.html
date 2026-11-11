@@ -1,0 +1,160 @@
+<app-page-header
+  [title]="'nav.projectProfitability' | translate"
+  [subtitle]="'profitability.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.projectProfitability' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<mat-button-toggle-group
+  class="filter"
+  hideSingleSelectionIndicator
+  [attr.aria-label]="'profitability.filterLabel' | translate"
+  [value]="filter()"
+  (change)="filter.set($event.value)"
+>
+  @for (option of filters; track option) {
+    <mat-button-toggle [value]="option">{{ 'profitability.filter.' + option | translate }} ({{ count(option) }})</mat-button-toggle>
+  }
+</mat-button-toggle-group>
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table" [dataSource]="dataSource()" matSort multiTemplateDataRows>
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef class="icon-col"><span class="cdk-visually-hidden">{{ 'profitability.detail' | translate }}</span></th>
+        <td mat-cell *matCellDef="let project" class="icon-col">
+          <button
+            mat-icon-button
+            type="button"
+            (click)="toggle(project); $event.stopPropagation()"
+            [attr.aria-expanded]="isExpanded(project)"
+            [attr.aria-label]="'profitability.showDetail' | translate: { code: project.code }"
+          >
+            <mat-icon>{{ isExpanded(project) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="project">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'profitability.project' | translate }}</th>
+        <td mat-cell *matCellDef="let project">
+          <span class="mono code">{{ project.code }}</span>
+          <small class="client">{{ project.clientName }}</small>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'profitability.status' | translate }}</th>
+        <td mat-cell *matCellDef="let project"><app-status-chip [status]="project.status" /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="budget">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.budget' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.budget | money: project.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estimatedCost">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.estimatedCost' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.estimatedCost | money: project.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actualCost">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.actualCost' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.actualCost | money: project.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="costDeviation">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.costDeviation' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount" [class.over]="project.isOverEstimate()">
+          {{ project.isOverEstimate() ? '+' : '' }}{{ project.costDeviation | money: project.currency }}
+          @if (project.isOverEstimate()) {
+            <small class="over-tag">{{ 'profitability.overEstimate' | translate }}</small>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="grossProfit">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.grossProfit' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount strong" [class.over]="project.grossProfit < 0">{{ project.grossProfit | money: project.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="margin">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.margin' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.margin | percent: '1.1-1' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="accumulatedProgress">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.progress' | translate }}</th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.accumulatedProgress | percent: '1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="recognizedProfitInPeriod">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">
+          {{ 'profitability.recognized' | translate: { period: periodLabel() } }}
+        </th>
+        <td mat-cell *matCellDef="let project" class="amount">{{ project.recognizedProfitInPeriod | money: project.currency }}</td>
+      </ng-container>
+
+      <!-- The detail of the expanded project, in one cell across the row. -->
+      <ng-container matColumnDef="detail">
+        <td mat-cell *matCellDef="let project" [attr.colspan]="displayedColumns.length" class="detail-cell">
+          @if (isExpanded(project)) {
+            <div class="detail">
+              <div>
+                <h3>{{ project.name }}</h3>
+                <p class="detail-title">{{ 'profitability.costByCategory' | translate }}</p>
+                <dl>
+                  @for (item of categories(project); track item.category) {
+                    <dt>{{ 'costCategory.' + item.category | translate }}</dt>
+                    <dd>{{ item.amount | money: project.currency }}</dd>
+                  } @empty {
+                    <dt>{{ 'profitability.noCosts' | translate }}</dt>
+                    <dd></dd>
+                  }
+                </dl>
+              </div>
+              <div>
+                <p class="detail-title">{{ 'profitability.billing' | translate }}</p>
+                <dl>
+                  <dt>{{ 'profitability.salesCommission' | translate }}</dt>
+                  <dd>{{ project.salesCommission | money: project.currency }}</dd>
+                  <dt>{{ 'profitability.invoiced' | translate }}</dt>
+                  <dd>{{ project.invoiced | money: project.currency }}</dd>
+                  <dt>{{ 'profitability.collected' | translate }}</dt>
+                  <dd>{{ project.collected | money: project.currency }}</dd>
+                  <dt>{{ 'profitability.outstanding' | translate }}</dt>
+                  <dd>{{ project.outstanding() | money: project.currency }}</dd>
+                </dl>
+              </div>
+            </div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let project; columns: displayedColumns" class="project-row" [class.expanded]="isExpanded(project)" (click)="toggle(project)"></tr>
+      <tr mat-row *matRowDef="let project; columns: ['detail']" class="detail-row" [class.open]="isExpanded(project)"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          {{ (loading() ? 'common.loading' : 'profitability.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<p class="note">
+  <mat-icon>info</mat-icon>
+  <span>{{ 'profitability.grossProfitNote' | translate }}</span>
+</p>

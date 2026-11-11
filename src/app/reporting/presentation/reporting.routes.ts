@@ -6,6 +6,8 @@ const cashFlowView = () => import('./views/cash-flow-view/cash-flow-view').then(
 const incomeStatementView = () =>
   import('./views/income-statement-view/income-statement-view').then((m) => m.IncomeStatementView);
 const balanceSheetView = () => import('./views/balance-sheet-view/balance-sheet-view').then((m) => m.BalanceSheetView);
+const projectProfitabilityView = () =>
+  import('./views/project-profitability-view/project-profitability-view').then((m) => m.ProjectProfitabilityView);
 
 /** Only what the cash flow chart draws, so the rest of Chart.js stays out of the bundle. */
 const charts = provideCharts({
@@ -14,11 +16,12 @@ const charts = provideCharts({
 
 /**
  * Reporting context routes (docs/uml-frontend/00-app.puml), lazy loaded under `/reports` (admin, management and
- * accounting read, like the backend). The other reports come with their screens.
+ * accounting read, like the backend).
  */
 export const reportingRoutes: Routes = [
   { path: '', redirectTo: 'cash-flow', pathMatch: 'full' },
   { path: 'cash-flow', loadComponent: cashFlowView, title: 'Brasper', providers: [charts] },
   { path: 'income-statement', loadComponent: incomeStatementView, title: 'Brasper' },
   { path: 'balance-sheet', loadComponent: balanceSheetView, title: 'Brasper' },
+  { path: 'project-profitability', loadComponent: projectProfitabilityView, title: 'Brasper' },
 ];

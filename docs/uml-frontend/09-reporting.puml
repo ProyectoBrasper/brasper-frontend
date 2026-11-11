@@ -21,7 +21,6 @@ package "app" {
 
   package "projects" {
     package "application" {
-      class ProjectsStore <<Store>>
     }
   }
 
@@ -132,7 +131,9 @@ package "app" {
         +recognizedProfitInPeriod: number
         +invoiced: number
         +collected: number
-        +isOverBudget(): boolean
+        +outstanding(): number
+        +isOverEstimate(): boolean
+        +isActive(): boolean
       }
 
       class Dashboard <<ReadModel>> {
@@ -224,7 +225,6 @@ package "app" {
         +toEntityFromResource(resource: BalanceSheetResource): BalanceSheet
       }
       class ProjectProfitabilityAssembler <<Assembler>> {
-        +toEntitiesFromResources(resources: ProjectProfitabilityResource[]): ProjectProfitability[]
         +toEntityFromResource(resource: ProjectProfitabilityResource): ProjectProfitability
       }
       class DashboardAssembler <<Assembler>> {
@@ -248,7 +248,6 @@ package "app" {
       class ProjectProfitabilityApiEndpoint {
         -endpointUrl: string
         -assembler: ProjectProfitabilityAssembler
-        +getByProjectId(projectId: number): Observable<ProjectProfitability>
         +getPortfolio(year: number, month: number): Observable<ProjectProfitability[]>
       }
       class DashboardApiEndpoint {
@@ -267,7 +266,6 @@ package "app" {
         +getCashFlowProjection(from: string, weeks: number): Observable<CashFlowReport>
         +getIncomeStatement(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<IncomeStatement>
         +getBalanceSheet(year: number, month: number): Observable<BalanceSheet>
-        +getProjectProfitability(projectId: number): Observable<ProjectProfitability>
         +getPortfolioProfitability(year: number, month: number): Observable<ProjectProfitability[]>
         +getDashboard(year: number, month: number): Observable<Dashboard>
       }
@@ -309,7 +307,6 @@ package "app" {
         +incomeStatement: Signal<IncomeStatement | null>
         +balanceSheet: Signal<BalanceSheet | null>
         +profitability: Signal<ProjectProfitability[]>
-        +overBudgetProjects: Signal<ProjectProfitability[]>
         +dashboard: Signal<Dashboard | null>
         +loading: Signal<boolean>
         +error: Signal<string | null>
@@ -320,8 +317,7 @@ package "app" {
         +loadCashFlowProjection(from: string, weeks: number): void
         +loadIncomeStatement(from: Period, to: Period): void
         +loadBalanceSheet(period: Period): void
-        +loadPortfolioProfitability(): void
-        +loadProjectProfitability(projectId: number): void
+        +loadPortfolioProfitability(period: Period): void
       }
       ReportingStore --> ReportingApi : uses
       ReportingStore --> CashFlowReport : manages
@@ -404,13 +400,13 @@ package "app" {
         }
         class ProjectProfitabilityView <<Component>> {
           -reportingStore: ReportingStore
-          -projectsStore: ProjectsStore
+          +period: WritableSignal<Period>
+          +filter: WritableSignal<ProfitabilityFilter>
+          +expandedId: WritableSignal<number | null>
           +displayedColumns: string[]
           +dataSource: Signal<MatTableDataSource<ProjectProfitability>>
-          +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
-          +selected: WritableSignal<ProjectProfitability | null>
-          +onSelect(row: ProjectProfitability): void
+          +toggle(project: ProjectProfitability): void
         }
       }
 
@@ -429,7 +425,6 @@ package "app" {
       CashFlowView --> app.shared.presentation.components.PeriodSelector : contains
       BalanceSheetView --> app.shared.presentation.components.PeriodSelector : contains
       ProjectProfitabilityView --> app.shared.presentation.components.StatusChip : contains
-      ProjectProfitabilityView --> app.projects.application.ProjectsStore : reads projects
     }
   }
 }
@@ -445,6 +440,7 @@ note bottom
   Semanas proyectadas (projected = true) se pintan distinto a las reales.
   El balance llega por código de cuenta: los nombres salen del plan de cuentas (AccountingStore).
   API falsa: /reports/income-statement y /reports/balance-sheet se calculan desde los asientos;
+  /reports/projects/profitability, desde proyectos, gastos y facturas;
   /reports/cash-flow/weekly, /monthly y /projection se calculan desde lo guardado en db.json, igual que el backend
   (CashFlowCalculator). La etiqueta de cada semana la arma el front: el backend la envía en inglés.
   El estado de la columna (Real, En curso, Proyectada) sale de las fechas.

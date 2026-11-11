@@ -1037,5 +1037,36 @@
     },
     "differenceAlert": "Activos y pasivos más patrimonio difieren en {{amount}}.",
     "resultNote": "Aún no hay cierre de ejercicio: el resultado sin cerrar acumula toda la utilidad desde el inicio."
+  },
+  "profitability": {
+    "subtitle": "Costo real contra lo estimado y utilidad de cada proyecto",
+    "filterLabel": "Filtrar proyectos",
+    "filter": {
+      "ACTIVE": "Activos",
+      "OVER_ESTIMATE": "Sobre lo estimado",
+      "ALL": "Todos"
+    },
+    "detail": "Detalle",
+    "showDetail": "Ver detalle de {{code}}",
+    "project": "Proyecto",
+    "status": "Estado",
+    "budget": "Presupuesto",
+    "estimatedCost": "Costo estimado",
+    "actualCost": "Costo real",
+    "costDeviation": "Desviación",
+    "overEstimate": "Sobre lo estimado",
+    "grossProfit": "Utilidad bruta (a presupuesto)",
+    "margin": "Margen",
+    "progress": "Avance",
+    "recognized": "Reconocida en {{period}}",
+    "costByCategory": "Costo real por categoría",
+    "noCosts": "Sin costos registrados",
+    "billing": "Comisión y facturación",
+    "salesCommission": "Comisión de venta",
+    "invoiced": "Facturado",
+    "collected": "Cobrado",
+    "outstanding": "Por cobrar",
+    "empty": "No hay proyectos para este filtro.",
+    "grossProfitNote": "La utilidad bruta toma el presupuesto completo menos el costo real a la fecha y la comisión, por la participación de la empresa. En un proyecto en ejecución todavía falta costo por gastar, así que el resultado final será menor."
   }
 }

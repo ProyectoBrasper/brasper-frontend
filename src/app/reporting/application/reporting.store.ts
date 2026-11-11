@@ -4,6 +4,7 @@ import { Period } from '../../shared/domain/model/period';
 import { BalanceSheet } from '../domain/model/balance-sheet';
 import { CashFlowReport } from '../domain/model/cash-flow-report';
 import { IncomeStatement } from '../domain/model/income-statement';
+import { ProjectProfitability } from '../domain/model/project-profitability';
 import { ReportingApi } from '../infrastructure/reporting-api';
 
 /** Reporting context state: the reports the backend calculates. The rest come with their screens. */
@@ -14,10 +15,12 @@ export class ReportingStore {
   private readonly cashFlowSignal = signal<CashFlowReport | null>(null);
   private readonly incomeStatementSignal = signal<IncomeStatement | null>(null);
   private readonly balanceSheetSignal = signal<BalanceSheet | null>(null);
+  private readonly profitabilitySignal = signal<ProjectProfitability[]>([]);
   /** Number of the last report of each kind asked for (to drop late answers). */
   private cashFlowRequest = 0;
   private incomeStatementRequest = 0;
   private balanceSheetRequest = 0;
+  private profitabilityRequest = 0;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
@@ -28,6 +31,8 @@ export class ReportingStore {
   readonly incomeStatement = this.incomeStatementSignal.asReadonly();
   /** The balance sheet shown; null while it loads. */
   readonly balanceSheet = this.balanceSheetSignal.asReadonly();
+  /** Every project, whatever its status. */
+  readonly profitability = this.profitabilitySignal.asReadonly();
   readonly loading = computed(() => this.pendingSignal() > 0);
   readonly error = this.errorSignal.asReadonly();
 
@@ -64,6 +69,16 @@ export class ReportingStore {
     this.run(this.reportingApi.getBalanceSheet(period.year, period.month), 'Failed to load balance sheet', (sheet) => {
       if (this.balanceSheetRequest === number) {
         this.balanceSheetSignal.set(sheet);
+      }
+    });
+  }
+
+  /** Loads every project; the month decides the profit recognized by that month's progress. */
+  loadPortfolioProfitability(period: Period): void {
+    const number = ++this.profitabilityRequest;
+    this.run(this.reportingApi.getPortfolioProfitability(period.year, period.month), 'Failed to load project profitability', (projects) => {
+      if (this.profitabilityRequest === number) {
+        this.profitabilitySignal.set(projects);
       }
     });
   }
