@@ -7,6 +7,7 @@ export const environment = {
   platformProviderApiBaseUrl: '/api/v1',
   platformProviderSignInEndpointPath: '/auth/sign-in',
   platformProviderSignUpEndpointPath: '/auth/sign-up',
+  platformProviderPasswordEndpointPath: '/auth/password',
   platformProviderUsersEndpointPath: '/users',
   platformProviderClientsEndpointPath: '/clients',
   platformProviderProjectsEndpointPath: '/projects',

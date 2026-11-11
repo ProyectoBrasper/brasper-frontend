@@ -9,7 +9,7 @@ import { UserAssembler } from './user-assembler';
 import { UserResource, UsersResponse } from './user.resource';
 
 /**
- * Client for `/users` (administrators only): list, change role and deactivate.
+ * Client for `/users` (administrators only): list, change role, deactivate, reactivate and reset the password.
  */
 export class UsersApiEndpoint extends BaseApiEndpoint<User, UserResource, UsersResponse, UserAssembler> {
   constructor(http: HttpClient) {
@@ -32,5 +32,19 @@ export class UsersApiEndpoint extends BaseApiEndpoint<User, UserResource, UsersR
       map((resource) => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Failed to deactivate user')),
     );
+  }
+
+  reactivate(id: number): Observable<User> {
+    return this.http.post<UserResource>(`${this.endpointUrl}/${id}/reactivate`, {}).pipe(
+      map((resource) => this.assembler.toEntityFromResource(resource)),
+      catchError(this.handleError('Failed to reactivate user')),
+    );
+  }
+
+  /** `PUT /users/{id}/password`: 204 when reset; a weak password is a 422. */
+  resetPassword(id: number, newPassword: string): Observable<void> {
+    return this.http
+      .put<void>(`${this.endpointUrl}/${id}/password`, { newPassword })
+      .pipe(catchError(this.handleError('Failed to reset password')));
   }
 }

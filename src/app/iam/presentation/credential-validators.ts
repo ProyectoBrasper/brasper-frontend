@@ -7,3 +7,7 @@ export const usernameValidator: ValidatorFn = (control: AbstractControl): Valida
 /** Backend rule (`UserCommandService`): 8 to 72 characters with at least one letter and one digit. */
 export const passwordValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
   !control.value || /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(control.value) ? null : { password: true };
+
+/** The confirmation must repeat the `newPassword` control of its form. Empty is left to `required`. */
+export const matchesNewPassword: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  !control.value || control.value === control.parent?.get('newPassword')?.value ? null : { passwordMismatch: true };

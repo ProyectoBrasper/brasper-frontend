@@ -52,7 +52,9 @@
   },
   "auth": {
     "signIn": "Ingresar",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "userMenu": "Menú de {{name}}",
+    "changePassword": "Cambiar contraseña"
   },
   "notFound": {
     "title": "Página no encontrada",
@@ -74,7 +76,8 @@
     "password": "Debe tener de 8 a 72 caracteres, con al menos una letra y un número.",
     "matDatepickerParse": "Usa el formato dd/mm/aaaa.",
     "decimals": "Usa hasta 2 decimales.",
-    "notBeforeHiring": "No puede ser anterior a la fecha de ingreso."
+    "notBeforeHiring": "No puede ser anterior a la fecha de ingreso.",
+    "passwordMismatch": "Las contraseñas no coinciden."
   },
   "common": {
     "home": "Inicio",
@@ -124,7 +127,11 @@
     "changeRoleTitle": "Cambiar rol",
     "changeRoleMessage": "¿Cambiar el rol de {{name}} a {{role}}?",
     "deactivateTitle": "Desactivar usuario",
-    "deactivateMessage": "{{name}} ya no podrá ingresar a la plataforma. ¿Deseas continuar?"
+    "deactivateMessage": "{{name}} ya no podrá ingresar a la plataforma. ¿Deseas continuar?",
+    "resetPassword": "Resetear contraseña",
+    "reactivate": "Reactivar",
+    "reactivateTitle": "Reactivar usuario",
+    "reactivateMessage": "{{name}} podrá volver a ingresar a la plataforma. ¿Deseas continuar?"
   },
   "status": {
     "ACTIVE": "Activo",
@@ -1068,5 +1075,16 @@
     "outstanding": "Por cobrar",
     "empty": "No hay proyectos para este filtro.",
     "grossProfitNote": "La utilidad bruta toma el presupuesto completo menos el costo real a la fecha y la comisión, por la participación de la empresa. En un proyecto en ejecución todavía falta costo por gastar, así que el resultado final será menor."
+  },
+  "password": {
+    "changeTitle": "Cambiar contraseña",
+    "resetTitle": "Resetear contraseña de {{name}}",
+    "current": "Contraseña actual",
+    "new": "Contraseña nueva",
+    "confirmation": "Repite la contraseña nueva",
+    "resetNotice": "Compártela por un canal seguro. El sistema no obliga a cambiarla: pídele que lo haga al ingresar.",
+    "changeDone": "Tu contraseña fue actualizada.",
+    "resetDone": "La contraseña de {{name}} fue actualizada.",
+    "close": "Cerrar"
   }
 }

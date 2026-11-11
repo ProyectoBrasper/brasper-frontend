@@ -17,9 +17,11 @@ import { initialsOf } from '../../../../shared/presentation/initials';
 import { IamStore } from '../../../application/iam.store';
 import { Role, ROLES } from '../../../domain/model/role';
 import { User } from '../../../domain/model/user.entity';
+import { PasswordDialog, PasswordDialogData } from '../../components/password-dialog/password-dialog';
 
 /**
- * Administrators: users with their role and status; change role and deactivate.
+ * Administrators: users with their role and status; change role, deactivate, reactivate and reset the password. On
+ * their own row an administrator has no actions: their own password is changed from the toolbar.
  */
 @Component({
   selector: 'app-user-list',
@@ -89,6 +91,17 @@ export class UserList implements OnInit {
     this.confirm('users.deactivateTitle', 'users.deactivateMessage', { name: user?.fullName }).subscribe(() =>
       this.iamStore.deactivateUser(id),
     );
+  }
+
+  onReactivate(id: number): void {
+    const user = this.iamStore.users().find((u) => u.id === id);
+    this.confirm('users.reactivateTitle', 'users.reactivateMessage', { name: user?.fullName }).subscribe(() =>
+      this.iamStore.reactivateUser(id),
+    );
+  }
+
+  onResetPassword(user: User): void {
+    this.dialog.open<PasswordDialog, PasswordDialogData>(PasswordDialog, { data: { user }, width: '480px' });
   }
 
   private confirm(titleKey: string, messageKey: string, params: Record<string, unknown>) {
