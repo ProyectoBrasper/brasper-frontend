@@ -1,0 +1,41 @@
+.final {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 12px;
+  margin: 16px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.final .amount {
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
+.final .amount.negative {
+  color: var(--brasper-danger);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.notes mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}

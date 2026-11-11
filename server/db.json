@@ -152,10 +152,10 @@
   "scheduled-collections": [
     {"id":1,"projectId":2,"expectedAmount":60000,"currency":"PEN","year":2026,"month":10,"week":2,"status":"REALIZED","invoiceId":4,"notes":null},
     {"id":2,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":10,"week":4,"status":"RESCHEDULED","invoiceId":null,"notes":null},
-    {"id":3,"projectId":2,"expectedAmount":64608,"currency":"PEN","year":2026,"month":11,"week":2,"status":"SCHEDULED","invoiceId":null,"notes":null},
-    {"id":4,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":11,"week":3,"status":"SCHEDULED","invoiceId":null,"notes":null},
-    {"id":5,"projectId":2,"expectedAmount":118000,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null},
-    {"id":6,"projectId":4,"expectedAmount":259600,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null}
+    {"id":3,"projectId":2,"expectedAmount":64608,"currency":"PEN","year":2026,"month":11,"week":3,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":4,"projectId":1,"expectedAmount":155760,"currency":"PEN","year":2026,"month":11,"week":4,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":5,"projectId":2,"expectedAmount":118000,"currency":"PEN","year":2026,"month":11,"week":5,"status":"SCHEDULED","invoiceId":null,"notes":null},
+    {"id":6,"projectId":4,"expectedAmount":259600,"currency":"PEN","year":2026,"month":11,"week":5,"status":"SCHEDULED","invoiceId":null,"notes":null}
   ],
   "suppliers": [
     {"id":1,"businessName":"Aceros y Estructuras del Norte S.A.C.","ruc":"20601112221","type":"COMPANY","phone":"01 555 0101"},
@@ -251,11 +251,11 @@
     {"id":2,"type":"GRANTED","counterparty":"Ing. Walter Soto (contratista)","principal":30000,"currency":"PEN","interestRate":0,"disbursedOn":"2026-08-05","bankAccountId":1,"status":"PARTIALLY_PAID","installments":[{"id":9,"dueOn":"2026-09-05","principal":10000,"interest":0,"paid":true,"paidOn":"2026-09-05"},{"id":10,"dueOn":"2026-10-05","principal":10000,"interest":0,"paid":false,"paidOn":null},{"id":11,"dueOn":"2026-11-05","principal":10000,"interest":0,"paid":false,"paidOn":null}]}
   ],
   "payables": [
-    {"id":1,"concept":"Saldo factura Electro Andes (F010-8841)","type":"SUPPLIER","totalAmount":70800,"currency":"PEN","paidAmount":42300,"supplierId":2,"projectId":2,"expenseId":2,"year":2026,"month":11,"week":2},
-    {"id":2,"concept":"Honorarios técnico instalador","type":"TECHNICIAN","totalAmount":12000,"currency":"PEN","paidAmount":0,"supplierId":3,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":1},
-    {"id":3,"concept":"Gastos legales","type":"OTHER","totalAmount":2800,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":1},
-    {"id":4,"concept":"Detracción propia F001-00000053","type":"SELF_DETRACTION","totalAmount":35400,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":3},
-    {"id":5,"concept":"IGV y renta octubre 2026","type":"TAX","totalAmount":25150,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":3},
+    {"id":1,"concept":"Saldo factura Electro Andes (F010-8841)","type":"SUPPLIER","totalAmount":70800,"currency":"PEN","paidAmount":42300,"supplierId":2,"projectId":2,"expenseId":2,"year":2026,"month":11,"week":3},
+    {"id":2,"concept":"Honorarios técnico instalador","type":"TECHNICIAN","totalAmount":12000,"currency":"PEN","paidAmount":0,"supplierId":3,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":2},
+    {"id":3,"concept":"Gastos legales","type":"OTHER","totalAmount":2800,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":2},
+    {"id":4,"concept":"Detracción propia F001-00000053","type":"SELF_DETRACTION","totalAmount":35400,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":4,"expenseId":null,"year":2026,"month":11,"week":4},
+    {"id":5,"concept":"IGV y renta octubre 2026","type":"TAX","totalAmount":25150,"currency":"PEN","paidAmount":0,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":11,"week":4},
     {"id":6,"concept":"Servicio contable setiembre","type":"ACCOUNTING","totalAmount":3500,"currency":"PEN","paidAmount":3500,"supplierId":null,"projectId":null,"expenseId":null,"year":2026,"month":10,"week":1}
   ]
 }

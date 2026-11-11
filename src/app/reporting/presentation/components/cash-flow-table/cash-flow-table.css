@@ -1,0 +1,90 @@
+.table-scroll {
+  overflow-x: auto;
+}
+
+.flow {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font: var(--mat-sys-body-medium);
+}
+
+.flow th,
+.flow td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The concept stays in view while the weeks scroll. */
+.flow .concept {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 200px;
+  background: var(--mat-sys-surface);
+  font-weight: 500;
+  text-align: left;
+}
+
+.flow thead th {
+  vertical-align: top;
+  background: var(--mat-sys-surface-container);
+}
+
+.flow thead .concept {
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.week,
+.dates {
+  display: block;
+}
+
+.week {
+  font-weight: 600;
+}
+
+.dates {
+  margin-bottom: 6px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* What is scheduled reads lighter than what happened; the chip carries the meaning. */
+.flow td.projected {
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font-style: italic;
+}
+
+.flow .section .concept {
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.flow .total th,
+.flow .total td {
+  font-weight: 600;
+}
+
+.flow .balance th,
+.flow .balance td {
+  font-weight: 700;
+}
+
+.flow .closing th,
+.flow .closing td {
+  border-top: 2px solid var(--mat-sys-outline);
+  border-bottom: none;
+}
+
+.flow td.negative {
+  color: var(--brasper-danger);
+}

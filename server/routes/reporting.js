@@ -1,0 +1,188 @@
+// Reporting fake routes. Read: ADMIN, MANAGEMENT, ACCOUNTING. Like the backend, the reports are calculated from what the
+// other modules stored. The rest comes with its screens.
+const { weeksOf, weekOf } = require('./cash-flow-week');
+
+const READERS = ['ROLE_ADMIN', 'ROLE_MANAGEMENT', 'ROLE_ACCOUNTING'];
+
+const cents = (amount) => Math.round(amount * 100);
+const todayInLima = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+const previousDay = (iso) => new Date(Date.parse(`${iso}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+const add = (flows, concept, amount) => {
+  if (amount) flows[concept] = (flows[concept] ?? 0) + amount;
+};
+const sameWeek = (a, week) => a.year === week.year && a.month === week.month && a.week === week.number;
+
+/** ReportingFacadeCashFlowSource.inflowConcept and outflowConcept. */
+const INFLOWS = { INVOICE_PAYMENT: 'INVOICE_COLLECTIONS', LOAN_DISBURSEMENT: 'LOANS', PARTNER_CONTRIBUTION: 'PARTNER_CONTRIBUTIONS' };
+const OUTFLOWS = { EXPENSE: 'SUPPLIERS', PAYABLE_PAYMENT: 'PENDING_PAYABLES', LOAN_INSTALLMENT: 'LOAN_REPAYMENTS', TAX_PAYMENT: 'TAXES' };
+/** ReportingFacadeCashFlowSource.addFixedCosts. */
+const FIXED_COSTS = {
+  SALARY: 'PAYROLL',
+  OVERTIME: 'PAYROLL',
+  OFFICE_RENT: 'OFFICE_RENT',
+  CLEANING: 'CLEANING',
+  SCTR_INSURANCE: 'INSURANCE',
+  LIFE_INSURANCE: 'INSURANCE',
+};
+const fixedCostConcept = (type) => FIXED_COSTS[type] ?? 'OTHER_EXPENSES';
+
+module.exports = (server, { db, problem, requireRoles }) => {
+  const movements = () => db.get('cash-movements').value();
+
+  /** Real cash at the end of a date: today's balances minus what moved after it. */
+  const cashBalanceAt = (date) => {
+    const current = db.get('bank-accounts').value().reduce((sum, account) => sum + cents(account.currentBalance), 0);
+    return movements()
+      .filter((m) => m.occurredOn > date)
+      .reduce((sum, m) => sum - (m.direction === 'INFLOW' ? 1 : -1) * cents(m.amount), current);
+  };
+
+  const inWeek = (date, week) => date >= week.startDate && date <= week.endDate;
+
+  const actualInflows = (week) => {
+    const flows = {};
+    for (const m of movements()) {
+      if (m.direction === 'INFLOW' && inWeek(m.occurredOn, week)) add(flows, INFLOWS[m.source] ?? 'OTHER_INCOME', cents(m.amount));
+    }
+    return flows;
+  };
+
+  /** The movements of fixed costs are left out: their payments carry the cost type the movements lack. */
+  const actualOutflows = (week) => {
+    const flows = {};
+    for (const m of movements()) {
+      if (m.direction === 'OUTFLOW' && m.source !== 'FIXED_COST_PAYMENT' && inWeek(m.occurredOn, week)) {
+        add(flows, OUTFLOWS[m.source] ?? 'OTHER_EXPENSES', cents(m.amount));
+      }
+    }
+    const costs = db.get('fixed-costs').value();
+    for (const payment of db.get('fixed-cost-payments').value()) {
+      if (inWeek(payment.paidOn, week)) {
+        add(flows, fixedCostConcept(costs.find((cost) => cost.id === payment.fixedCostId)?.type), cents(payment.amount));
+      }
+    }
+    return flows;
+  };
+
+  /** Unpaid installments due in the week, by loan type, capital plus interest. */
+  const scheduledInstallments = (week, type) => {
+    let total = 0;
+    for (const loan of db.get('loans').value()) {
+      if (loan.type !== type) continue;
+      for (const installment of loan.installments) {
+        if (!installment.paid && sameWeek(weekOf(installment.dueOn), week)) {
+          total += cents(installment.principal) + cents(installment.interest);
+        }
+      }
+    }
+    return total;
+  };
+
+  const projectedInflows = (week) => {
+    const flows = {};
+    let collections = 0;
+    for (const collection of db.get('scheduled-collections').value()) {
+      const open = collection.status === 'SCHEDULED' || collection.status === 'RESCHEDULED';
+      if (open && sameWeek(collection, week)) collections += cents(collection.expectedAmount);
+    }
+    add(flows, 'INVOICE_COLLECTIONS', collections);
+    add(flows, 'OTHER_INCOME', scheduledInstallments(week, 'GRANTED'));
+    return flows;
+  };
+
+  /** A fixed cost splits its monthly amount across its expected weeks while the month is not fully paid. */
+  const scheduledFixedCosts = (flows, week) => {
+    const payments = db.get('fixed-cost-payments').value();
+    for (const cost of db.get('fixed-costs').value()) {
+      if (!cost.active || !cost.expectedWeeks.includes(week.number)) continue;
+      const paid = payments
+        .filter((p) => p.fixedCostId === cost.id && p.year === week.year && p.month === week.month)
+        .reduce((sum, p) => sum + cents(p.amount), 0);
+      if (cents(cost.monthlyAmount) > paid) {
+        add(flows, fixedCostConcept(cost.type), Math.round(cents(cost.monthlyAmount) / cost.expectedWeeks.length));
+      }
+    }
+  };
+
+  const projectedOutflows = (week) => {
+    const flows = {};
+    let payables = 0;
+    for (const payable of db.get('payables').value()) {
+      const balance = cents(payable.totalAmount) - cents(payable.paidAmount);
+      if (balance > 0 && sameWeek(payable, week)) payables += balance;
+    }
+    add(flows, 'PENDING_PAYABLES', payables);
+    add(flows, 'LOAN_REPAYMENTS', scheduledInstallments(week, 'RECEIVED'));
+    scheduledFixedCosts(flows, week);
+    return flows;
+  };
+
+  const merge = (a, b) => {
+    const total = { ...a };
+    for (const [concept, amount] of Object.entries(b)) add(total, concept, amount);
+    return total;
+  };
+
+  /** CashFlowCalculator.weekLine, in cents: a past week is real, a later one scheduled, the week of today both. */
+  const weekLine = (week, opening, today) => {
+    const projected = week.endDate >= today;
+    const current = projected && week.startDate <= today;
+    let inflows = projected ? projectedInflows(week) : actualInflows(week);
+    let outflows = projected ? projectedOutflows(week) : actualOutflows(week);
+    if (current) {
+      inflows = merge(actualInflows(week), inflows);
+      outflows = merge(actualOutflows(week), outflows);
+    }
+    const label = `${week.year}-${String(week.month).padStart(2, '0')} Week ${String(week.number).padStart(2, '0')}`;
+    return { label, startDate: week.startDate, endDate: week.endDate, projected, opening, inflows, outflows };
+  };
+
+  const total = (flows) => Object.values(flows).reduce((sum, amount) => sum + amount, 0);
+  const inSoles = (flows) =>
+    Object.fromEntries(Object.entries(flows).sort(([a], [b]) => (a < b ? -1 : 1)).map(([concept, amount]) => [concept, amount / 100]));
+  const lineResource = (line) => {
+    const net = total(line.inflows) - total(line.outflows);
+    return {
+      label: line.label,
+      startDate: line.startDate,
+      endDate: line.endDate,
+      projected: line.projected,
+      openingBalance: line.opening / 100,
+      inflows: inSoles(line.inflows),
+      outflows: inSoles(line.outflows),
+      totalInflows: total(line.inflows) / 100,
+      totalOutflows: total(line.outflows) / 100,
+      netFlow: net / 100,
+      closingBalance: (line.opening + net) / 100,
+    };
+  };
+
+  /** CashFlowCalculator.buildWeekly: the first week opens with the real cash the day before, the next with its closing. */
+  const buildWeekly = (weeks) => {
+    const today = todayInLima();
+    let opening = cashBalanceAt(previousDay(weeks[0].startDate));
+    const lines = weeks.map((week) => {
+      const line = weekLine(week, opening, today);
+      opening += total(line.inflows) - total(line.outflows);
+      return lineResource(line);
+    });
+    return {
+      from: weeks[0].startDate,
+      to: weeks.at(-1).endDate,
+      finalBalance: lines.at(-1).closingBalance,
+      hasNegativeBalance: lines.some((line) => line.closingBalance < 0),
+      lines,
+    };
+  };
+
+  // GET /reports/cash-flow/weekly?year=&month= (both required, like the backend @RequestParam int).
+  server.get('/api/v1/reports/cash-flow/weekly', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!Number.isInteger(year) || year < 1 || !Number.isInteger(month) || month < 1 || month > 12) {
+      return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    }
+    res.json(buildWeekly(weeksOf(year, month)));
+  });
+  server.use('/api/v1/reports', requireRoles(...READERS));
+};

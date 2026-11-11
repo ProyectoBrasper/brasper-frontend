@@ -17,6 +17,7 @@ const staffRoutes = () => import('./staff/presentation/staff.routes').then((m) =
 const billingRoutes = () => import('./billing/presentation/billing.routes').then((m) => m.billingRoutes);
 const accountingRoutes = () =>
   import('./accounting/presentation/accounting.routes').then((m) => m.accountingRoutes);
+const reportingRoutes = () => import('./reporting/presentation/reporting.routes').then((m) => m.reportingRoutes);
 
 /**
  * Root routes (docs/uml-frontend/00-app.puml). Each bounded context is lazy loaded with
@@ -56,5 +57,7 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: AREA_ROLES.accounting },
   },
+  // Reports are read by admin, management and accounting, like the backend.
+  { path: 'reports', loadChildren: reportingRoutes, canActivate: [roleGuard], data: { roles: AREA_ROLES.reports } },
   { path: '**', loadComponent: pageNotFound, title: 'Brasper' },
 ];

@@ -17,6 +17,7 @@ export const environment = {
   platformProviderJournalEntriesEndpointPath: '/journal-entries',
   platformProviderTaxReturnsEndpointPath: '/tax-returns',
   platformProviderFixedAssetsEndpointPath: '/fixed-assets',
+  platformProviderReportsEndpointPath: '/reports',
   platformProviderBankAccountsEndpointPath: '/bank-accounts',
   platformProviderPartnersEndpointPath: '/partners',
   platformProviderPayablesEndpointPath: '/payables',
