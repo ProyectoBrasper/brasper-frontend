@@ -14,11 +14,14 @@ const taxReturnList = () => import('./views/tax-return-list/tax-return-list').th
 const taxParametersForm = () =>
   import('./views/tax-parameters-form/tax-parameters-form').then((m) => m.TaxParametersForm);
 
+const fixedAssetList = () => import('./views/fixed-asset-list/fixed-asset-list').then((m) => m.FixedAssetList);
+const fixedAssetForm = () => import('./views/fixed-asset-form/fixed-asset-form').then((m) => m.FixedAssetForm);
+
 const canWrite = { canActivate: [roleGuard], data: { roles: AREA_ROLES.accountingWrite } };
 
 /**
  * Accounting context routes (docs/uml-frontend/00-app.puml), lazy loaded under `/accounting` (admin, accounting and
- * management read; admin and accounting write; only admin sets tax rates). Fixed assets come in the next PR.
+ * management read; admin and accounting write; only admin sets tax rates).
  */
 export const accountingRoutes: Routes = [
   { path: '', redirectTo: 'ledger-accounts', pathMatch: 'full' },
@@ -28,4 +31,6 @@ export const accountingRoutes: Routes = [
   { path: 'trial-balance', loadComponent: trialBalanceView, title: 'Brasper' },
   { path: 'tax-returns', loadComponent: taxReturnList, title: 'Brasper' },
   { path: 'tax-parameters', loadComponent: taxParametersForm, title: 'Brasper' },
+  { path: 'fixed-assets', loadComponent: fixedAssetList, title: 'Brasper' },
+  { path: 'fixed-assets/new', loadComponent: fixedAssetForm, title: 'Brasper', ...canWrite },
 ];

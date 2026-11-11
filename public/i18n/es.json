@@ -891,5 +891,39 @@
     "history": "Historial",
     "status": "Estado",
     "emptyHistory": "Aún no hay parámetros registrados."
+  },
+  "fixedAssetStatus": {
+    "ACTIVE": "Vigente",
+    "DISPOSED": "Dado de baja"
+  },
+  "fixedAssets": {
+    "subtitle": "Bienes de la empresa y su depreciación en línea recta",
+    "new": "Registrar activo",
+    "formSubtitle": "El IGV y el total los calcula el sistema a partir de la base",
+    "empty": "Aún no hay activos fijos registrados.",
+    "bookValueNote": "La depreciación acumulada y el valor en libros están al día de hoy, contando el mes en curso aunque aún no esté contabilizado.",
+    "description": "Descripción",
+    "acquiredOn": "Fecha de adquisición",
+    "acquired": "Adquisición",
+    "taxableBase": "Base imponible",
+    "igv": "IGV",
+    "total": "Total",
+    "usefulLife": "Vida útil (meses)",
+    "usefulLifeShort": "Vida útil",
+    "months": "{{months}} meses",
+    "monthlyDepreciation": "Depreciación mensual",
+    "bookValue": "Valor en libros",
+    "status": "Estado",
+    "fromExpense": "Gasto #{{id}}",
+    "data": "Datos del activo",
+    "origin": "Origen",
+    "expense": "¿Viene de un gasto?",
+    "noExpense": "No, la empresa ya lo tenía",
+    "originExpense": "El costo pasa del gasto al activo, así no se cuenta dos veces en resultados. El IGV queda como lo registró el gasto.",
+    "originOwned": "Se registra contra Resultados acumulados (59). Si lo compraste con un gasto, elígelo para no contar el costo dos veces.",
+    "amountsPreview": "Vista previa",
+    "previewNote": "IGV con las tasas vigentes desde {{date}}. El monto final lo calcula el sistema al registrar.",
+    "previewNoteStandard": "No hay parámetros vigentes en esa fecha: se usa el IGV estándar de 18 %.",
+    "register": "Registrar activo"
   }
 }

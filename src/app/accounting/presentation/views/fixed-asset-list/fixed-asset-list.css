@@ -1,0 +1,41 @@
+table {
+  min-width: 960px;
+}
+
+.name {
+  display: block;
+  font-weight: 500;
+}
+
+.origin {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.inactive td {
+  color: var(--mat-sys-outline);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
