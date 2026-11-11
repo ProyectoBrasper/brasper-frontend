@@ -4,7 +4,11 @@ const LAST_ADMIN = 'No se puede desactivar ni cambiar de rol al último administ
 
 const withoutPassword = ({ password, ...user }) => user;
 
-module.exports = (server, { db, problem, requireRoles, nextId }) => {
+const WEAK_PASSWORD = 'La contraseña debe tener de 8 a 72 caracteres, con al menos una letra y un número.';
+const isStrong = (password) => /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(password ?? '');
+const isBlank = (value) => typeof value !== 'string' || value.trim() === '';
+
+module.exports = (server, { db, problem, requireRoles, nextId, tokenUser }) => {
   const requireAdmin = requireRoles('ROLE_ADMIN');
   const users = () => db.get('users');
   const isLastActiveAdmin = (user) =>
@@ -33,6 +37,28 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     }
     const { id, fullName, role } = user;
     res.json({ id, username, fullName, role, token: `fake-jwt.${id}` });
+  });
+
+  // Own password, like UserCommandService: @NotBlank (400), locked (429), the user (404), the current password (422,
+  // counted apart from the sign-in failures), a weak new one (422). 204. The session stays.
+  const passwordAttempts = new Map();
+  server.put('/api/v1/auth/password', requireRoles(), (req, res) => {
+    const { currentPassword, newPassword } = req.body ?? {};
+    if (isBlank(currentPassword) || isBlank(newPassword)) return problem(res, 400, 'Bad Request', 'La contraseña actual y la nueva son obligatorias.');
+    const user = tokenUser(req);
+    const state = passwordAttempts.get(user.username) ?? { failures: 0, lockedUntil: 0 };
+    if (state.lockedUntil > Date.now()) {
+      return problem(res, 429, 'Too Many Requests', 'Demasiados intentos fallidos de inicio de sesión. Inténtalo de nuevo en 15 minutos.');
+    }
+    if (user.password !== currentPassword) {
+      const failures = state.failures + 1;
+      passwordAttempts.set(user.username, { failures, lockedUntil: failures >= MAX_FAILURES ? Date.now() + LOCK_MS : 0 });
+      return problem(res, 422, 'Unprocessable Entity', 'La contraseña actual no es correcta.');
+    }
+    if (!isStrong(newPassword)) return problem(res, 422, 'Unprocessable Entity', WEAK_PASSWORD);
+    passwordAttempts.delete(user.username);
+    users().find({ id: user.id }).assign({ password: newPassword }).write();
+    res.status(204).end();
   });
 
   server.post('/api/v1/auth/sign-up', requireAdmin, (req, res) => {
@@ -65,6 +91,26 @@ module.exports = (server, { db, problem, requireRoles, nextId }) => {
     if (!user) return problem(res, 404, 'Not Found', 'Usuario no encontrado.');
     if (isLastActiveAdmin(user)) return problem(res, 409, 'Conflict', LAST_ADMIN);
     users().find({ id: user.id }).assign({ active: false }).write();
+    res.json(withoutPassword(users().find({ id: user.id }).value()));
+  });
+
+  // Reset, like UserCommandService: @NotBlank (400), the user (404), a weak password (422). It clears the lock. 204.
+  server.put('/api/v1/users/:id/password', requireAdmin, (req, res) => {
+    const newPassword = req.body?.newPassword;
+    if (isBlank(newPassword)) return problem(res, 400, 'Bad Request', 'La contraseña nueva es obligatoria.');
+    const user = users().find({ id: Number(req.params.id) }).value();
+    if (!user) return problem(res, 404, 'Not Found', 'Usuario no encontrado.');
+    if (!isStrong(newPassword)) return problem(res, 422, 'Unprocessable Entity', WEAK_PASSWORD);
+    attempts.delete(user.username);
+    passwordAttempts.delete(user.username);
+    users().find({ id: user.id }).assign({ password: newPassword }).write();
+    res.status(204).end();
+  });
+
+  server.post('/api/v1/users/:id/reactivate', requireAdmin, (req, res) => {
+    const user = users().find({ id: Number(req.params.id) }).value();
+    if (!user) return problem(res, 404, 'Not Found', 'Usuario no encontrado.');
+    users().find({ id: user.id }).assign({ active: true }).write();
     res.json(withoutPassword(users().find({ id: user.id }).value()));
   });
 

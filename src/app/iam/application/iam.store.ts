@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ChangePasswordCommand } from '../domain/model/change-password.command';
 import { Role } from '../domain/model/role';
 import { SignInCommand } from '../domain/model/sign-in.command';
 import { SignUpCommand } from '../domain/model/sign-up.command';
@@ -103,6 +104,42 @@ export class IamStore {
       next: (user) => this.replaceUser(user),
       error: (error: unknown) => this.fail(error, 'Failed to deactivate user'),
     });
+  }
+
+  reactivateUser(id: number): void {
+    this.start();
+    this.iamApi.reactivateUser(id).subscribe({
+      next: (user) => this.replaceUser(user),
+      error: (error: unknown) => this.fail(error, 'Failed to reactivate user'),
+    });
+  }
+
+  /** Resets another user's password; `onDone` runs only when the backend accepts it. */
+  resetUserPassword(id: number, newPassword: string, onDone: () => void): void {
+    this.start();
+    this.iamApi.resetUserPassword(id, newPassword).subscribe({
+      next: () => {
+        this.loadingSignal.set(false);
+        onDone();
+      },
+      error: (error: unknown) => this.fail(error, 'Failed to reset password'),
+    });
+  }
+
+  /** Changes the signed-in user's own password. The session stays: the backend does not revoke tokens. */
+  changePassword(command: ChangePasswordCommand, onDone: () => void): void {
+    this.start();
+    this.iamApi.changePassword(command).subscribe({
+      next: () => {
+        this.loadingSignal.set(false);
+        onDone();
+      },
+      error: (error: unknown) => this.fail(error, 'Failed to change password'),
+    });
+  }
+
+  clearError(): void {
+    this.errorSignal.set(null);
   }
 
   /** True when the signed-in user has any of the given roles. */

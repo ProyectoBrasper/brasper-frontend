@@ -52,7 +52,9 @@
   },
   "auth": {
     "signIn": "Sign in",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "userMenu": "Menu of {{name}}",
+    "changePassword": "Change password"
   },
   "notFound": {
     "title": "Page not found",
@@ -74,7 +76,8 @@
     "password": "Must be 8 to 72 characters with at least one letter and one digit.",
     "matDatepickerParse": "Use the dd/mm/yyyy format.",
     "decimals": "Use at most 2 decimals.",
-    "notBeforeHiring": "Cannot be before the hiring date."
+    "notBeforeHiring": "Cannot be before the hiring date.",
+    "passwordMismatch": "The passwords do not match."
   },
   "common": {
     "home": "Home",
@@ -124,7 +127,11 @@
     "changeRoleTitle": "Change role",
     "changeRoleMessage": "Change the role of {{name}} to {{role}}?",
     "deactivateTitle": "Deactivate user",
-    "deactivateMessage": "{{name}} will no longer be able to sign in. Continue?"
+    "deactivateMessage": "{{name}} will no longer be able to sign in. Continue?",
+    "resetPassword": "Reset password",
+    "reactivate": "Reactivate",
+    "reactivateTitle": "Reactivate user",
+    "reactivateMessage": "{{name}} will be able to sign in again. Do you want to continue?"
   },
   "status": {
     "ACTIVE": "Active",
@@ -1068,5 +1075,16 @@
     "outstanding": "Outstanding",
     "empty": "No projects for this filter.",
     "grossProfitNote": "Gross profit takes the whole budget minus the actual cost to date and the commission, times the company share. A project in progress still has costs to spend, so the final result will be lower."
+  },
+  "password": {
+    "changeTitle": "Change password",
+    "resetTitle": "Reset password of {{name}}",
+    "current": "Current password",
+    "new": "New password",
+    "confirmation": "Repeat the new password",
+    "resetNotice": "Share it through a secure channel. The system does not force a change: ask them to change it when they sign in.",
+    "changeDone": "Your password was updated.",
+    "resetDone": "The password of {{name}} was updated.",
+    "close": "Close"
   }
 }

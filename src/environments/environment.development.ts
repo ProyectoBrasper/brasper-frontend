@@ -6,6 +6,7 @@ export const environment = {
   platformProviderApiBaseUrl: 'http://localhost:3000/api/v1',
   platformProviderSignInEndpointPath: '/auth/sign-in',
   platformProviderSignUpEndpointPath: '/auth/sign-up',
+  platformProviderPasswordEndpointPath: '/auth/password',
   platformProviderUsersEndpointPath: '/users',
   platformProviderClientsEndpointPath: '/clients',
   platformProviderProjectsEndpointPath: '/projects',

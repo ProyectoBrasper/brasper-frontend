@@ -8,6 +8,8 @@ import { SignUpCommand } from '../domain/model/sign-up.command';
 import { User } from '../domain/model/user.entity';
 import { SignInApiEndpoint } from './sign-in-api-endpoint';
 import { SignUpApiEndpoint } from './sign-up-api-endpoint';
+import { ChangePasswordCommand } from '../domain/model/change-password.command';
+import { PasswordApiEndpoint } from './password-api-endpoint';
 import { UsersApiEndpoint } from './users-api-endpoint';
 
 /**
@@ -19,6 +21,7 @@ export class IamApi extends BaseApi {
   private readonly signInEndpoint = new SignInApiEndpoint(this.http);
   private readonly signUpEndpoint = new SignUpApiEndpoint(this.http);
   private readonly usersEndpoint = new UsersApiEndpoint(this.http);
+  private readonly passwordEndpoint = new PasswordApiEndpoint(this.http);
 
   signIn(command: SignInCommand): Observable<{ user: User; token: string }> {
     return this.signInEndpoint.signIn(command);
@@ -38,5 +41,17 @@ export class IamApi extends BaseApi {
 
   deactivateUser(id: number): Observable<User> {
     return this.usersEndpoint.deactivate(id);
+  }
+
+  reactivateUser(id: number): Observable<User> {
+    return this.usersEndpoint.reactivate(id);
+  }
+
+  resetUserPassword(id: number, newPassword: string): Observable<void> {
+    return this.usersEndpoint.resetPassword(id, newPassword);
+  }
+
+  changePassword(command: ChangePasswordCommand): Observable<void> {
+    return this.passwordEndpoint.change(command);
   }
 }

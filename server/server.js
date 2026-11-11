@@ -41,7 +41,7 @@ const requireRoles =
 /** Next id for a collection. */
 const nextId = (collection) => Math.max(0, ...db.get(collection).map('id').value()) + 1;
 
-const context = { db, problem, requireRoles, nextId };
+const context = { db, problem, requireRoles, nextId, tokenUser };
 
 server.use(jsonServer.defaults());
 server.use(jsonServer.bodyParser);

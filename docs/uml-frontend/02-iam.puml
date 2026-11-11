@@ -131,11 +131,15 @@ package "app" {
         -signInEndpoint: SignInApiEndpoint
         -signUpEndpoint: SignUpApiEndpoint
         -usersEndpoint: UsersApiEndpoint
+        -passwordEndpoint: PasswordApiEndpoint
         +signIn(command: SignInCommand): Observable<{user: User, token: string}>
         +signUp(command: SignUpCommand): Observable<User>
         +getUsers(): Observable<User[]>
         +changeUserRole(id: number, role: Role): Observable<User>
         +deactivateUser(id: number): Observable<User>
+        +reactivateUser(id: number): Observable<User>
+        +resetUserPassword(id: number, newPassword: string): Observable<void>
+        +changePassword(command: ChangePasswordCommand): Observable<void>
       }
 
       class authenticationInterceptor <<Interceptor>> {
@@ -182,6 +186,10 @@ package "app" {
         +loadUsers(): void
         +changeUserRole(id: number, role: Role): void
         +deactivateUser(id: number): void
+        +reactivateUser(id: number): void
+        +resetUserPassword(id: number, newPassword: string, onDone: () => void): void
+        +changePassword(command: ChangePasswordCommand, onDone: () => void): void
+        +clearError(): void
         +hasAnyRole(...roles: Role[]): boolean
       }
 
@@ -211,7 +219,16 @@ package "app" {
           +role: Signal<Role | null>
           +initials: Signal<string>
           +onSignIn(): void
+          +onChangePassword(): void
           +onSignOut(): void
+        }
+        class PasswordDialog <<Component>> {
+          -iamStore: IamStore
+          +user: User | null
+          +passwordForm: FormGroup
+          +done: WritableSignal<boolean>
+          +onSave(): void
+          +onClose(): void
         }
       }
 
@@ -240,10 +257,16 @@ package "app" {
           +sort: Signal<MatSort>
           +onChangeRole(id: number, role: Role): void
           +onDeactivate(id: number): void
+          +onReactivate(id: number): void
+          +onResetPassword(user: User): void
         }
       }
 
       AuthenticationSection --> IamStore : uses
+      AuthenticationSection --> PasswordDialog : opens
+      UserList --> PasswordDialog : opens
+      PasswordDialog --> IamStore : uses
+      PasswordDialog --|> app.shared.presentation.BaseForm : extends
       SignInForm --|> app.shared.presentation.BaseForm : extends
       SignUpForm --|> app.shared.presentation.BaseForm : extends
       SignInForm --> IamStore : uses
@@ -258,7 +281,9 @@ package "app" {
 note bottom
   Contrato del backend (Spring, develop): POST /auth/sign-in -> SignInResource
   (AuthenticatedUserResource); POST /auth/sign-up solo ADMIN, responde UserResource;
-  /users solo ADMIN: GET, PUT /{id}/role {role}, POST /{id}/deactivate.
+  /users solo ADMIN: GET, PUT /{id}/role {role}, POST /{id}/deactivate, POST /{id}/reactivate,
+  PUT /{id}/password {newPassword} (204). PUT /auth/password {currentPassword, newPassword} para el
+  propio usuario (204; 422 actual incorrecta o débil; 429 tras 5 fallos).
   Errores RFC 9457 (ProblemDetail): 401 credenciales, 403 inactivo, 409 usuario repetido
   o último admin, 422 contraseña débil (8-72, letra y número). Username [a-z0-9._-]{3,50}.
   JWT: IamStore guarda token y usuario (signals + sessionStorage); authenticationInterceptor
