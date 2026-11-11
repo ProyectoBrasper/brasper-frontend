@@ -53,6 +53,7 @@ require('./routes/expenses')(server, context);
 require('./routes/staff')(server, context);
 require('./routes/accounting')(server, context);
 require('./routes/treasury')(server, context);
+require('./routes/reporting')(server, context);
 
 // Every other /api/v1 route needs a session.
 server.use('/api/v1', requireRoles());

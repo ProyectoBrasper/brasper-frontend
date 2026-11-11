@@ -26,4 +26,19 @@ const weekOf = (isoDate) => {
   return { year, month, week };
 };
 
-module.exports = { weekExists, weekOf };
+const iso = (year, month, day) => `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+/** The weeks of a month, in order: { year, month, number, startDate, endDate }. */
+const weeksOf = (year, month) => {
+  const sunday = firstSunday(year, month);
+  const last = daysIn(year, month);
+  const weeks = [];
+  for (let number = 1; weekExists(year, month, number); number += 1) {
+    const start = number === 1 ? 1 : sunday + 1 + 7 * (number - 2);
+    const end = number === 1 ? sunday : Math.min(start + 6, last);
+    weeks.push({ year, month, number, startDate: iso(year, month, start), endDate: iso(year, month, end) });
+  }
+  return weeks;
+};
+
+module.exports = { weekExists, weekOf, weeksOf };

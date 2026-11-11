@@ -954,5 +954,41 @@
   },
   "fixedAssetDepreciation": {
     "POSTED": "Already posted"
+  },
+  "cashFlowState": {
+    "ACTUAL": "Actual",
+    "CURRENT": "In progress",
+    "PROJECTED": "Projected"
+  },
+  "cashFlowConcept": {
+    "INVOICE_COLLECTIONS": "Invoice collections",
+    "LOANS": "Loans",
+    "PARTNER_CONTRIBUTIONS": "Partner contributions",
+    "OTHER_INCOME": "Other income",
+    "SUPPLIERS": "Supplier payments",
+    "PAYROLL": "Payroll",
+    "OFFICE_RENT": "Office rent",
+    "CLEANING": "Office cleaning",
+    "INSURANCE": "Insurance",
+    "TAXES": "Taxes",
+    "PENDING_PAYABLES": "Pending payables",
+    "LOAN_REPAYMENTS": "Loan repayments",
+    "OTHER_EXPENSES": "Other expenses"
+  },
+  "cashFlow": {
+    "subtitle": "What came in and went out of cash and what is scheduled, week by week",
+    "concept": "Concept",
+    "week": "Week {{number}}",
+    "openingBalance": "Opening balance",
+    "inflows": "(+) Cash inflows",
+    "totalInflows": "Total inflows",
+    "outflows": "(−) Cash outflows",
+    "totalOutflows": "Total outflows",
+    "netFlow": "Net flow",
+    "closingBalance": "Closing balance",
+    "finalBalance": "Closing balance of the period",
+    "negativeAlert": "A week ends with a negative balance.",
+    "overdueNote": "Overdue unpaid items from past weeks do not appear: a finished week only shows what actually happened.",
+    "futureNote": "This period has not started: the opening balance is today's cash and does not add what is scheduled before it."
   }
 }

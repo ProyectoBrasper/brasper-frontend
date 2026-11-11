@@ -37,11 +37,10 @@ package "app" {
         +from: string
         +to: string
         +lines: CashFlowLine[]
-        +finalBalance(): number
-        +hasNegativeBalance(): boolean
+        +finalBalance: number
+        +hasNegativeBalance: boolean
       }
       class CashFlowLine <<ValueObject>> {
-        +label: string
         +startDate: string
         +endDate: string
         +projected: boolean
@@ -322,7 +321,7 @@ package "app" {
         +error: Signal<string | null>
         +setPeriod(period: Period): void
         +loadDashboard(): void
-        +loadWeeklyCashFlow(): void
+        +loadWeeklyCashFlow(period: Period): void
         +loadMonthlyCashFlow(from: Period, to: Period): void
         +loadCashFlowProjection(from: string, weeks: number): void
         +loadIncomeStatement(from: Period, to: Period): void
@@ -353,7 +352,9 @@ package "app" {
         }
         class CashFlowTable <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
-          +concepts: Signal<string[]>
+          +inflowConcepts: Signal<string[]>
+          +outflowConcepts: Signal<string[]>
+          +columns: Signal<CashFlowColumn[]>
         }
         class StatementSection <<Component>> {
           +title: InputSignal<string>
@@ -375,7 +376,9 @@ package "app" {
         class CashFlowView <<Component>> {
           -reportingStore: ReportingStore
           +mode: WritableSignal<'weekly' | 'monthly' | 'projection'>
-          +cashFlow: Signal<CashFlowReport | null>
+          +report: Signal<CashFlowReport | null>
+          +period: WritableSignal<Period>
+          +startsInFuture: Signal<boolean>
           +onModeChange(mode: string): void
           +onPeriodChange(period: Period): void
         }
@@ -432,7 +435,8 @@ note bottom
   negativo, facturas vencidas, proyectos sobre presupuesto).
   CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos.
   Semanas proyectadas (projected = true) se pintan distinto a las reales.
-  json-server: /reports/cash-flow?year=&month=, /reports/income-statement, /reports/balance-sheet,
-  /reports/project-profitability, /reports/dashboard -> datos YA calculados en db.json.
+  API falsa: /reports/cash-flow/weekly se calcula desde lo guardado en db.json, igual que el backend
+  (CashFlowCalculator). La etiqueta de cada semana la arma el front: el backend la envía en inglés.
+  El estado de la columna (Real, En curso, Proyectada) sale de las fechas.
 end note
 @enduml

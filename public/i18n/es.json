@@ -954,5 +954,41 @@
   },
   "fixedAssetDepreciation": {
     "POSTED": "Ya contabilizada"
+  },
+  "cashFlowState": {
+    "ACTUAL": "Real",
+    "CURRENT": "En curso",
+    "PROJECTED": "Proyectada"
+  },
+  "cashFlowConcept": {
+    "INVOICE_COLLECTIONS": "Cobranza de facturas",
+    "LOANS": "Préstamos",
+    "PARTNER_CONTRIBUTIONS": "Aportes de socios",
+    "OTHER_INCOME": "Otros ingresos",
+    "SUPPLIERS": "Pago a proveedores",
+    "PAYROLL": "Planilla",
+    "OFFICE_RENT": "Alquiler de local",
+    "CLEANING": "Limpieza de local",
+    "INSURANCE": "Seguros",
+    "TAXES": "Impuestos y tributos",
+    "PENDING_PAYABLES": "Pagos pendientes",
+    "LOAN_REPAYMENTS": "Devolución de préstamos",
+    "OTHER_EXPENSES": "Otros egresos"
+  },
+  "cashFlow": {
+    "subtitle": "Lo que entró y salió de caja y lo programado, semana a semana",
+    "concept": "Concepto",
+    "week": "Semana {{number}}",
+    "openingBalance": "Saldo inicial",
+    "inflows": "(+) Ingresos de efectivo",
+    "totalInflows": "Total ingresos",
+    "outflows": "(−) Egresos de efectivo",
+    "totalOutflows": "Total egresos",
+    "netFlow": "Flujo neto",
+    "closingBalance": "Saldo final",
+    "finalBalance": "Saldo final del período",
+    "negativeAlert": "Alguna semana termina con saldo negativo.",
+    "overdueNote": "Lo vencido y sin pagar de semanas pasadas no aparece: una semana ya terminada solo muestra lo que realmente ocurrió.",
+    "futureNote": "Este período aún no empieza: el saldo inicial es la caja de hoy y no acumula lo programado antes."
   }
 }

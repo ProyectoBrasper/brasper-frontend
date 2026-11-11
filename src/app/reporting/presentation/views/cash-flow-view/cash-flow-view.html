@@ -1,0 +1,45 @@
+@let current = report();
+<app-page-header
+  [title]="'nav.cashFlow' | translate"
+  [subtitle]="'cashFlow.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.cashFlow' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (current?.hasNegativeBalance) {
+  <div class="page-alert" role="alert">
+    <mat-icon>warning</mat-icon>
+    <span>{{ 'cashFlow.negativeAlert' | translate }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (current) {
+    <app-cash-flow-table [lines]="current.lines" />
+  }
+</section>
+
+@if (current) {
+  <p class="final">
+    {{ 'cashFlow.finalBalance' | translate }}
+    <strong class="amount" [class.negative]="current.finalBalance < 0">{{ current.finalBalance | money }}</strong>
+  </p>
+}
+
+<ul class="notes">
+  <li><mat-icon>info</mat-icon>{{ 'cashFlow.overdueNote' | translate }}</li>
+  @if (startsInFuture()) {
+    <li><mat-icon>info</mat-icon>{{ 'cashFlow.futureNote' | translate }}</li>
+  }
+</ul>
