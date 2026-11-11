@@ -41,4 +41,10 @@ const weeksOf = (year, month) => {
   return weeks;
 };
 
-module.exports = { weekExists, weekOf, weeksOf };
+/** The week object of the week that contains a `yyyy-MM-dd` date. */
+const weekContaining = (isoDate) => {
+  const { year, month, week } = weekOf(isoDate);
+  return weeksOf(year, month).find((candidate) => candidate.number === week);
+};
+
+module.exports = { weekExists, weekOf, weeksOf, weekContaining };

@@ -1,6 +1,10 @@
 import { CashFlowWeek } from '../../../shared/domain/model/cash-flow-week';
 import { fromIsoDate, toIsoDate } from '../../../shared/domain/model/iso-date';
+import { Period } from '../../../shared/domain/model/period';
 import { CashFlowAmounts, CashFlowLine } from '../model/cash-flow-report';
+
+/** What each line of a report covers. */
+export type CashFlowGranularity = 'week' | 'month';
 
 /** What a line holds: what happened, a mix (the week of today), or what is scheduled. */
 export type CashFlowLineState = 'ACTUAL' | 'CURRENT' | 'PROJECTED';
@@ -38,4 +42,30 @@ export function conceptsWithMovement(
   amounts: (line: CashFlowLine) => CashFlowAmounts,
 ): string[] {
   return order.filter((concept) => lines.some((line) => (amounts(line)[concept] ?? 0) !== 0));
+}
+
+/** The month of a monthly line, as the selector names it: `Noviembre 2026`. */
+export function monthTitle(line: CashFlowLine, locale = 'es-PE'): string {
+  return new Period(Number(line.startDate.slice(0, 4)), Number(line.startDate.slice(5, 7))).label(locale);
+}
+
+/** The backend accepts at most this many months. */
+export const MAX_CASH_FLOW_MONTHS = 24;
+
+const monthIndex = (period: Period) => period.year * 12 + period.month - 1;
+const periodAt = (index: number) => new Period(Math.floor(index / 12), (index % 12) + 1);
+
+/**
+ * Keeps a range valid after moving one end (the backend answers 400 otherwise): the other end follows when they would
+ * cross or span more than the maximum.
+ */
+export function clampMonthRange(from: Period, to: Period, moved: 'from' | 'to'): { from: Period; to: Period } {
+  const span = monthIndex(to) - monthIndex(from);
+  if (span >= 0 && span < MAX_CASH_FLOW_MONTHS) {
+    return { from, to };
+  }
+  if (moved === 'from') {
+    return { from, to: span < 0 ? from : periodAt(monthIndex(from) + MAX_CASH_FLOW_MONTHS - 1) };
+  }
+  return { from: span < 0 ? to : periodAt(monthIndex(to) - MAX_CASH_FLOW_MONTHS + 1), to };
 }

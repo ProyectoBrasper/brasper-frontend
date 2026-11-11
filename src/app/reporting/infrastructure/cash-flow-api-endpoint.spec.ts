@@ -51,6 +51,24 @@ describe('CashFlowApiEndpoint', () => {
     expect(line.outflows).toEqual({ TAXES: 50 });
   });
 
+  const empty = { from: '2026-01-01', to: '2026-12-31', finalBalance: 0, hasNegativeBalance: false, lines: [] };
+
+  it('asks for a range of months', async () => {
+    const result = firstValueFrom(endpoint.getMonthly(2026, 1, 2026, 12));
+    const request = http.expectOne((r) => r.url.endsWith('/reports/cash-flow/monthly'));
+    expect(['fromYear', 'fromMonth', 'toYear', 'toMonth'].map((key) => request.request.params.get(key))).toEqual(['2026', '1', '2026', '12']);
+    request.flush(empty);
+    expect((await result).to).toBe('2026-12-31');
+  });
+
+  it('asks for the weeks ahead from a date', async () => {
+    const result = firstValueFrom(endpoint.getProjection('2026-11-10', 13));
+    const request = http.expectOne((r) => r.url.endsWith('/reports/cash-flow/projection'));
+    expect([request.request.params.get('from'), request.request.params.get('weeks')]).toEqual(['2026-11-10', '13']);
+    request.flush(empty);
+    await result;
+  });
+
   it('surfaces the backend detail on an error', async () => {
     const result = firstValueFrom(endpoint.getWeekly(2026, 13));
     http.expectOne(url).flush({ detail: 'Mes no válido.' }, { status: 400, statusText: 'Bad Request' });

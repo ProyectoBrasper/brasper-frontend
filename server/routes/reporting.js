@@ -1,12 +1,15 @@
 // Reporting fake routes. Read: ADMIN, MANAGEMENT, ACCOUNTING. Like the backend, the reports are calculated from what the
 // other modules stored. The rest comes with its screens.
-const { weeksOf, weekOf } = require('./cash-flow-week');
+const { weeksOf, weekOf, weekContaining } = require('./cash-flow-week');
 
 const READERS = ['ROLE_ADMIN', 'ROLE_MANAGEMENT', 'ROLE_ACCOUNTING'];
 
 const cents = (amount) => Math.round(amount * 100);
 const todayInLima = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
-const previousDay = (iso) => new Date(Date.parse(`${iso}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+const shiftDay = (iso, days) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
+const previousDay = (iso) => shiftDay(iso, -1);
+const MAX_WEEKS = 52;
+const MAX_MONTHS = 24;
 const add = (flows, concept, amount) => {
   if (amount) flows[concept] = (flows[concept] ?? 0) + amount;
 };
@@ -183,6 +186,64 @@ module.exports = (server, { db, problem, requireRoles }) => {
       return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
     }
     res.json(buildWeekly(weeksOf(year, month)));
+  });
+
+  /** CashFlowCalculator.buildMonthly: one line per month, each the sum of its weeks, chained like the weeks. */
+  const buildMonthly = (periods) => {
+    const today = todayInLima();
+    const first = weeksOf(periods[0].year, periods[0].month)[0];
+    let opening = cashBalanceAt(previousDay(first.startDate));
+    const lines = periods.map(({ year, month }) => {
+      const weeks = weeksOf(year, month);
+      let inflows = {};
+      let outflows = {};
+      let projected = false;
+      for (const week of weeks) {
+        const line = weekLine(week, 0, today);
+        inflows = merge(inflows, line.inflows);
+        outflows = merge(outflows, line.outflows);
+        projected = projected || line.projected;
+      }
+      const label = `${year}-${String(month).padStart(2, '0')}`;
+      const line = { label, startDate: weeks[0].startDate, endDate: weeks.at(-1).endDate, projected, opening, inflows, outflows };
+      opening += total(inflows) - total(outflows);
+      return lineResource(line);
+    });
+    return {
+      from: lines[0].startDate,
+      to: lines.at(-1).endDate,
+      finalBalance: lines.at(-1).closingBalance,
+      hasNegativeBalance: lines.some((line) => line.closingBalance < 0),
+      lines,
+    };
+  };
+
+  // GET /reports/cash-flow/monthly: both ends included, at most 24 months, the first not after the last (400).
+  server.get('/api/v1/reports/cash-flow/monthly', requireRoles(...READERS), (req, res) => {
+    const [fromYear, fromMonth, toYear, toMonth] = ['fromYear', 'fromMonth', 'toYear', 'toMonth'].map((key) => Number(req.query[key]));
+    const validMonth = (year, month) => Number.isInteger(year) && year >= 1 && Number.isInteger(month) && month >= 1 && month <= 12;
+    if (!validMonth(fromYear, fromMonth) || !validMonth(toYear, toMonth)) {
+      return problem(res, 400, 'Bad Request', 'fromYear, fromMonth, toYear y toMonth son obligatorios (mes de 1 a 12).');
+    }
+    const first = fromYear * 12 + fromMonth - 1;
+    const last = toYear * 12 + toMonth - 1;
+    if (last - first + 1 > MAX_MONTHS) return problem(res, 400, 'Bad Request', `At most ${MAX_MONTHS} months can be requested`);
+    if (first > last) return problem(res, 400, 'Bad Request', 'The first month must not come after the last month');
+    const periods = Array.from({ length: last - first + 1 }, (_, i) => ({ year: Math.floor((first + i) / 12), month: ((first + i) % 12) + 1 }));
+    res.json(buildMonthly(periods));
+  });
+
+  // GET /reports/cash-flow/projection?from=&weeks=: the weeks consecutive weeks starting with the one that contains from.
+  server.get('/api/v1/reports/cash-flow/projection', requireRoles(...READERS), (req, res) => {
+    const from = req.query.from ?? '';
+    const weeks = Number(req.query.weeks);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !Number.isInteger(weeks)) {
+      return problem(res, 400, 'Bad Request', 'from (yyyy-MM-dd) y weeks son obligatorios.');
+    }
+    if (weeks < 1 || weeks > MAX_WEEKS) return problem(res, 400, 'Bad Request', `Weeks must be between 1 and ${MAX_WEEKS}`);
+    const list = [weekContaining(from)];
+    while (list.length < weeks) list.push(weekContaining(shiftDay(list.at(-1).endDate, 1)));
+    res.json(buildWeekly(list));
   });
   server.use('/api/v1/reports', requireRoles(...READERS));
 };

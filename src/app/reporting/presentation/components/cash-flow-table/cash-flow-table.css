@@ -50,6 +50,10 @@
   font-weight: 600;
 }
 
+.week.month {
+  margin-bottom: 6px;
+}
+
 .dates {
   margin-bottom: 6px;
   font: var(--mat-sys-body-small);

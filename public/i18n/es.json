@@ -976,7 +976,7 @@
     "OTHER_EXPENSES": "Otros egresos"
   },
   "cashFlow": {
-    "subtitle": "Lo que entró y salió de caja y lo programado, semana a semana",
+    "subtitle": "Lo que entró y salió de caja y lo programado, por período",
     "concept": "Concepto",
     "week": "Semana {{number}}",
     "openingBalance": "Saldo inicial",
@@ -987,8 +987,21 @@
     "netFlow": "Flujo neto",
     "closingBalance": "Saldo final",
     "finalBalance": "Saldo final del período",
-    "negativeAlert": "Alguna semana termina con saldo negativo.",
+    "negativeAlert": "Algún período termina con saldo negativo.",
     "overdueNote": "Lo vencido y sin pagar de semanas pasadas no aparece: una semana ya terminada solo muestra lo que realmente ocurrió.",
-    "futureNote": "Este período aún no empieza: el saldo inicial es la caja de hoy y no acumula lo programado antes."
+    "futureNote": "Este período aún no empieza: el saldo inicial es la caja de hoy y no acumula lo programado antes.",
+    "modeLabel": "Vista del flujo",
+    "mode": {
+      "WEEKLY": "Semanal",
+      "MONTHLY": "Mensual",
+      "PROJECTION": "Proyección"
+    },
+    "from": "Desde",
+    "to": "Hasta",
+    "weeksLabel": "Semanas a proyectar",
+    "weeks": "{{number}} semanas",
+    "flowsPanel": "Ingresos y egresos",
+    "balancePanel": "Saldo final",
+    "projectedKey": "Tono claro y línea punteada: en curso o proyectado"
   }
 }
