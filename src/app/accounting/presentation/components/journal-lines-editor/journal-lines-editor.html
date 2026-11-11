@@ -17,7 +17,7 @@
     <tbody>
       @for (line of lines().controls; track line; let i = $index) {
         <tr [formGroup]="line" [class.side-error]="lineHasSideError(line)">
-          <td>
+          <td [attr.data-label]="'journalEntries.account' | translate">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="accountCode" [attr.aria-label]="('journalEntries.account' | translate) + ' ' + (i + 1)">
                 @for (account of accounts(); track account.code) {
@@ -29,7 +29,7 @@
               }
             </mat-form-field>
           </td>
-          <td>
+          <td [attr.data-label]="'journalEntries.project' | translate">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="projectId" [attr.aria-label]="('journalEntries.project' | translate) + ' ' + (i + 1)">
                 <mat-option [value]="null">{{ 'journalEntries.noProject' | translate }}</mat-option>
@@ -39,7 +39,7 @@
               </mat-select>
             </mat-form-field>
           </td>
-          <td>
+          <td [attr.data-label]="'journalEntries.debitPen' | translate">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input
                 matInput
@@ -53,7 +53,7 @@
               />
             </mat-form-field>
           </td>
-          <td>
+          <td [attr.data-label]="'journalEntries.creditPen' | translate">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input
                 matInput

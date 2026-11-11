@@ -138,3 +138,67 @@ input.amount {
   color: var(--brasper-danger);
   font: var(--mat-sys-body-medium);
 }
+
+/* On a phone each line is a card: account and project across, then debit, credit and remove side by side. */
+@media (max-width: 599px) {
+  /* The cards fit the width; the outlined fields only reach a few pixels past it. */
+  .table-scroll {
+    overflow-x: visible;
+  }
+
+  .lines {
+    display: block;
+    min-width: 0;
+  }
+
+  .lines thead {
+    display: none;
+  }
+
+  .lines tbody {
+    display: block;
+  }
+
+  .lines tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 0 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  .lines td {
+    display: block;
+    width: auto;
+    padding: 4px 0;
+  }
+
+  .lines td:nth-child(1),
+  .lines td:nth-child(2),
+  .lines tr.line-error td {
+    grid-column: 1 / -1;
+  }
+
+  .lines tr.line-error {
+    display: block;
+    padding: 0;
+  }
+
+  .lines td.remove {
+    align-self: end;
+  }
+
+  .lines td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font: var(--mat-sys-label-small);
+    font-weight: 700;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .totals {
+    justify-content: flex-start;
+    gap: 8px 16px;
+  }
+}

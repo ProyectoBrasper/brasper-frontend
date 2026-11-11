@@ -36,27 +36,27 @@
     <mat-progress-bar mode="indeterminate" />
   }
   <div class="table-scroll">
-    <table mat-table class="data-table" [dataSource]="dataSource()" matSort>
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort>
       <ng-container matColumnDef="code">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.code' | translate }}</th>
-        <td mat-cell *matCellDef="let account" class="mono code">{{ account.code }}</td>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.code' | translate" *matCellDef="let account" class="mono code">{{ account.code }}</td>
       </ng-container>
 
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.name' | translate }}</th>
-        <td mat-cell *matCellDef="let account" class="name">{{ account.name }}</td>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.name' | translate" *matCellDef="let account" class="name">{{ account.name }}</td>
       </ng-container>
 
       <ng-container matColumnDef="type">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.type' | translate }}</th>
-        <td mat-cell *matCellDef="let account">
+        <td mat-cell [attr.data-label]="'ledgerAccounts.type' | translate" *matCellDef="let account">
           <span [class]="'tag ' + account.type.toLowerCase()">{{ 'ledgerAccountType.' + account.type | translate }}</span>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="active">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.status' | translate }}</th>
-        <td mat-cell *matCellDef="let account">
+        <td mat-cell [attr.data-label]="'ledgerAccounts.status' | translate" *matCellDef="let account">
           <app-status-chip [status]="account.active ? 'ACTIVE' : 'INACTIVE'" labelPrefix="ledgerAccountStatus." />
         </td>
       </ng-container>

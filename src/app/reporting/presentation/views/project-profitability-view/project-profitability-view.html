@@ -30,7 +30,7 @@
     <mat-progress-bar mode="indeterminate" />
   }
   <div class="table-scroll">
-    <table mat-table class="data-table" [dataSource]="dataSource()" matSort multiTemplateDataRows>
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort multiTemplateDataRows>
       <ng-container matColumnDef="expand">
         <th mat-header-cell *matHeaderCellDef class="icon-col"><span class="cdk-visually-hidden">{{ 'profitability.detail' | translate }}</span></th>
         <td mat-cell *matCellDef="let project" class="icon-col">
@@ -48,7 +48,7 @@
 
       <ng-container matColumnDef="project">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'profitability.project' | translate }}</th>
-        <td mat-cell *matCellDef="let project">
+        <td mat-cell [attr.data-label]="'profitability.project' | translate" *matCellDef="let project">
           <span class="mono code">{{ project.code }}</span>
           <small class="client">{{ project.clientName }}</small>
         </td>
@@ -56,27 +56,27 @@
 
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'profitability.status' | translate }}</th>
-        <td mat-cell *matCellDef="let project"><app-status-chip [status]="project.status" /></td>
+        <td mat-cell [attr.data-label]="'profitability.status' | translate" *matCellDef="let project"><app-status-chip [status]="project.status" /></td>
       </ng-container>
 
       <ng-container matColumnDef="budget">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.budget' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.budget | money: project.currency }}</td>
+        <td mat-cell [attr.data-label]="'profitability.budget' | translate" *matCellDef="let project" class="amount">{{ project.budget | money: project.currency }}</td>
       </ng-container>
 
       <ng-container matColumnDef="estimatedCost">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.estimatedCost' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.estimatedCost | money: project.currency }}</td>
+        <td mat-cell [attr.data-label]="'profitability.estimatedCost' | translate" *matCellDef="let project" class="amount">{{ project.estimatedCost | money: project.currency }}</td>
       </ng-container>
 
       <ng-container matColumnDef="actualCost">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.actualCost' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.actualCost | money: project.currency }}</td>
+        <td mat-cell [attr.data-label]="'profitability.actualCost' | translate" *matCellDef="let project" class="amount">{{ project.actualCost | money: project.currency }}</td>
       </ng-container>
 
       <ng-container matColumnDef="costDeviation">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.costDeviation' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount" [class.over]="project.isOverEstimate()">
+        <td mat-cell [attr.data-label]="'profitability.costDeviation' | translate" *matCellDef="let project" class="amount" [class.over]="project.isOverEstimate()">
           {{ project.isOverEstimate() ? '+' : '' }}{{ project.costDeviation | money: project.currency }}
           @if (project.isOverEstimate()) {
             <small class="over-tag">{{ 'profitability.overEstimate' | translate }}</small>
@@ -86,24 +86,24 @@
 
       <ng-container matColumnDef="grossProfit">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.grossProfit' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount strong" [class.over]="project.grossProfit < 0">{{ project.grossProfit | money: project.currency }}</td>
+        <td mat-cell [attr.data-label]="'profitability.grossProfit' | translate" *matCellDef="let project" class="amount strong" [class.over]="project.grossProfit < 0">{{ project.grossProfit | money: project.currency }}</td>
       </ng-container>
 
       <ng-container matColumnDef="margin">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.margin' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.margin | percent: '1.1-1' }}</td>
+        <td mat-cell [attr.data-label]="'profitability.margin' | translate" *matCellDef="let project" class="amount">{{ project.margin | percent: '1.1-1' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="accumulatedProgress">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">{{ 'profitability.progress' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.accumulatedProgress | percent: '1.0-0' }}</td>
+        <td mat-cell [attr.data-label]="'profitability.progress' | translate" *matCellDef="let project" class="amount">{{ project.accumulatedProgress | percent: '1.0-0' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="recognizedProfitInPeriod">
         <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="amount">
           {{ 'profitability.recognized' | translate: { period: periodLabel() } }}
         </th>
-        <td mat-cell *matCellDef="let project" class="amount">{{ project.recognizedProfitInPeriod | money: project.currency }}</td>
+        <td mat-cell [attr.data-label]="'profitability.recognized' | translate" *matCellDef="let project" class="amount">{{ project.recognizedProfitInPeriod | money: project.currency }}</td>
       </ng-container>
 
       <!-- The detail of the expanded project, in one cell across the row. -->

@@ -137,30 +137,30 @@
 <section class="table-card">
   <h2 class="table-title">{{ 'taxParameters.history' | translate }}</h2>
   <div class="table-scroll">
-    <table mat-table class="data-table" [dataSource]="history()">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="history()">
       <ng-container matColumnDef="effectiveFrom">
         <th mat-header-cell *matHeaderCellDef>{{ 'taxParameters.effectiveFrom' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="strong">{{ row.effectiveFrom | date: 'dd/MM/yyyy' }}</td>
+        <td mat-cell [attr.data-label]="'taxParameters.effectiveFrom' | translate" *matCellDef="let row" class="strong">{{ row.effectiveFrom | date: 'dd/MM/yyyy' }}</td>
       </ng-container>
       <ng-container matColumnDef="igv">
         <th mat-header-cell *matHeaderCellDef class="amount">{{ 'taxParameters.igv' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="amount">{{ percent(row.igv) | number: '1.0-2' }} %</td>
+        <td mat-cell [attr.data-label]="'taxParameters.igv' | translate" *matCellDef="let row" class="amount">{{ percent(row.igv) | number: '1.0-2' }} %</td>
       </ng-container>
       <ng-container matColumnDef="detraction">
         <th mat-header-cell *matHeaderCellDef class="amount">{{ 'taxParameters.detraction' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="amount">{{ percent(row.detraction) | number: '1.0-2' }} %</td>
+        <td mat-cell [attr.data-label]="'taxParameters.detraction' | translate" *matCellDef="let row" class="amount">{{ percent(row.detraction) | number: '1.0-2' }} %</td>
       </ng-container>
       <ng-container matColumnDef="retention">
         <th mat-header-cell *matHeaderCellDef class="amount">{{ 'taxParameters.retention' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="amount">{{ percent(row.retention) | number: '1.0-2' }} %</td>
+        <td mat-cell [attr.data-label]="'taxParameters.retention' | translate" *matCellDef="let row" class="amount">{{ percent(row.retention) | number: '1.0-2' }} %</td>
       </ng-container>
       <ng-container matColumnDef="incomeTaxPrepayment">
         <th mat-header-cell *matHeaderCellDef class="amount">{{ 'taxParameters.incomeTaxPrepayment' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="amount">{{ percent(row.incomeTaxPrepayment) | number: '1.0-2' }} %</td>
+        <td mat-cell [attr.data-label]="'taxParameters.incomeTaxPrepayment' | translate" *matCellDef="let row" class="amount">{{ percent(row.incomeTaxPrepayment) | number: '1.0-2' }} %</td>
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>{{ 'taxParameters.status' | translate }}</th>
-        <td mat-cell *matCellDef="let row"><app-status-chip [status]="status(row)" labelPrefix="taxParameterStatus." /></td>
+        <td mat-cell [attr.data-label]="'taxParameters.status' | translate" *matCellDef="let row"><app-status-chip [status]="status(row)" labelPrefix="taxParameterStatus." /></td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="columns"></tr>
