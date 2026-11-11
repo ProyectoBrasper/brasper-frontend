@@ -443,8 +443,8 @@ package "app" {
       }
       class FixedAssetsApiEndpoint {
         +register(command: RegisterFixedAssetCommand): Observable<FixedAsset>
-        +dispose(id: number): Observable<FixedAsset>
-        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+        +dispose(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]>
       }
 
       class AccountingApi {
@@ -468,8 +468,8 @@ package "app" {
         +setTaxParameters(command: SetTaxParametersCommand): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
         +registerFixedAsset(command: RegisterFixedAssetCommand): Observable<FixedAsset>
-        +disposeFixedAsset(id: number): Observable<FixedAsset>
-        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+        +disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]>
       }
 
       LedgerAccountResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -546,8 +546,8 @@ package "app" {
         +canSetTaxParameters: Signal<boolean>
         +loadFixedAssets(): void
         +registerFixedAsset(command: RegisterFixedAssetCommand): void
-        +disposeFixedAsset(id: number): void
-        +runMonthlyDepreciation(year: number, month: number): void
+        +disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): void
+        +runMonthlyDepreciation(period: Period): void
       }
       AccountingStore --> AccountingApi : uses
       AccountingStore --> LedgerAccount : manages
@@ -677,12 +677,25 @@ package "app" {
           +onSubmit(): void
           +onReset(): void
         }
+        class DisposeFixedAssetDialog <<Component>> {
+          +asset: FixedAsset
+          +disposalForm: FormGroup
+          +preview: Signal<DisposalPreview | null>
+          +backdated: Signal<boolean>
+          +onSave(): void
+          +onCancel(): void
+        }
         class FixedAssetList <<Component>> {
           -accountingStore: AccountingStore
           -dialog: MatDialog
           +displayedColumns: string[]
+          +period: WritableSignal<Period>
+          +filter: WritableSignal<string>
           +dataSource: Signal<MatTableDataSource<FixedAsset>>
-          +onDispose(id: number): void
+          +charge: Signal<MonthlyCharge>
+          +posted: Signal<boolean>
+          +canPost: Signal<boolean>
+          +onDispose(asset: FixedAsset): void
           +onRunDepreciation(): void
         }
         class FixedAssetForm <<Component>> {
@@ -721,6 +734,8 @@ package "app" {
       TaxReturnList --> app.shared.presentation.components.PeriodSelector : contains
       JournalEntryList --> ReverseJournalEntryDialog : opens
       FixedAssetList --> app.shared.presentation.components.ConfirmDialog : opens
+      FixedAssetList --> DisposeFixedAssetDialog : opens
+      FixedAssetList --> app.shared.presentation.components.PeriodSelector : contains
       TaxReturnList --> app.shared.presentation.components.StatusChip : contains
     }
   }

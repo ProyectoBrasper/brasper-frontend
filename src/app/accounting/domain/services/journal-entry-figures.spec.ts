@@ -18,6 +18,10 @@ describe('journal entry figures', () => {
     expect(entryLabel(invoice)).toEqual({ key: 'entrySource.INVOICE_ISSUED', params: {}, ref: 8 });
   });
 
+  it('shows no document for a depreciation: its source id only encodes the month', () => {
+    expect(entryLabel(entryFixture({ source: EntrySource.DEPRECIATION, sourceId: 2026070 }))?.ref).toBeNull();
+  });
+
   it('points a reversal at the entry it reverses', () => {
     const reversal = octoberEntries().find((entry) => entry.isReversal())!;
     expect(entryLabel(reversal)).toEqual({ key: 'journalEntries.reversalOf', params: { id: 205 }, ref: null });

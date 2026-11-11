@@ -57,6 +57,52 @@ describe('FixedAssetsApiEndpoint', () => {
     expect((await result).expenseId).toBe(3);
   });
 
+  it('runs the depreciation of a month and reads the entries', async () => {
+    const result = firstValueFrom(endpoint.runMonthlyDepreciation(2026, 11));
+    const request = http.expectOne((r) => r.url.endsWith('/fixed-assets/depreciation'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ year: 2026, month: 11 });
+    const money = (amount: number) => ({ amount, currency: 'PEN' });
+    request.flush([
+      {
+        id: 213,
+        entryDate: '2026-11-30',
+        year: 2026,
+        month: 11,
+        description: 'Depreciation 2026-11',
+        source: 'DEPRECIATION',
+        sourceId: 2026110,
+        reversed: false,
+        reversalOfId: null,
+        totalDebit: money(1000),
+        totalCredit: money(1000),
+        lines: [
+          { accountCode: '68', debit: money(1000), credit: money(0), projectId: null },
+          { accountCode: '39', debit: money(0), credit: money(1000), projectId: null },
+        ],
+      },
+    ]);
+    const [entry] = await result;
+    expect([entry.id, entry.totalDebit]).toEqual([213, 1000]);
+  });
+
+  it('surfaces the backend detail when the month was already posted', async () => {
+    const result = firstValueFrom(endpoint.runMonthlyDepreciation(2026, 10));
+    http
+      .expectOne((r) => r.url.endsWith('/fixed-assets/depreciation'))
+      .flush({ detail: 'La depreciación de este período ya fue contabilizada.' }, { status: 409, statusText: 'Conflict' });
+    await expect(result).rejects.toThrow('La depreciación de este período ya fue contabilizada.');
+  });
+
+  it('disposes of an asset on a date', async () => {
+    const result = firstValueFrom(endpoint.dispose(1, { disposedOn: '2026-11-10' }));
+    const request = http.expectOne((r) => r.url.endsWith('/fixed-assets/1/disposal'));
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ disposedOn: '2026-11-10' });
+    request.flush({ ...resource, disposedOn: '2026-11-10' });
+    expect((await result).disposed).toBe(true);
+  });
+
   it('surfaces the backend detail when the currency is not supported', async () => {
     const result = firstValueFrom(endpoint.register({ ...command, currency: 'USD' }));
     http

@@ -11,3 +11,8 @@ export interface RegisterFixedAssetCommand {
   usefulLifeMonths: number;
   expenseId: number | null;
 }
+
+/** Writes an asset off on a date (backend `DisposeFixedAssetResource`); it cannot go before the acquisition (400). */
+export interface DisposeFixedAssetCommand {
+  disposedOn: string;
+}

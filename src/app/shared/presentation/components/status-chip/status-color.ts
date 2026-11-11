@@ -5,6 +5,7 @@ const COLORS: Record<string, StatusColor> = {
   ACTIVE: 'success',
   COLLECTED: 'success',
   PAID: 'success',
+  POSTED: 'success',
   REALIZED: 'success',
   COMPLETED: 'success',
   PENDING: 'warning',
