@@ -1108,5 +1108,13 @@
       "costOverrun": "El proyecto {{code}} superó su costo estimado.",
       "unknown": "Alerta: {{code}}"
     }
+  },
+  "paginator": {
+    "itemsPerPage": "Por página:",
+    "nextPage": "Página siguiente",
+    "previousPage": "Página anterior",
+    "firstPage": "Primera página",
+    "lastPage": "Última página",
+    "of": "de"
   }
 }
