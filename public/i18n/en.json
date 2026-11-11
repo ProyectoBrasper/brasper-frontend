@@ -976,7 +976,7 @@
     "OTHER_EXPENSES": "Other expenses"
   },
   "cashFlow": {
-    "subtitle": "What came in and went out of cash and what is scheduled, week by week",
+    "subtitle": "What came in and went out of cash and what is scheduled, by period",
     "concept": "Concept",
     "week": "Week {{number}}",
     "openingBalance": "Opening balance",
@@ -987,8 +987,21 @@
     "netFlow": "Net flow",
     "closingBalance": "Closing balance",
     "finalBalance": "Closing balance of the period",
-    "negativeAlert": "A week ends with a negative balance.",
+    "negativeAlert": "A period ends with a negative balance.",
     "overdueNote": "Overdue unpaid items from past weeks do not appear: a finished week only shows what actually happened.",
-    "futureNote": "This period has not started: the opening balance is today's cash and does not add what is scheduled before it."
+    "futureNote": "This period has not started: the opening balance is today's cash and does not add what is scheduled before it.",
+    "modeLabel": "Cash flow view",
+    "mode": {
+      "WEEKLY": "Weekly",
+      "MONTHLY": "Monthly",
+      "PROJECTION": "Projection"
+    },
+    "from": "From",
+    "to": "To",
+    "weeksLabel": "Weeks to project",
+    "weeks": "{{number}} weeks",
+    "flowsPanel": "Inflows and outflows",
+    "balancePanel": "Closing balance",
+    "projectedKey": "Light shade and dashed line: in progress or projected"
   }
 }

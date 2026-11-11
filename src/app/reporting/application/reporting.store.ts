@@ -10,8 +10,8 @@ export class ReportingStore {
   private readonly reportingApi = inject(ReportingApi);
 
   private readonly cashFlowSignal = signal<CashFlowReport | null>(null);
-  /** Month of the cash flow shown (to drop late answers). */
-  private cashFlowPeriod: Period | null = null;
+  /** Number of the last cash flow asked for (to drop late answers). */
+  private cashFlowRequest = 0;
   /** Requests in flight; several can run at once. */
   private readonly pendingSignal = signal(0);
   private readonly errorSignal = signal<string | null>(null);
@@ -23,18 +23,32 @@ export class ReportingStore {
 
   /** Loads the weeks of one month. */
   loadWeeklyCashFlow(period: Period): void {
-    this.cashFlowPeriod = period;
-    this.cashFlowSignal.set(null);
-    this.run(this.reportingApi.getWeeklyCashFlow(period.year, period.month), 'Failed to load cash flow', (report) => {
-      // Ignore a late answer for a month the user already left.
-      if (this.cashFlowPeriod === period) {
-        this.cashFlowSignal.set(report);
-      }
-    });
+    this.loadCashFlow(this.reportingApi.getWeeklyCashFlow(period.year, period.month));
+  }
+
+  /** Loads one line per month of a range, both ends included. */
+  loadMonthlyCashFlow(from: Period, to: Period): void {
+    this.loadCashFlow(this.reportingApi.getMonthlyCashFlow(from.year, from.month, to.year, to.month));
+  }
+
+  /** Loads `weeks` weeks starting with the one that contains `from` (`yyyy-MM-dd`). */
+  loadCashFlowProjection(from: string, weeks: number): void {
+    this.loadCashFlow(this.reportingApi.getCashFlowProjection(from, weeks));
   }
 
   clearError(): void {
     this.errorSignal.set(null);
+  }
+
+  private loadCashFlow(request: Observable<CashFlowReport>): void {
+    const number = ++this.cashFlowRequest;
+    this.cashFlowSignal.set(null);
+    this.run(request, 'Failed to load cash flow', (report) => {
+      // Ignore a late answer for a view the user already left.
+      if (this.cashFlowRequest === number) {
+        this.cashFlowSignal.set(report);
+      }
+    });
   }
 
   private run<T>(request: Observable<T>, fallback: string, onSuccess: (value: T) => void): void {

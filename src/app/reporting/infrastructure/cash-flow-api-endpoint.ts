@@ -62,7 +62,7 @@ export class CashFlowReportAssembler {
 
 /**
  * Client for `/reports/cash-flow` (admin, management and accounting). It is a read model, not a collection, so it does
- * not extend `BaseApiEndpoint`. The monthly view and the projection come with their screens.
+ * not extend `BaseApiEndpoint`.
  */
 export class CashFlowApiEndpoint extends ErrorHandlingEnabledBaseType {
   private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderReportsEndpointPath}/cash-flow`;
@@ -74,8 +74,22 @@ export class CashFlowApiEndpoint extends ErrorHandlingEnabledBaseType {
 
   /** `GET /reports/cash-flow/weekly`: the weeks of one month. */
   getWeekly(year: number, month: number): Observable<CashFlowReport> {
-    const params = new HttpParams().set('year', year).set('month', month);
-    return this.http.get<CashFlowReportResource>(`${this.endpointUrl}/weekly`, { params }).pipe(
+    return this.get('weekly', new HttpParams().set('year', year).set('month', month));
+  }
+
+  /** `GET /reports/cash-flow/monthly`: one line per month, both ends included, at most 24 months. */
+  getMonthly(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<CashFlowReport> {
+    const params = new HttpParams().set('fromYear', fromYear).set('fromMonth', fromMonth).set('toYear', toYear).set('toMonth', toMonth);
+    return this.get('monthly', params);
+  }
+
+  /** `GET /reports/cash-flow/projection`: `weeks` weeks (1 to 52) starting with the one that contains `from`. */
+  getProjection(from: string, weeks: number): Observable<CashFlowReport> {
+    return this.get('projection', new HttpParams().set('from', from).set('weeks', weeks));
+  }
+
+  private get(path: string, params: HttpParams): Observable<CashFlowReport> {
+    return this.http.get<CashFlowReportResource>(`${this.endpointUrl}/${path}`, { params }).pipe(
       map((resource) => this.assembler.toEntityFromResource(resource)),
       catchError(this.handleError('Failed to fetch cash flow')),
     );

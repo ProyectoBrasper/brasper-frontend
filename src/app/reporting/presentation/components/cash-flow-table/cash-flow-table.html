@@ -5,8 +5,12 @@
         <th scope="col" class="concept">{{ 'cashFlow.concept' | translate }}</th>
         @for (column of columns(); track column.line.startDate) {
           <th scope="col" [class]="column.state.toLowerCase()">
-            <span class="week">{{ 'cashFlow.week' | translate: { number: column.number } }}</span>
-            <span class="dates">{{ column.dates }}</span>
+            @if (granularity() === 'month') {
+              <span class="week month">{{ month(column.line) }}</span>
+            } @else {
+              <span class="week">{{ 'cashFlow.week' | translate: { number: column.number } }}</span>
+              <span class="dates">{{ column.dates }}</span>
+            }
             <app-status-chip [status]="column.state" labelPrefix="cashFlowState." />
           </th>
         }

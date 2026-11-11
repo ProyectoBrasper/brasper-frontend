@@ -14,4 +14,12 @@ export class ReportingApi extends BaseApi {
   getWeeklyCashFlow(year: number, month: number): Observable<CashFlowReport> {
     return this.cashFlowEndpoint.getWeekly(year, month);
   }
+
+  getMonthlyCashFlow(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<CashFlowReport> {
+    return this.cashFlowEndpoint.getMonthly(fromYear, fromMonth, toYear, toMonth);
+  }
+
+  getCashFlowProjection(from: string, weeks: number): Observable<CashFlowReport> {
+    return this.cashFlowEndpoint.getProjection(from, weeks);
+  }
 }

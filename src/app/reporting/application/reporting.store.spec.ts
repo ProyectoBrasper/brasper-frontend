@@ -16,7 +16,7 @@ describe('ReportingStore — cash flow', () => {
   };
 
   beforeEach(() => {
-    api = { getWeeklyCashFlow: vi.fn() };
+    api = { getWeeklyCashFlow: vi.fn(), getMonthlyCashFlow: vi.fn(), getCashFlowProjection: vi.fn() };
   });
 
   it('loads the weeks of the month', () => {
@@ -38,6 +38,36 @@ describe('ReportingStore — cash flow', () => {
     store.loadWeeklyCashFlow(new Period(2026, 11));
     late.next(report('2026-10-01'));
     expect(store.cashFlow()).toBe(november);
+  });
+
+  it('loads a range of months', () => {
+    const year = report('2026-01-01');
+    api['getMonthlyCashFlow'].mockReturnValue(of(year));
+    const store = createStore();
+    store.loadMonthlyCashFlow(new Period(2026, 1), new Period(2026, 12));
+    expect(api['getMonthlyCashFlow']).toHaveBeenCalledWith(2026, 1, 2026, 12);
+    expect(store.cashFlow()).toBe(year);
+  });
+
+  it('loads the weeks ahead', () => {
+    const ahead = report('2026-11-09');
+    api['getCashFlowProjection'].mockReturnValue(of(ahead));
+    const store = createStore();
+    store.loadCashFlowProjection('2026-11-10', 13);
+    expect(api['getCashFlowProjection']).toHaveBeenCalledWith('2026-11-10', 13);
+    expect(store.cashFlow()).toBe(ahead);
+  });
+
+  it('drops a late weekly answer once the user changed to another mode', () => {
+    const late = new Subject<CashFlowReport>();
+    const year = report('2026-01-01');
+    api['getWeeklyCashFlow'].mockReturnValue(late);
+    api['getMonthlyCashFlow'].mockReturnValue(of(year));
+    const store = createStore();
+    store.loadWeeklyCashFlow(new Period(2026, 10));
+    store.loadMonthlyCashFlow(new Period(2026, 1), new Period(2026, 12));
+    late.next(report('2026-10-01'));
+    expect(store.cashFlow()).toBe(year);
   });
 
   it('shows the API error and leaves no report', () => {

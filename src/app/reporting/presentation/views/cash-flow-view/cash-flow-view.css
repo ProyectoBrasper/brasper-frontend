@@ -1,3 +1,29 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+
+.range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.chart-card {
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
 .final {
   display: flex;
   justify-content: flex-end;

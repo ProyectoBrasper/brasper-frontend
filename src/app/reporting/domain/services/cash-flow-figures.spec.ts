@@ -1,5 +1,6 @@
+import { Period } from '../../../shared/domain/model/period';
 import { CASH_FLOW_OUTFLOWS, CashFlowAmounts, CashFlowLine } from '../model/cash-flow-report';
-import { conceptsWithMovement, lineDates, lineState, weekNumber } from './cash-flow-figures';
+import { clampMonthRange, conceptsWithMovement, lineDates, lineState, monthTitle, weekNumber } from './cash-flow-figures';
 
 const line = (startDate: string, endDate: string, outflows: CashFlowAmounts = {}) =>
   new CashFlowLine({
@@ -50,5 +51,32 @@ describe('conceptsWithMovement', () => {
   it('keeps the order of the Excel and leaves out concepts without movement', () => {
     const lines = [line('2026-11-02', '2026-11-08', { TAXES: 100 }), line('2026-11-09', '2026-11-15', { SUPPLIERS: 50, CLEANING: 0 })];
     expect(conceptsWithMovement(CASH_FLOW_OUTFLOWS, lines, (l) => l.outflows)).toEqual(['SUPPLIERS', 'TAXES']);
+  });
+});
+
+describe('monthTitle', () => {
+  it('names the month of the line', () => {
+    expect(monthTitle(line('2026-11-01', '2026-11-30'))).toBe('Noviembre 2026');
+  });
+});
+
+describe('clampMonthRange (backend: from not after to, at most 24 months)', () => {
+  const months = (range: { from: Period; to: Period }) => [range.from.year, range.from.month, range.to.year, range.to.month];
+
+  it('keeps a valid range, 24 months included', () => {
+    expect(months(clampMonthRange(new Period(2026, 1), new Period(2027, 12), 'from'))).toEqual([2026, 1, 2027, 12]);
+  });
+
+  it('moves the end along when the start passes it', () => {
+    expect(months(clampMonthRange(new Period(2027, 2), new Period(2027, 1), 'from'))).toEqual([2027, 2, 2027, 2]);
+  });
+
+  it('moves the start along when the end goes before it', () => {
+    expect(months(clampMonthRange(new Period(2026, 6), new Period(2026, 5), 'to'))).toEqual([2026, 5, 2026, 5]);
+  });
+
+  it('shortens the other end when the range would span more than 24 months', () => {
+    expect(months(clampMonthRange(new Period(2025, 12), new Period(2027, 12), 'from'))).toEqual([2025, 12, 2027, 11]);
+    expect(months(clampMonthRange(new Period(2026, 1), new Period(2028, 1), 'to'))).toEqual([2026, 2, 2028, 1]);
   });
 });

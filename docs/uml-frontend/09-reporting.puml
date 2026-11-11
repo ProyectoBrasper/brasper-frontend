@@ -347,11 +347,15 @@ package "app" {
         }
         class CashFlowChart <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
-          +chartData: Signal<ChartData>
-          +chartOptions: ChartOptions
+          +granularity: InputSignal<CashFlowGranularity>
+          +flowsData: Signal<ChartData>
+          +balanceData: Signal<ChartData>
+          +flowsOptions: ChartOptions
+          +balanceOptions: ChartOptions
         }
         class CashFlowTable <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
+          +granularity: InputSignal<CashFlowGranularity>
           +inflowConcepts: Signal<string[]>
           +outflowConcepts: Signal<string[]>
           +columns: Signal<CashFlowColumn[]>
@@ -375,12 +379,15 @@ package "app" {
         }
         class CashFlowView <<Component>> {
           -reportingStore: ReportingStore
-          +mode: WritableSignal<'weekly' | 'monthly' | 'projection'>
+          +mode: WritableSignal<'WEEKLY' | 'MONTHLY' | 'PROJECTION'>
           +report: Signal<CashFlowReport | null>
           +period: WritableSignal<Period>
+          +from: WritableSignal<Period>
+          +to: WritableSignal<Period>
+          +weeks: WritableSignal<number>
           +startsInFuture: Signal<boolean>
-          +onModeChange(mode: string): void
-          +onPeriodChange(period: Period): void
+          +onFromChange(from: Period): void
+          +onToChange(to: Period): void
         }
         class IncomeStatementView <<Component>> {
           -reportingStore: ReportingStore
@@ -433,9 +440,10 @@ note bottom
   DashboardView es la pantalla de inicio ('/dashboard'): KPIs (caja, por cobrar, por pagar,
   utilidad acumulada, saldo proyectado), gráfico del flujo semanal y alertas (saldo proyectado
   negativo, facturas vencidas, proyectos sobre presupuesto).
-  CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos.
+  CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos. Son dos paneles alineados
+  (ingresos y egresos; saldo final), cada uno con su eje: un doble eje sugeriría relaciones que no existen.
   Semanas proyectadas (projected = true) se pintan distinto a las reales.
-  API falsa: /reports/cash-flow/weekly se calcula desde lo guardado en db.json, igual que el backend
+  API falsa: /reports/cash-flow/weekly, /monthly y /projection se calculan desde lo guardado en db.json, igual que el backend
   (CashFlowCalculator). La etiqueta de cada semana la arma el front: el backend la envía en inglés.
   El estado de la columna (Real, En curso, Proyectada) sale de las fechas.
 end note
