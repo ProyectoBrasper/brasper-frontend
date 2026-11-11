@@ -60,22 +60,22 @@
     <mat-progress-bar mode="indeterminate" />
   }
   <div class="table-scroll">
-    <table mat-table class="data-table" [dataSource]="rows()">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="rows()">
       <ng-container matColumnDef="contributedOn">
         <th mat-header-cell *matHeaderCellDef>{{ 'partners.date' | translate }}</th>
-        <td mat-cell *matCellDef="let row">{{ row.contribution.contributedOn | date: 'dd/MM/yyyy' }}</td>
+        <td mat-cell [attr.data-label]="'partners.date' | translate" *matCellDef="let row">{{ row.contribution.contributedOn | date: 'dd/MM/yyyy' }}</td>
         <td mat-footer-cell *matFooterCellDef class="totals-label">{{ 'partners.periodTotal' | translate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="partner">
         <th mat-header-cell *matHeaderCellDef>{{ 'partners.partner' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="strong">{{ row.partner.fullName }}</td>
+        <td mat-cell [attr.data-label]="'partners.partner' | translate" *matCellDef="let row" class="strong">{{ row.partner.fullName }}</td>
         <td mat-footer-cell *matFooterCellDef></td>
       </ng-container>
 
       <ng-container matColumnDef="concept">
         <th mat-header-cell *matHeaderCellDef>{{ 'partners.concept' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="concept" [title]="row.contribution.concept ?? ''">
+        <td mat-cell [attr.data-label]="'partners.concept' | translate" *matCellDef="let row" class="concept" [title]="row.contribution.concept ?? ''">
           {{ row.contribution.concept || '—' }}
         </td>
         <td mat-footer-cell *matFooterCellDef></td>
@@ -83,13 +83,13 @@
 
       <ng-container matColumnDef="amount">
         <th mat-header-cell *matHeaderCellDef class="amount">{{ 'partners.amount' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="amount">{{ row.contribution.amount | money: row.contribution.currency }}</td>
+        <td mat-cell [attr.data-label]="'partners.amount' | translate" *matCellDef="let row" class="amount">{{ row.contribution.amount | money: row.contribution.currency }}</td>
         <td mat-footer-cell *matFooterCellDef class="amount">{{ periodTotal() | money }}</td>
       </ng-container>
 
       <ng-container matColumnDef="reimbursable">
         <th mat-header-cell *matHeaderCellDef class="center">{{ 'partners.reimbursable' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="center">
+        <td mat-cell [attr.data-label]="'partners.reimbursable' | translate" *matCellDef="let row" class="center">
           <span class="flag" [class.yes]="row.contribution.reimbursable">
             <mat-icon aria-hidden="true">{{ row.contribution.reimbursable ? 'check' : 'remove' }}</mat-icon>
             {{ (row.contribution.reimbursable ? 'common.yes' : 'common.no') | translate }}
@@ -100,7 +100,7 @@
 
       <ng-container matColumnDef="destination">
         <th mat-header-cell *matHeaderCellDef>{{ 'partners.destination' | translate }}</th>
-        <td mat-cell *matCellDef="let row" class="muted">{{ destination(row.contribution) }}</td>
+        <td mat-cell [attr.data-label]="'partners.destination' | translate" *matCellDef="let row" class="muted">{{ destination(row.contribution) }}</td>
         <td mat-footer-cell *matFooterCellDef></td>
       </ng-container>
 

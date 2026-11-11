@@ -222,30 +222,31 @@ th.amount {
 
 /*
  * Lists read as cards on a phone (`<table class="data-table cards-on-mobile">`): the header row hides and each row
- * stacks its cells as "label: value", the label coming from `data-label`. Wide component tables set widths for the
- * desktop, hence the !important here.
+ * stacks its cells as "label: value", the label coming from `data-label`. Child selectors keep a table nested in an
+ * expanded row (the lines of a journal entry) as it is. Wide component tables set widths for the desktop, hence the
+ * !important here.
  */
 @media (max-width: 599px) {
   table.cards-on-mobile,
-  table.cards-on-mobile tbody {
+  table.cards-on-mobile > tbody,
+  table.cards-on-mobile > tfoot {
     display: block;
     min-width: 0 !important;
     width: 100%;
   }
 
-  table.cards-on-mobile thead,
-  table.cards-on-mobile tr.mat-mdc-header-row {
+  table.cards-on-mobile > thead {
     display: none;
   }
 
-  table.cards-on-mobile tr.mat-mdc-row {
+  table.cards-on-mobile > tbody > tr.mat-mdc-row {
     display: block;
     height: auto;
     padding: 8px 0;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
   }
 
-  table.cards-on-mobile td.mat-mdc-cell {
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -262,7 +263,7 @@ th.amount {
     overflow-wrap: anywhere;
   }
 
-  table.cards-on-mobile td.mat-mdc-cell[data-label]::before {
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell[data-label]::before {
     content: attr(data-label);
     flex: none;
     max-width: 45%;
@@ -272,27 +273,37 @@ th.amount {
     text-align: left;
   }
 
-  table.cards-on-mobile td.mat-mdc-cell:first-child {
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell:first-child {
     font-weight: 600;
   }
 
-  table.cards-on-mobile td.actions-col {
+  table.cards-on-mobile > tbody > tr > td.actions-col {
     justify-content: flex-end;
   }
 
-  table.cards-on-mobile tr.empty-row td {
+  table.cards-on-mobile > tbody > tr.empty-row > td {
     display: block;
     text-align: center;
   }
 
+  /* An expandable row's detail shows only when open, as the bottom of its card. */
+  table.cards-on-mobile > tbody > tr.detail-row:not(.open) {
+    display: none;
+  }
+
+  table.cards-on-mobile > tbody > tr.detail-row > td.mat-mdc-cell {
+    display: block;
+    padding: 0;
+    text-align: left;
+  }
+
   /* A totals row reads as one more card, without its empty cells. */
-  table.cards-on-mobile tfoot,
-  table.cards-on-mobile tr.mat-mdc-footer-row {
+  table.cards-on-mobile > tfoot > tr.mat-mdc-footer-row {
     display: block;
     height: auto;
   }
 
-  table.cards-on-mobile td.mat-mdc-footer-cell {
+  table.cards-on-mobile > tfoot > tr > td.mat-mdc-footer-cell {
     display: flex;
     justify-content: space-between;
     gap: 16px;
@@ -300,7 +311,7 @@ th.amount {
     border-bottom: none;
   }
 
-  table.cards-on-mobile td.mat-mdc-footer-cell:empty {
+  table.cards-on-mobile > tfoot > tr > td.mat-mdc-footer-cell:empty {
     display: none;
   }
 }
