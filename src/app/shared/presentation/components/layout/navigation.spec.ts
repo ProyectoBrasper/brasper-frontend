@@ -15,7 +15,6 @@ describe('navigation', () => {
   it('hides finance, accounting, reports, staff and users from engineers (backend permissions)', () => {
     const engineer = links(Role.ROLE_ENGINEER);
     expect(engineer).toEqual([
-      '/dashboard',
       '/projects',
       '/projects/clients',
       '/expenses',
@@ -35,6 +34,7 @@ describe('navigation', () => {
       expect(links(role)).toContain('/treasury/bank-accounts');
       expect(links(role)).toContain('/accounting/journal-entries');
       expect(links(role)).toContain('/reports/cash-flow');
+      expect(links(role)).toContain('/dashboard');
       expect(links(role)).not.toContain('/users');
     }
   });

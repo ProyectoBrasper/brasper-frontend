@@ -1086,5 +1086,27 @@
     "changeDone": "Tu contraseña fue actualizada.",
     "resetDone": "La contraseña de {{name}} fue actualizada.",
     "close": "Cerrar"
+  },
+  "dashboard": {
+    "subtitle": "El resumen financiero del mes",
+    "today": "Hoy",
+    "onDate": "Al {{date}}",
+    "cashBalance": "Caja",
+    "receivables": "Por cobrar",
+    "payables": "Por pagar",
+    "netProfit": "Utilidad acumulada",
+    "netProfitHint": "Enero a {{period}}",
+    "projected": "Saldo proyectado",
+    "projectedHint": "Al cierre de {{period}}",
+    "projects": "Proyectos en ejecución",
+    "weeklyFlow": "Flujo de caja del mes",
+    "alerts": "Alertas",
+    "noAlerts": "Sin alertas este mes.",
+    "seeReport": "Ver reporte",
+    "alert": {
+      "negativeBalance": "Alguna semana del mes cierra con saldo negativo.",
+      "costOverrun": "El proyecto {{code}} superó su costo estimado.",
+      "unknown": "Alerta: {{code}}"
+    }
   }
 }

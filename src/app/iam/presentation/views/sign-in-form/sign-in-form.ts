@@ -11,8 +11,8 @@ import { LanguageSwitcher } from '../../../../shared/presentation/components/lan
 import { IamStore } from '../../../application/iam.store';
 import { SignInCommand } from '../../../domain/model/sign-in.command';
 
-/** Page users land on after signing in (the dashboard comes last, see PANTALLAS.md). */
-export const HOME_ROUTE = ['/projects'];
+/** Where users land after signing in: the root redirects by role. */
+export const HOME_ROUTE = ['/'];
 
 /**
  * Split-screen sign-in: brand panel + username / password form.

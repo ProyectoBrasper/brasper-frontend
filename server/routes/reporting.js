@@ -386,5 +386,49 @@ module.exports = (server, { db, problem, requireRoles }) => {
     const igv = taxParametersAt(db, todayInLima())?.igv ?? 0.18;
     res.json(db.get('projects').value().map((project) => profitabilityOf(project, igv, year, month)));
   });
+
+  // ---------- Dashboard ----------
+  /** BillingContextFacade.sumOutstandingReceivablesAt: live invoices issued by the date, minus what was paid by it. */
+  const receivablesAt = (date) => {
+    const payments = db.get('invoice-payments').value();
+    return db.get('invoices').value()
+      .filter((invoice) => invoice.status !== 'VOIDED' && invoice.issuedOn <= date)
+      .reduce((sum, invoice) => {
+        const paid = payments.filter((p) => p.invoiceId === invoice.id && p.receivedOn <= date).reduce((total, p) => total + cents(p.amount), 0);
+        return sum + cents(invoice.total) - paid;
+      }, 0);
+  };
+
+  // GET /reports/dashboard?year=&month=, like DashboardQueryService: balances at the end of the month, or today when it
+  // has not ended; payables and projects are always today's. Alerts are codes.
+  server.get('/api/v1/reports/dashboard', requireRoles(...READERS), (req, res) => {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month);
+    if (!validPeriod(year, month)) return problem(res, 400, 'Bad Request', 'year y month son obligatorios (month de 1 a 12).');
+    const today = todayInLima();
+    const end = lastDay(year, month);
+    const asOf = end < today ? end : today;
+    const flow = buildWeekly(weeksOf(year, month));
+    const start = firstDay(year, 1);
+    const movements = accountBalances((date) => date >= start && date <= end);
+    const netProfit = sumOf(movements, (code) => code.startsWith('7')) - sumOf(movements, (code) => code.startsWith('6') || code.startsWith('8'));
+    const payables = db.get('payables').value().reduce((sum, p) => sum + Math.max(0, cents(p.totalAmount) - cents(p.paidAmount)), 0);
+    const projects = db.get('projects').value();
+    const igv = taxParametersAt(db, today)?.igv ?? 0.18;
+    const alerts = flow.hasNegativeBalance ? ['NEGATIVE_PROJECTED_BALANCE'] : [];
+    for (const project of projects) {
+      const figures = profitabilityOf(project, igv, year, month);
+      if (figures.costDeviation > 0) alerts.push(`COST_OVERRUN:${figures.code}`);
+    }
+    res.json({
+      cashBalance: cashBalanceAt(asOf) / 100,
+      receivablesOutstanding: receivablesAt(asOf) / 100,
+      payablesOutstanding: payables / 100,
+      netProfitYtd: netProfit / 100,
+      projectedClosingBalance: flow.finalBalance,
+      projectsInProgress: projects.filter((project) => project.status === 'IN_PROGRESS').length,
+      alerts,
+    });
+  });
   server.use('/api/v1/reports', requireRoles(...READERS));
 };
