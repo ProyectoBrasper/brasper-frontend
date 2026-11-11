@@ -93,32 +93,32 @@
   <section class="table-card">
     <h2 class="table-title">{{ 'invoices.payments' | translate }}</h2>
     <div class="table-scroll">
-      <table mat-table class="data-table" [dataSource]="payments()">
+      <table mat-table class="data-table cards-on-mobile" [dataSource]="payments()">
         <ng-container matColumnDef="receivedOn">
           <th mat-header-cell *matHeaderCellDef>{{ 'invoices.receivedOn' | translate }}</th>
-          <td mat-cell *matCellDef="let payment">{{ payment.receivedOn | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell [attr.data-label]="'invoices.receivedOn' | translate" *matCellDef="let payment">{{ payment.receivedOn | date: 'dd/MM/yyyy' }}</td>
           <td mat-footer-cell *matFooterCellDef></td>
         </ng-container>
         <ng-container matColumnDef="type">
           <th mat-header-cell *matHeaderCellDef>{{ 'invoices.paymentType' | translate }}</th>
-          <td mat-cell *matCellDef="let payment">
+          <td mat-cell [attr.data-label]="'invoices.paymentType' | translate" *matCellDef="let payment">
             <span [class]="'type ' + payment.type">{{ 'paymentType.' + payment.type | translate }}</span>
           </td>
           <td mat-footer-cell *matFooterCellDef></td>
         </ng-container>
         <ng-container matColumnDef="account">
           <th mat-header-cell *matHeaderCellDef>{{ 'invoices.bankAccount' | translate }}</th>
-          <td mat-cell *matCellDef="let payment">{{ accountLabel(payment) }}</td>
+          <td mat-cell [attr.data-label]="'invoices.bankAccount' | translate" *matCellDef="let payment">{{ accountLabel(payment) }}</td>
           <td mat-footer-cell *matFooterCellDef></td>
         </ng-container>
         <ng-container matColumnDef="reference">
           <th mat-header-cell *matHeaderCellDef>{{ 'invoices.reference' | translate }}</th>
-          <td mat-cell *matCellDef="let payment" class="mono">{{ payment.reference || '—' }}</td>
+          <td mat-cell [attr.data-label]="'invoices.reference' | translate" *matCellDef="let payment" class="mono">{{ payment.reference || '—' }}</td>
           <td mat-footer-cell *matFooterCellDef class="footer-label">{{ 'invoices.totalCollected' | translate }}</td>
         </ng-container>
         <ng-container matColumnDef="amount">
           <th mat-header-cell *matHeaderCellDef class="amount">{{ 'invoices.amount' | translate }}</th>
-          <td mat-cell *matCellDef="let payment" class="amount">{{ payment.amount | money: invoice.currency }}</td>
+          <td mat-cell [attr.data-label]="'invoices.amount' | translate" *matCellDef="let payment" class="amount">{{ payment.amount | money: invoice.currency }}</td>
           <td mat-footer-cell *matFooterCellDef class="amount collected">{{ invoice.collectedAmount | money: invoice.currency }}</td>
         </ng-container>
 

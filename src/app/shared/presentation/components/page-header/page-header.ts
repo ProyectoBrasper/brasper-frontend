@@ -85,6 +85,7 @@ export interface Breadcrumb {
     }
     .actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
     }
   `,

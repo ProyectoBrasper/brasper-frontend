@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   DEFAULT_CURRENCY_CODE,
   inject,
+  Injector,
   LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
@@ -12,7 +13,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
@@ -23,7 +24,7 @@ registerLocaleData(localeEsPe);
 
 /**
  * Application-wide providers: routing, HTTP, i18n (es / en), Peruvian locale (PEN, dd/MM/yyyy)
- * and Material Symbols as the default icon font.
+ * paginator texts and Material Symbols as the default icon font.
  */
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -42,6 +43,13 @@ export const appConfig: ApplicationConfig = {
     { provide: DEFAULT_CURRENCY_CODE, useValue: 'PEN' },
     provideAppInitializer(() => {
       inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-outlined');
+    }),
+    // Loaded apart, so the paginator stays out of the initial bundle; paginators already shown refresh when it lands.
+    provideAppInitializer(() => {
+      const injector = inject(Injector);
+      void Promise.all([import('@angular/material/paginator'), import('./shared/presentation/translated-paginator-intl')]).then(
+        ([paginator, texts]) => texts.translatePaginator(injector.get(paginator.MatPaginatorIntl), injector.get(TranslateService)),
+      );
     }),
   ],
 };
