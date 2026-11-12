@@ -1,0 +1,151 @@
+.card {
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 700 16px/24px var(--brasper-font-brand);
+}
+
+.card-head h2 mat-icon {
+  color: var(--mat-sys-primary);
+}
+
+.since {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: var(--brasper-success-container);
+  color: var(--brasper-success);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.since mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.rates {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.rate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.rate-label {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.rate-value {
+  font: 700 24px/30px var(--brasper-font-brand);
+  white-space: nowrap;
+}
+
+.rate-note {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.grid mat-form-field {
+  width: 100%;
+}
+
+input.amount {
+  text-align: right;
+}
+
+.info,
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  font: var(--mat-sys-body-medium);
+}
+
+.info {
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+}
+
+.notice {
+  background: var(--brasper-warning-container);
+  color: var(--brasper-warning);
+}
+
+.muted {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.table-title {
+  margin: 0;
+  padding: 18px 20px;
+  font: 600 18px/24px var(--brasper-font-brand);
+}
+
+table {
+  min-width: 760px;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+mat-progress-bar {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 899px) {
+  .rates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .rates,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

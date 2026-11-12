@@ -1,0 +1,135 @@
+<app-page-header
+  [title]="'nav.fixedCosts' | translate"
+  [subtitle]="'fixedCosts.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.fixedCosts' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/staff/fixed-costs/new">
+      <mat-icon>add</mat-icon>
+      {{ 'fixedCosts.new' | translate }}
+    </a>
+  }
+</app-page-header>
+
+<section class="summary">
+  <article class="summary-card">
+    <span class="summary-label">{{ 'fixedCosts.monthlyTotal' | translate }}</span>
+    <span class="summary-value amount">{{ monthlyTotal() | money }}</span>
+  </article>
+  <article class="summary-card">
+    <span class="summary-label">{{ 'fixedCosts.paidInPeriod' | translate }}</span>
+    <span class="summary-value amount paid">{{ paidTotal() | money }}</span>
+  </article>
+  <article class="summary-card">
+    <span class="summary-label">{{ 'fixedCosts.pendingInPeriod' | translate }}</span>
+    <span class="summary-value amount" [class.pending]="pendingTotal() > 0">{{ pendingTotal() | money }}</span>
+  </article>
+</section>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort matSortActive="code" matSortDirection="asc">
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'fixedCosts.code' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.code' | translate" *matCellDef="let cost" class="mono">{{ cost.code }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="concept">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'fixedCosts.concept' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.concept' | translate" *matCellDef="let cost" class="concept" [title]="cost.concept">{{ cost.concept }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'fixedCosts.type' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.type' | translate" *matCellDef="let cost"><span class="tag">{{ 'fixedCostType.' + cost.type | translate }}</span></td>
+      </ng-container>
+
+      <ng-container matColumnDef="employee">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'fixedCosts.employee' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.employee' | translate" *matCellDef="let cost" class="muted">{{ employeeName(cost.employeeId) || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monthlyAmount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'fixedCosts.monthlyAmount' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.monthlyAmount' | translate" *matCellDef="let cost" class="amount strong">{{ cost.monthlyAmount | money: cost.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="weeks">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="center">{{ 'fixedCosts.weeks' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.weeks' | translate" *matCellDef="let cost" class="center">{{ cost.expectedWeeks.join(', ') || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="paid">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'fixedCosts.paid' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.paid' | translate" *matCellDef="let cost" class="amount">
+          {{ cost.active || paid(cost) > 0 ? (paid(cost) | money: cost.currency) : '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="pending">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'fixedCosts.pending' | translate }}</th>
+        <td mat-cell [attr.data-label]="'fixedCosts.pending' | translate" *matCellDef="let cost" class="amount" [class.pending]="pending(cost) > 0">
+          {{ cost.active ? (pending(cost) | money: cost.currency) : '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">{{ 'common.actions' | translate }}</th>
+        <td mat-cell *matCellDef="let cost" class="actions-col">
+          @if (cost.active) {
+            @if (pending(cost) > 0) {
+              <button
+                mat-icon-button
+                type="button"
+                (click)="onRegisterPayment(cost)"
+                [matTooltip]="'fixedCosts.registerPayment' | translate"
+                [attr.aria-label]="'fixedCosts.registerPaymentFor' | translate: { code: cost.code }"
+              >
+                <mat-icon>payments</mat-icon>
+              </button>
+            }
+            <a
+              mat-icon-button
+              [routerLink]="['/staff/fixed-costs', cost.id, 'edit']"
+              [matTooltip]="'common.edit' | translate"
+              [attr.aria-label]="'common.editItem' | translate: { name: cost.code }"
+            >
+              <mat-icon>edit</mat-icon>
+            </a>
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onDeactivate(cost)"
+              [matTooltip]="'fixedCosts.deactivate' | translate"
+              [attr.aria-label]="'fixedCosts.deactivateFor' | translate: { code: cost.code }"
+            >
+              <mat-icon>block</mat-icon>
+            </button>
+          } @else {
+            <span class="inactive-tag">{{ 'status.INACTIVE' | translate }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let cost; columns: displayedColumns()" [class.inactive]="!cost.active"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns().length">
+          {{ (loading() ? 'common.loading' : 'fixedCosts.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[20, 50]" [pageSize]="20" />
+</section>

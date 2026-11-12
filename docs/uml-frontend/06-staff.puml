@@ -43,6 +43,7 @@ package "app" {
         - #dni: string
         - #position: string
         - #monthlySalary: number
+        - #currency: string
         - #hiredOn: string
         - #terminatedOn: string | null
         - #active: boolean
@@ -51,9 +52,11 @@ package "app" {
         +dni: string
         +position: string
         +monthlySalary: number
+        +currency: string
         +hiredOn: string
         +terminatedOn: string | null
         +active: boolean
+        +isActive(): boolean
       }
       Employee ..|> app.shared.domain.model.BaseEntity : implements
 
@@ -63,6 +66,7 @@ package "app" {
         - #concept: string
         - #type: FixedCostType
         - #monthlyAmount: number
+        - #currency: string
         - #employeeId: number | null
         - #expectedWeeks: number[]
         - #active: boolean
@@ -71,9 +75,11 @@ package "app" {
         +concept: string
         +type: FixedCostType
         +monthlyAmount: number
+        +currency: string
         +employeeId: number | null
         +expectedWeeks: number[]
         +active: boolean
+        +isActive(): boolean
       }
       FixedCost ..|> app.shared.domain.model.BaseEntity : implements
       Employee "0..1" <-- "*" FixedCost : references employeeId
@@ -100,7 +106,8 @@ package "app" {
         - #year: number
         - #month: number
         - #amount: number
-        - #bankAccountId: number
+        - #currency: string
+        - #bankAccountId: number | null
         - #notes: string
         +id: number
         +fixedCostId: number
@@ -108,7 +115,8 @@ package "app" {
         +year: number
         +month: number
         +amount: number
-        +bankAccountId: number
+        +currency: string
+        +bankAccountId: number | null
         +notes: string
       }
       FixedCostPayment ..|> app.shared.domain.model.BaseEntity : implements
@@ -122,9 +130,23 @@ package "app" {
         +dni: string
         +position: string
         +monthlySalary: number
+        +currency: string
         +hiredOn: string
         +terminatedOn: string | null
         +active: boolean
+      }
+      class HireEmployeeRequest <<Request>> {
+        +fullName: string
+        +dni: string
+        +position: string | null
+        +monthlySalary: number
+        +currency: string
+        +hiredOn: string
+      }
+      class UpdateEmployeeRequest <<Request>> {
+        +position: string | null
+        +monthlySalary: number
+        +currency: string
       }
       class FixedCostResource <<Resource>> {
         +id: number
@@ -132,9 +154,32 @@ package "app" {
         +concept: string
         +type: string
         +monthlyAmount: number
+        +currency: string
         +employeeId: number | null
         +expectedWeeks: number[]
         +active: boolean
+      }
+      class CreateFixedCostRequest <<Request>> {
+        +code: string
+        +concept: string
+        +type: string
+        +monthlyAmount: number
+        +currency: string
+        +employeeId: number | null
+        +expectedWeeks: number[]
+      }
+      class UpdateFixedCostRequest <<Request>> {
+        +concept: string
+        +monthlyAmount: number
+        +expectedWeeks: number[]
+      }
+      class RegisterFixedCostPaymentRequest <<Request>> {
+        +paidOn: string
+        +year: number
+        +month: number
+        +amount: number
+        +bankAccountId: number | null
+        +notes: string | null
       }
       class FixedCostPaymentResource <<Resource>> {
         +id: number
@@ -143,8 +188,9 @@ package "app" {
         +year: number
         +month: number
         +amount: number
-        +bankAccountId: number
-        +notes: string
+        +currency: string
+        +bankAccountId: number | null
+        +notes: string | null
       }
       class EmployeesResponse <<Response>> {
       }
@@ -170,14 +216,18 @@ package "app" {
       }
 
       class EmployeesApiEndpoint {
+        +hire(command: HireEmployeeCommand): Observable<Employee>
+        +updateEmployee(id: number, command: UpdateEmployeeCommand): Observable<Employee>
         +terminate(id: number, terminatedOn: string): Observable<Employee>
       }
       class FixedCostsApiEndpoint {
+        +createFixedCost(command: CreateFixedCostCommand): Observable<FixedCost>
+        +updateFixedCost(id: number, command: UpdateFixedCostCommand): Observable<FixedCost>
         +deactivate(id: number): Observable<FixedCost>
       }
       class FixedCostPaymentsApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<FixedCostPayment[]>
-        +register(fixedCostId: number, payment: FixedCostPayment): Observable<FixedCostPayment>
+        +register(fixedCostId: number, command: RegisterFixedCostPaymentCommand): Observable<FixedCostPayment>
       }
 
       class StaffApi {
@@ -186,16 +236,16 @@ package "app" {
         -fixedCostPaymentsEndpoint: FixedCostPaymentsApiEndpoint
         +getEmployees(): Observable<Employee[]>
         +getEmployeeById(id: number): Observable<Employee>
-        +hireEmployee(employee: Employee): Observable<Employee>
-        +updateEmployee(employee: Employee): Observable<Employee>
+        +hireEmployee(command: HireEmployeeCommand): Observable<Employee>
+        +updateEmployee(id: number, command: UpdateEmployeeCommand): Observable<Employee>
         +terminateEmployee(id: number, terminatedOn: string): Observable<Employee>
         +getFixedCosts(): Observable<FixedCost[]>
         +getFixedCostById(id: number): Observable<FixedCost>
-        +createFixedCost(fixedCost: FixedCost): Observable<FixedCost>
-        +updateFixedCost(fixedCost: FixedCost): Observable<FixedCost>
+        +createFixedCost(command: CreateFixedCostCommand): Observable<FixedCost>
+        +updateFixedCost(id: number, command: UpdateFixedCostCommand): Observable<FixedCost>
         +deactivateFixedCost(id: number): Observable<FixedCost>
         +getPaymentsByPeriod(year: number, month: number): Observable<FixedCostPayment[]>
-        +registerPayment(fixedCostId: number, payment: FixedCostPayment): Observable<FixedCostPayment>
+        +registerPayment(fixedCostId: number, command: RegisterFixedCostPaymentCommand): Observable<FixedCostPayment>
       }
 
       EmployeeResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -235,17 +285,22 @@ package "app" {
         +payments: Signal<FixedCostPayment[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
+        +paidInPeriod: Signal<number>
+        +pendingInPeriod: Signal<number>
         +loadEmployees(): void
+        +loadEmployee(id: number): void
         +loadFixedCosts(): void
         +loadPayments(year: number, month: number): void
-        +hireEmployee(employee: Employee): void
-        +updateEmployee(employee: Employee): void
+        +hireEmployee(command: HireEmployeeCommand, navigateTo: string[]): void
+        +updateEmployee(id: number, command: UpdateEmployeeCommand, navigateTo: string[]): void
         +terminateEmployee(id: number, terminatedOn: string): void
-        +createFixedCost(fixedCost: FixedCost): void
-        +updateFixedCost(fixedCost: FixedCost): void
+        +createFixedCost(command: CreateFixedCostCommand, navigateTo: string[]): void
+        +updateFixedCost(id: number, command: UpdateFixedCostCommand, navigateTo: string[]): void
         +deactivateFixedCost(id: number): void
-        +registerPayment(fixedCostId: number, payment: FixedCostPayment): void
-        +pendingAmount(fixedCostId: number, year: number, month: number): number
+        +registerPayment(fixedCostId: number, command: RegisterFixedCostPaymentCommand): void
+        +paidAmount(fixedCostId: number): number
+        +pendingAmount(fixedCostId: number): number
         +getEmployeeById(id: number): Employee | undefined
         +getFixedCostById(id: number): FixedCost | undefined
       }
@@ -257,6 +312,14 @@ package "app" {
 
     package "presentation" {
       package "components" {
+        class TerminateEmployeeDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<TerminateEmployeeDialog>
+          +employee: Employee
+          +terminationForm: FormGroup
+          +onConfirm(): void
+          +onCancel(): void
+        }
         class RegisterFixedCostPaymentDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<RegisterFixedCostPaymentDialog>
@@ -278,9 +341,7 @@ package "app" {
           +dataSource: Signal<MatTableDataSource<Employee>>
           +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
-          +onEdit(id: number): void
-          +onTerminate(id: number): void
-          +onAdd(): void
+          +onTerminate(employee: Employee): void
         }
         class EmployeeForm <<Component>> {
           -formBuilder: FormBuilder
@@ -329,7 +390,8 @@ package "app" {
       FixedCostForm --|> app.shared.presentation.BaseForm : extends
       FixedCostList --> RegisterFixedCostPaymentDialog : opens
       FixedCostList --> app.shared.presentation.components.PeriodSelector : contains
-      EmployeeList --> app.shared.presentation.components.ConfirmDialog : opens
+      EmployeeList --> TerminateEmployeeDialog : opens
+      FixedCostList --> app.shared.presentation.components.ConfirmDialog : opens
       RegisterFixedCostPaymentDialog --> app.treasury.application.TreasuryStore : reads bank accounts
     }
   }
@@ -340,7 +402,13 @@ note bottom
   semanas del mes se espera pagar (alimenta el flujo de caja proyectado).
   FixedCostList muestra por período lo pagado vs. pendiente (pendingAmount).
   Los gastos de proyecto NO se registran aquí, sino en expenses.
-  json-server (colecciones planas + routes.json): /employees, /fixed-costs,
-  /fixed-cost-payments?fixedCostId= y /fixed-cost-payments?year=&month=.
+  Empleado: al editar solo cambian cargo y sueldo (PUT); nombre, DNI (8 dígitos, único) e ingreso no.
+  La baja pide fecha (POST /employees/{id}/termination {terminatedOn}), no puede ser anterior al ingreso
+  y no se deshace; un cesado no se edita ni se vuelve a dar de baja (409).
+  Costo fijo: código único (1 a 30), SALARY exige empleado; al editar solo concepto, monto y semanas
+  (código, tipo y empleado fijos). Desactivar (POST /{id}/deactivate) no tiene vuelta atrás; uno inactivo
+  no se edita ni recibe pagos (409). Pagos: POST /fixed-costs/{id}/payments (cuenta opcional: sin cuenta
+  no hay salida de caja) y GET /fixed-costs/payments?year=&month=. Solo PEN.
+  Lectura: ADMIN, ACCOUNTING, MANAGEMENT. Escritura: ADMIN, ACCOUNTING.
 end note
 @enduml

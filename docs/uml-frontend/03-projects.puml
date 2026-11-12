@@ -77,6 +77,8 @@ package "app" {
         +accumulatedProgress: number
         +estimatedDirectCost: number
         +isInProgress(): boolean
+        +isOpen(): boolean
+        +canStart(): boolean
         +remainingProgress(): number
       }
       Project ..|> app.shared.domain.model.BaseEntity : implements
@@ -153,24 +155,28 @@ package "app" {
       }
       class ProgressRecordResource <<Resource>> {
         +id: number
-        +projectId: number
+        +year: number
+        +month: number
+        +percentage: number
+      }
+      class RegisterProgressRequest <<Request>> {
         +year: number
         +month: number
         +percentage: number
       }
       class CostEstimateResource <<Resource>> {
         +id: number
-        +projectId: number
         +category: string
         +estimatedAmount: number
+      }
+      class SetCostEstimateRequest <<Request>> {
+        +category: string
+        +estimatedAmount: number
+        +currency: string
       }
       class ClientsResponse <<Response>> {
       }
       class ProjectsResponse <<Response>> {
-      }
-      class ProgressRecordsResponse <<Response>> {
-      }
-      class CostEstimatesResponse <<Response>> {
       }
 
       class ClientAssembler <<Assembler>> {
@@ -184,14 +190,12 @@ package "app" {
         +toResourceFromEntity(entity: Project): ProjectResource
       }
       class ProgressRecordAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: ProgressRecordsResponse): ProgressRecord[]
-        +toEntityFromResource(resource: ProgressRecordResource): ProgressRecord
-        +toResourceFromEntity(entity: ProgressRecord): ProgressRecordResource
+        +toEntityFromResource(resource: ProgressRecordResource, projectId: number): ProgressRecord
+        +toRequestFromEntity(entity: ProgressRecord): RegisterProgressRequest
       }
       class CostEstimateAssembler <<Assembler>> {
-        +toEntitiesFromResponse(response: CostEstimatesResponse): CostEstimate[]
-        +toEntityFromResource(resource: CostEstimateResource): CostEstimate
-        +toResourceFromEntity(entity: CostEstimate): CostEstimateResource
+        +toEntityFromResource(resource: CostEstimateResource, projectId: number): CostEstimate
+        +toRequestFromEntity(entity: CostEstimate, currency: string): SetCostEstimateRequest
       }
 
       class ClientsApiEndpoint {
@@ -207,7 +211,7 @@ package "app" {
       }
       class CostEstimatesApiEndpoint {
         +getByProjectId(projectId: number): Observable<CostEstimate[]>
-        +set(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+        +set(projectId: number, estimate: CostEstimate, currency: string): Observable<CostEstimate>
       }
 
       class ProjectsApi {
@@ -228,7 +232,7 @@ package "app" {
         +getProgressRecords(projectId: number): Observable<ProgressRecord[]>
         +registerProgress(projectId: number, record: ProgressRecord): Observable<ProgressRecord>
         +getCostEstimates(projectId: number): Observable<CostEstimate[]>
-        +setCostEstimate(projectId: number, estimate: CostEstimate): Observable<CostEstimate>
+        +setCostEstimate(projectId: number, estimate: CostEstimate, currency: string): Observable<CostEstimate>
       }
 
       ClientResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -237,16 +241,12 @@ package "app" {
       CostEstimateResource ..|> app.shared.infrastructure.BaseResource : implements
       ClientsResponse ..|> app.shared.infrastructure.BaseResponse : implements
       ProjectsResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      ProgressRecordsResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      CostEstimatesResponse ..|> app.shared.infrastructure.BaseResponse : implements
       ClientAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       ProjectAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      ProgressRecordAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
-      CostEstimateAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       ClientsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       ProjectsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      ProgressRecordsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
-      CostEstimatesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      ProgressRecordsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
+      CostEstimatesApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
       ProjectsApi --|> app.shared.infrastructure.BaseApi : extends
       ProjectsApi --> ClientsApiEndpoint : delegates to
       ProjectsApi --> ProjectsApiEndpoint : delegates to
@@ -274,12 +274,15 @@ package "app" {
         +costEstimates: Signal<CostEstimate[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
         +loadClients(): void
         +loadProjects(): void
-        +createClient(client: Client): void
-        +updateClient(client: Client): void
-        +createProject(project: Project): void
-        +updateProject(project: Project): void
+        +createClient(client: Client, navigateTo: string[]): void
+        +updateClient(client: Client, navigateTo: string[]): void
+        +clearError(): void
+        +createProject(project: Project, navigateTo: string[]): void
+        +updateProject(project: Project, navigateTo: string[]): void
+        +countByStatus(status: ProjectStatus | null): number
         +startProject(id: number): void
         +cancelProject(id: number): void
         +loadProjectDetail(projectId: number): void
@@ -404,10 +407,18 @@ package "app" {
 
 note bottom
   Validaciones en ProjectForm: code con patrón ^\d{3}BR-(ENE|FEB|...|DIC)-\d{4}$, budget > 0,
-  participation entre 0 y 1. RegisterProgressDialog limita el porcentaje a
+  participation entre 0 y 1. Los porcentajes se escriben en % y viajan como fracción
+  (toPercent / toFraction); quotedOn viaja como yyyy-MM-dd (toIsoDate, sin UTC).
+  Al editar quedan bloqueados code, clientId, currency y quotedOn (UpdateProjectResource);
+  completados y cancelados no se editan. estimatedDirectCost es de solo lectura (suma de
+  CostEstimate). RegisterProgressDialog limita el porcentaje a
   (100% - accumulatedProgress). El costo real del proyecto NO se muestra aquí:
   viene de reporting (ProjectProfitabilityView).
-  json-server (colecciones planas + routes.json): /clients, /projects,
-  /progress-records?projectId=, /cost-estimates?projectId=; start/cancel = PATCH /projects/{id} {status}.
+  Contrato del backend (develop): /clients (PUT no cambia el RUC; RUC = 11 dígitos, único),
+  /projects?status=&clientId=, POST /projects/{id}/start y /cancel,
+  GET/POST /projects/{id}/progress, GET/PUT /projects/{id}/cost-estimates.
+  Escriben ADMIN, ACCOUNTING y ENGINEER (ProjectsStore.canWrite); MANAGEMENT solo lee.
+  Crear/editar navegan solo si la API acepta (navigateTo); si falla, el error se muestra en el formulario.
+  Fake API: server/routes/projects.js replica rutas, reglas y errores del backend.
 end note
 @enduml

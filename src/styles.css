@@ -1,0 +1,317 @@
+/* Brasper — global tokens and base styles (docs/mockups/DESIGN.md). Material roles live in material-theme.scss. */
+:root {
+  /* Sidebar */
+  --brasper-sidebar: #0b2545;
+  --brasper-sidebar-hover: #133563;
+  --brasper-sidebar-active: #1d4c87;
+  --brasper-sidebar-text: #c9d6ea;
+  --brasper-sidebar-muted: #7f93b3;
+  --brasper-accent: #f2a900;
+
+  /* Status colors (StatusChip, KPIs, charts) */
+  --brasper-success: #1b7f4b;
+  --brasper-success-container: #ddf3e6;
+  --brasper-warning: #b26a00;
+  --brasper-warning-container: #fff0d6;
+  --brasper-info: #0b6ea8;
+  --brasper-info-container: #dceffa;
+  --brasper-danger: #ba1a1a;
+  --brasper-danger-container: #fde4e1;
+  --brasper-neutral: #6b7280;
+  --brasper-neutral-container: #eef0f3;
+
+  /* Layout */
+  --brasper-sidebar-width: 272px;
+  --brasper-toolbar-height: 64px;
+  --brasper-content-max-width: 1440px;
+  --brasper-gutter: 24px;
+
+  /* Radii and elevation */
+  --brasper-radius-sm: 4px;
+  --brasper-radius-md: 8px;
+  --brasper-radius-lg: 12px;
+  --brasper-radius-xl: 16px;
+  --brasper-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --brasper-shadow-dialog: 0 12px 32px rgba(16, 24, 40, 0.18);
+
+  /* Typography */
+  --brasper-font-brand: 'Manrope', sans-serif;
+  --brasper-font-plain: 'Inter', sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--mat-sys-background);
+  color: var(--mat-sys-on-background);
+  font: var(--mat-sys-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--brasper-font-brand);
+  margin: 0;
+}
+
+/* Visible focus (accessibility, DESIGN.md §6) */
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+/* ---------- Shared page building blocks (DESIGN.md §3–4) ---------- */
+
+/* Error banner shown above a table or form */
+.page-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
+}
+
+/* Card that wraps a MatTable + paginator */
+.table-card {
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+/* Wide tables scroll horizontally instead of pushing columns out of view */
+.table-scroll {
+  overflow-x: auto;
+}
+
+table.data-table {
+  width: 100%;
+  --mat-table-header-container-height: 48px;
+  --mat-table-row-item-container-height: 56px;
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+}
+
+table.data-table th.mat-mdc-header-cell {
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+table.data-table td.mat-mdc-cell {
+  white-space: nowrap;
+}
+
+table.data-table tr.mat-mdc-row:hover {
+  background: var(--mat-sys-surface-container);
+}
+
+table.data-table tr.clickable {
+  cursor: pointer;
+}
+
+table.data-table .empty-row td {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+table.data-table .actions-col {
+  width: 72px;
+  text-align: right;
+}
+
+/* Initials avatar for people and companies */
+.entity-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.entity-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+/* Form inside a card: sections, 2 columns on desktop / 1 on mobile, actions at the bottom */
+.form-card {
+  max-width: 880px;
+  padding: 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.form-card-title {
+  margin: 0 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-title-medium);
+  font-family: var(--brasper-font-brand);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+}
+
+.form-grid mat-form-field {
+  width: 100%;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+@media (max-width: 599px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card {
+    padding: 16px;
+  }
+}
+
+/* Amounts: tabular digits, right-aligned in tables */
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+td.amount,
+th.amount {
+  text-align: right;
+}
+
+/*
+ * Lists read as cards on a phone (`<table class="data-table cards-on-mobile">`): the header row hides and each row
+ * stacks its cells as "label: value", the label coming from `data-label`. Child selectors keep a table nested in an
+ * expanded row (the lines of a journal entry) as it is. Wide component tables set widths for the desktop, hence the
+ * !important here.
+ */
+@media (max-width: 599px) {
+  table.cards-on-mobile,
+  table.cards-on-mobile > tbody,
+  table.cards-on-mobile > tfoot {
+    display: block;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  table.cards-on-mobile > thead {
+    display: none;
+  }
+
+  table.cards-on-mobile > tbody > tr.mat-mdc-row {
+    display: block;
+    height: auto;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 32px;
+    padding: 2px 16px;
+    border-bottom: none;
+    overflow: visible;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    margin-right: auto;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+    text-align: left;
+  }
+
+  table.cards-on-mobile > tbody > tr > td.mat-mdc-cell:first-child {
+    font-weight: 600;
+  }
+
+  table.cards-on-mobile > tbody > tr > td.actions-col {
+    justify-content: flex-end;
+  }
+
+  table.cards-on-mobile > tbody > tr.empty-row > td {
+    display: block;
+    text-align: center;
+  }
+
+  /* An expandable row's detail shows only when open, as the bottom of its card. */
+  table.cards-on-mobile > tbody > tr.detail-row:not(.open) {
+    display: none;
+  }
+
+  table.cards-on-mobile > tbody > tr.detail-row > td.mat-mdc-cell {
+    display: block;
+    padding: 0;
+    text-align: left;
+  }
+
+  /* A totals row reads as one more card, without its empty cells. */
+  table.cards-on-mobile > tfoot > tr.mat-mdc-footer-row {
+    display: block;
+    height: auto;
+  }
+
+  table.cards-on-mobile > tfoot > tr > td.mat-mdc-footer-cell {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 4px 16px;
+    border-bottom: none;
+  }
+
+  table.cards-on-mobile > tfoot > tr > td.mat-mdc-footer-cell:empty {
+    display: none;
+  }
+}

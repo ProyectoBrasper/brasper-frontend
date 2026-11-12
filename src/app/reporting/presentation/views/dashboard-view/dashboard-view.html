@@ -1,0 +1,80 @@
+@let current = dashboard();
+@let flow = cashFlow();
+@let onDate = balancesOn();
+@let balancesHint = onDate ? ('dashboard.onDate' | translate: { date: (onDate | date: 'dd/MM/yyyy') }) : ('dashboard.today' | translate);
+
+<app-page-header
+  [title]="'nav.dashboard' | translate"
+  [subtitle]="'dashboard.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.dashboard' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (current) {
+  <div class="kpis">
+    <app-kpi-card
+      icon="account_balance"
+      [label]="'dashboard.cashBalance' | translate"
+      [value]="current.cashBalance | money"
+      [hint]="balancesHint"
+      [negative]="current.cashBalance < 0"
+    />
+    <app-kpi-card
+      icon="call_received"
+      [label]="'dashboard.receivables' | translate"
+      [value]="current.receivablesOutstanding | money"
+      [hint]="balancesHint"
+    />
+    <app-kpi-card
+      icon="call_made"
+      [label]="'dashboard.payables' | translate"
+      [value]="current.payablesOutstanding | money"
+      [hint]="'dashboard.today' | translate"
+    />
+    <app-kpi-card
+      icon="trending_up"
+      [label]="'dashboard.netProfit' | translate"
+      [value]="current.netProfitYtd | money"
+      [hint]="'dashboard.netProfitHint' | translate: { period: periodLabel() }"
+      [negative]="current.netProfitYtd < 0"
+    />
+    <app-kpi-card
+      icon="query_stats"
+      [label]="'dashboard.projected' | translate"
+      [value]="current.projectedClosingBalance | money"
+      [hint]="'dashboard.projectedHint' | translate: { period: periodLabel() }"
+      [negative]="current.projectedClosingBalance < 0"
+    />
+    <app-kpi-card
+      icon="engineering"
+      [label]="'dashboard.projects' | translate"
+      [value]="'' + current.projectsInProgress"
+      [hint]="'dashboard.today' | translate"
+    />
+  </div>
+
+  <div class="columns">
+    <section class="chart-card">
+      <div class="chart-head">
+        <h2>{{ 'dashboard.weeklyFlow' | translate }}</h2>
+        <a routerLink="/reports/cash-flow">{{ 'dashboard.seeReport' | translate }}</a>
+      </div>
+      @if (flow) {
+        <app-cash-flow-chart [lines]="flow.lines" />
+      }
+    </section>
+    <app-alerts-panel [alerts]="current.alerts" />
+  </div>
+}

@@ -74,15 +74,22 @@ package "app" {
     }
 
     package "infrastructure" {
+      class SignInRequest <<Request>> {
+        +username: string
+        +password: string
+      }
       class SignInResource <<Resource>> {
         +id: number
         +username: string
+        +fullName: string
         +role: string
         +token: string
       }
-      class SignUpResource <<Resource>> {
-        +id: number
+      class SignUpRequest <<Request>> {
         +username: string
+        +password: string
+        +fullName: string
+        +role: string
       }
       class UserResource <<Resource>> {
         +id: number
@@ -91,19 +98,13 @@ package "app" {
         +role: string
         +active: boolean
       }
-      class SignInResponse <<Response>> {
-      }
-      class SignUpResponse <<Response>> {
-      }
       class UsersResponse <<Response>> {
       }
 
       class SignInAssembler <<Assembler>> {
+        +toRequestFromCommand(command: SignInCommand): SignInRequest
         +toEntityFromResource(resource: SignInResource): User
         +toTokenFromResource(resource: SignInResource): string
-      }
-      class SignUpAssembler <<Assembler>> {
-        +toEntityFromResource(resource: SignUpResource): User
       }
       class UserAssembler <<Assembler>> {
         +toEntitiesFromResponse(response: UsersResponse): User[]
@@ -118,7 +119,7 @@ package "app" {
       }
       class SignUpApiEndpoint {
         -endpointUrl: string
-        -assembler: SignUpAssembler
+        -assembler: UserAssembler
         +signUp(command: SignUpCommand): Observable<User>
       }
       class UsersApiEndpoint {
@@ -130,11 +131,15 @@ package "app" {
         -signInEndpoint: SignInApiEndpoint
         -signUpEndpoint: SignUpApiEndpoint
         -usersEndpoint: UsersApiEndpoint
+        -passwordEndpoint: PasswordApiEndpoint
         +signIn(command: SignInCommand): Observable<{user: User, token: string}>
         +signUp(command: SignUpCommand): Observable<User>
         +getUsers(): Observable<User[]>
         +changeUserRole(id: number, role: Role): Observable<User>
         +deactivateUser(id: number): Observable<User>
+        +reactivateUser(id: number): Observable<User>
+        +resetUserPassword(id: number, newPassword: string): Observable<void>
+        +changePassword(command: ChangePasswordCommand): Observable<void>
       }
 
       class authenticationInterceptor <<Interceptor>> {
@@ -142,10 +147,7 @@ package "app" {
       }
 
       SignInResource ..|> app.shared.infrastructure.BaseResource : implements
-      SignUpResource ..|> app.shared.infrastructure.BaseResource : implements
       UserResource ..|> app.shared.infrastructure.BaseResource : implements
-      SignInResponse ..|> app.shared.infrastructure.BaseResponse : implements
-      SignUpResponse ..|> app.shared.infrastructure.BaseResponse : implements
       UsersResponse ..|> app.shared.infrastructure.BaseResponse : implements
       UserAssembler ..|> app.shared.infrastructure.BaseAssembler : implements
       SignInApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
@@ -156,10 +158,9 @@ package "app" {
       IamApi --> SignUpApiEndpoint : delegates to
       IamApi --> UsersApiEndpoint : delegates to
       SignInApiEndpoint --> SignInAssembler : uses
-      SignUpApiEndpoint --> SignUpAssembler : uses
+      SignUpApiEndpoint --> UserAssembler : uses
       UsersApiEndpoint --> UserAssembler : uses
       SignInAssembler --> User : builds
-      SignUpAssembler --> User : builds
       UserAssembler --> User : builds
     }
 
@@ -185,6 +186,10 @@ package "app" {
         +loadUsers(): void
         +changeUserRole(id: number, role: Role): void
         +deactivateUser(id: number): void
+        +reactivateUser(id: number): void
+        +resetUserPassword(id: number, newPassword: string, onDone: () => void): void
+        +changePassword(command: ChangePasswordCommand, onDone: () => void): void
+        +clearError(): void
         +hasAnyRole(...roles: Role[]): boolean
       }
 
@@ -207,11 +212,23 @@ package "app" {
         class AuthenticationSection <<Component>> {
           -iamStore: IamStore
           -router: Router
+          +mode: InputSignal<'toolbar' | 'sidebar'>
           +isSignedIn: Signal<boolean>
           +currentUsername: Signal<string>
+          +fullName: Signal<string>
+          +role: Signal<Role | null>
+          +initials: Signal<string>
           +onSignIn(): void
-          +onSignUp(): void
+          +onChangePassword(): void
           +onSignOut(): void
+        }
+        class PasswordDialog <<Component>> {
+          -iamStore: IamStore
+          +user: User | null
+          +passwordForm: FormGroup
+          +done: WritableSignal<boolean>
+          +onSave(): void
+          +onClose(): void
         }
       }
 
@@ -240,10 +257,16 @@ package "app" {
           +sort: Signal<MatSort>
           +onChangeRole(id: number, role: Role): void
           +onDeactivate(id: number): void
+          +onReactivate(id: number): void
+          +onResetPassword(user: User): void
         }
       }
 
       AuthenticationSection --> IamStore : uses
+      AuthenticationSection --> PasswordDialog : opens
+      UserList --> PasswordDialog : opens
+      PasswordDialog --> IamStore : uses
+      PasswordDialog --|> app.shared.presentation.BaseForm : extends
       SignInForm --|> app.shared.presentation.BaseForm : extends
       SignUpForm --|> app.shared.presentation.BaseForm : extends
       SignInForm --> IamStore : uses
@@ -256,12 +279,21 @@ package "app" {
 }
 
 note bottom
-  JWT: IamStore guarda el token (signal + sessionStorage); authenticationInterceptor
-  agrega "Authorization: Bearer <token>" a cada request hacia la API.
-  Con json-server (fake API) el sign-in se simula con un middleware (server.js) que
-  responde POST /authentication/sign-in buscando el usuario en db.json y devolviendo
-  un token ficticio; el rol viene en SignInResource (mismo contrato que Spring).
+  Contrato del backend (Spring, develop): POST /auth/sign-in -> SignInResource
+  (AuthenticatedUserResource); POST /auth/sign-up solo ADMIN, responde UserResource;
+  /users solo ADMIN: GET, PUT /{id}/role {role}, POST /{id}/deactivate, POST /{id}/reactivate,
+  PUT /{id}/password {newPassword} (204). PUT /auth/password {currentPassword, newPassword} para el
+  propio usuario (204; 422 actual incorrecta o débil; 429 tras 5 fallos).
+  Errores RFC 9457 (ProblemDetail): 401 credenciales, 403 inactivo, 409 usuario repetido
+  o último admin, 422 contraseña débil (8-72, letra y número). Username [a-z0-9._-]{3,50}.
+  JWT: IamStore guarda token y usuario (signals + sessionStorage); authenticationInterceptor
+  agrega "Authorization: Bearer <token>" y "Accept-Language" a las requests de la API y
+  cierra la sesión ante un 401 con token.
+  Fake API: server/server.js (json-server) simula /auth y /users con el mismo contrato.
   authenticationGuard redirige a /sign-in si no hay sesión; roleGuard lee
-  route.data.roles y redirige al dashboard si el rol no está permitido.
+  route.data.roles y redirige a '/' si el rol no está permitido.
+  Alta de usuarios solo ADMIN (igual que el backend): SignInForm no tiene "Crear cuenta";
+  SignUpForm es "Nuevo usuario" dentro del layout, se abre desde UserList y vuelve a /users.
+  Validaciones iguales al backend: usernameValidator y passwordValidator.
 end note
 @enduml

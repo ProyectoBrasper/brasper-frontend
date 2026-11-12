@@ -1,0 +1,47 @@
+.project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 960px;
+}
+
+.project-form .form-card {
+  max-width: none;
+}
+
+input.amount {
+  text-align: right;
+}
+
+.read-only-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 20px;
+}
+
+.read-only-field .label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.read-only-field .value {
+  font: var(--mat-sys-title-medium);
+}
+
+.read-only-field .hint {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 599px) {
+  .read-only-field:empty {
+    display: none;
+  }
+}

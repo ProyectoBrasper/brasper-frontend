@@ -1,0 +1,141 @@
+@if (invoice(); as invoice) {
+  <app-page-header
+    [title]="('invoices.invoice' | translate) + ' ' + invoice.number"
+    [subtitle]="
+      ('invoices.issuedOnLabel' | translate: { date: (invoice.issuedOn | date: 'dd/MM/yyyy') }) +
+      (invoice.purchaseOrder ? ' · ' + ('invoices.purchaseOrder' | translate) + ' ' + invoice.purchaseOrder : '')
+    "
+    [breadcrumbs]="[
+      { label: 'common.home' | translate, link: '/' },
+      { label: 'nav.invoices' | translate, link: '/billing/invoices' },
+      { label: invoice.number }
+    ]"
+  >
+    @if (canWrite() && !invoice.isVoided()) {
+      <span [matTooltip]="invoice.canBeVoided() ? '' : ('invoices.voidOnlyWithoutPayments' | translate)">
+        <button mat-stroked-button type="button" [disabled]="!invoice.canBeVoided()" (click)="onVoid()">
+          <mat-icon>block</mat-icon>
+          {{ 'invoices.void' | translate }}
+        </button>
+      </span>
+      @if (invoice.isCollectable()) {
+        <button mat-flat-button type="button" (click)="onRegisterPayment()">
+          <mat-icon>payments</mat-icon>
+          {{ 'invoices.registerPayment' | translate }}
+        </button>
+      }
+    }
+  </app-page-header>
+
+  <div class="status-row"><app-status-chip [status]="invoice.status" /></div>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="cards">
+    <section class="form-card">
+      <h2 class="form-card-title">{{ 'invoices.invoiceData' | translate }}</h2>
+      <dl class="data">
+        <dt>{{ 'invoices.project' | translate }}</dt>
+        <dd>{{ project() ? project()!.code + ' · ' + project()!.name : '—' }}</dd>
+        <dt>{{ 'invoices.client' | translate }}</dt>
+        <dd>
+          @if (client(); as client) {
+            {{ client.businessName }} · RUC <span class="mono">{{ client.ruc }}</span>
+          } @else {
+            —
+          }
+        </dd>
+        <dt>{{ 'invoices.purchaseOrder' | translate }}</dt>
+        <dd>{{ invoice.purchaseOrder || '—' }}</dd>
+        <dt>{{ 'invoices.advance' | translate }}</dt>
+        <dd>{{ (invoice.advance ? 'common.yes' : 'common.no') | translate }}</dd>
+        <dt>{{ 'invoices.selfDetraction' | translate }}</dt>
+        <dd>{{ (invoice.selfDetraction ? 'common.yes' : 'common.no') | translate }}</dd>
+        <dt>{{ 'invoices.notes' | translate }}</dt>
+        <dd>{{ invoice.notes || '—' }}</dd>
+      </dl>
+    </section>
+
+    <section class="form-card">
+      <h2 class="form-card-title">{{ 'invoices.amounts' | translate }}</h2>
+      <app-invoice-amounts-summary
+        [taxableBase]="invoice.taxableBase"
+        [igv]="invoice.igv"
+        [total]="invoice.total"
+        [retention]="invoice.retention"
+        [detraction]="invoice.detraction"
+        [netAmount]="invoice.netAmount"
+        [currency]="invoice.currency"
+      />
+      <dl class="collection">
+        <dt>{{ 'invoices.collected' | translate }}</dt>
+        <dd class="amount collected">{{ invoice.collectedAmount | money: invoice.currency }}</dd>
+        <dt class="strong">{{ 'invoices.outstanding' | translate }}</dt>
+        <dd class="amount outstanding">
+          {{ invoice.isVoided() ? '—' : (invoice.outstandingBalance | money: invoice.currency) }}
+        </dd>
+      </dl>
+      @if (!invoice.isVoided()) {
+        <div class="progress-label">
+          <span>{{ 'invoices.collectionProgress' | translate }}</span>
+          <strong>{{ collectedShare() | percent: '1.0-0' }}</strong>
+        </div>
+        <mat-progress-bar mode="determinate" [value]="collectedShare() * 100" />
+      }
+    </section>
+  </div>
+
+  <section class="table-card">
+    <h2 class="table-title">{{ 'invoices.payments' | translate }}</h2>
+    <div class="table-scroll">
+      <table mat-table class="data-table cards-on-mobile" [dataSource]="payments()">
+        <ng-container matColumnDef="receivedOn">
+          <th mat-header-cell *matHeaderCellDef>{{ 'invoices.receivedOn' | translate }}</th>
+          <td mat-cell [attr.data-label]="'invoices.receivedOn' | translate" *matCellDef="let payment">{{ payment.receivedOn | date: 'dd/MM/yyyy' }}</td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>{{ 'invoices.paymentType' | translate }}</th>
+          <td mat-cell [attr.data-label]="'invoices.paymentType' | translate" *matCellDef="let payment">
+            <span [class]="'type ' + payment.type">{{ 'paymentType.' + payment.type | translate }}</span>
+          </td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+        <ng-container matColumnDef="account">
+          <th mat-header-cell *matHeaderCellDef>{{ 'invoices.bankAccount' | translate }}</th>
+          <td mat-cell [attr.data-label]="'invoices.bankAccount' | translate" *matCellDef="let payment">{{ accountLabel(payment) }}</td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>{{ 'invoices.reference' | translate }}</th>
+          <td mat-cell [attr.data-label]="'invoices.reference' | translate" *matCellDef="let payment" class="mono">{{ payment.reference || '—' }}</td>
+          <td mat-footer-cell *matFooterCellDef class="footer-label">{{ 'invoices.totalCollected' | translate }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef class="amount">{{ 'invoices.amount' | translate }}</th>
+          <td mat-cell [attr.data-label]="'invoices.amount' | translate" *matCellDef="let payment" class="amount">{{ payment.amount | money: invoice.currency }}</td>
+          <td mat-footer-cell *matFooterCellDef class="amount collected">{{ invoice.collectedAmount | money: invoice.currency }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+        <tr mat-row *matRowDef="let payment; columns: paymentColumns"></tr>
+        <tr mat-footer-row *matFooterRowDef="paymentColumns" [class.hidden]="payments().length === 0"></tr>
+        <tr class="mat-mdc-row empty-row" *matNoDataRow>
+          <td class="mat-mdc-cell" [attr.colspan]="paymentColumns.length">{{ 'invoices.noPayments' | translate }}</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+} @else if (loading()) {
+  <p class="placeholder">{{ 'common.loading' | translate }}</p>
+} @else if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}

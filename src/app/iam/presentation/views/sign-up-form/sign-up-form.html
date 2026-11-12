@@ -1,0 +1,75 @@
+<app-page-header
+  [title]="'users.new' | translate"
+  [subtitle]="'signUp.subtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.users' | translate, link: '/users' },
+    { label: 'users.new' | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="signUpForm" (ngSubmit)="onSubmit()" novalidate>
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'users.fullName' | translate }}</mat-label>
+      <input matInput formControlName="fullName" autocomplete="name" />
+      @if (isInvalidControl(signUpForm, 'fullName')) {
+        <mat-error>{{ errorMessageForControl(signUpForm, 'fullName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'users.username' | translate }}</mat-label>
+      <input matInput formControlName="username" autocomplete="off" autocapitalize="none" />
+      <mat-hint>{{ 'signUp.usernameHint' | translate }}</mat-hint>
+      @if (isInvalidControl(signUpForm, 'username')) {
+        <mat-error>{{ errorMessageForControl(signUpForm, 'username') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'signIn.password' | translate }}</mat-label>
+      <input
+        matInput
+        formControlName="password"
+        autocomplete="new-password"
+        [type]="hidePassword() ? 'password' : 'text'"
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="hidePassword.set(!hidePassword())"
+        [attr.aria-label]="(hidePassword() ? 'signIn.showPassword' : 'signIn.hidePassword') | translate"
+        [attr.aria-pressed]="!hidePassword()"
+      >
+        <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+      </button>
+      <mat-hint>{{ 'signUp.passwordHint' | translate }}</mat-hint>
+      @if (isInvalidControl(signUpForm, 'password')) {
+        <mat-error>{{ errorMessageForControl(signUpForm, 'password') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'users.role' | translate }}</mat-label>
+      <mat-select formControlName="role">
+        @for (role of roles; track role) {
+          <mat-option [value]="role">{{ 'role.' + role | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="form-actions">
+    <a mat-button routerLink="/users">{{ 'common.cancel' | translate }}</a>
+    <button mat-flat-button type="submit" [disabled]="loading()">{{ 'signUp.submit' | translate }}</button>
+  </div>
+</form>

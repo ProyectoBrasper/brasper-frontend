@@ -1,0 +1,116 @@
+<div class="editor-head">
+  <h2 class="form-card-title"><mat-icon>table_rows</mat-icon>{{ 'journalEntries.formLines' | translate }}</h2>
+  <span class="count">{{ 'journalEntries.linesCount' | translate: { count: lines().length } }}</span>
+</div>
+
+<div class="table-scroll">
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="account">{{ 'journalEntries.account' | translate }}</th>
+        <th class="project">{{ 'journalEntries.project' | translate }}</th>
+        <th class="amount">{{ 'journalEntries.debitPen' | translate }}</th>
+        <th class="amount">{{ 'journalEntries.creditPen' | translate }}</th>
+        <th class="remove"><span class="cdk-visually-hidden">{{ 'common.actions' | translate }}</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of lines().controls; track line; let i = $index) {
+        <tr [formGroup]="line" [class.side-error]="lineHasSideError(line)">
+          <td [attr.data-label]="'journalEntries.account' | translate">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="accountCode" [attr.aria-label]="('journalEntries.account' | translate) + ' ' + (i + 1)">
+                @for (account of accounts(); track account.code) {
+                  <mat-option [value]="account.code"><span class="mono">{{ account.code }}</span> · {{ account.name }}</mat-option>
+                }
+              </mat-select>
+              @if (line.controls.accountCode.invalid && line.controls.accountCode.touched) {
+                <mat-error>{{ 'journalEntries.accountRequired' | translate }}</mat-error>
+              }
+            </mat-form-field>
+          </td>
+          <td [attr.data-label]="'journalEntries.project' | translate">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="projectId" [attr.aria-label]="('journalEntries.project' | translate) + ' ' + (i + 1)">
+                <mat-option [value]="null">{{ 'journalEntries.noProject' | translate }}</mat-option>
+                @for (project of projects(); track project.id) {
+                  <mat-option [value]="project.id"><span class="mono">{{ project.code }}</span> · {{ project.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td [attr.data-label]="'journalEntries.debitPen' | translate">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input
+                matInput
+                class="amount"
+                formControlName="debit"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                [attr.aria-label]="('journalEntries.debit' | translate) + ' ' + (i + 1)"
+              />
+            </mat-form-field>
+          </td>
+          <td [attr.data-label]="'journalEntries.creditPen' | translate">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <input
+                matInput
+                class="amount"
+                formControlName="credit"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                [attr.aria-label]="('journalEntries.credit' | translate) + ' ' + (i + 1)"
+              />
+            </mat-form-field>
+          </td>
+          <td class="remove">
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onRemoveLine(i)"
+              [disabled]="lines().length <= 2"
+              [matTooltip]="'journalEntries.removeLine' | translate"
+              [attr.aria-label]="'journalEntries.removeLineNumber' | translate: { number: i + 1 }"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </tr>
+        @if (lineHasSideError(line)) {
+          <tr class="line-error">
+            <td colspan="5">{{ 'journalEntries.oneSide' | translate }}</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="add">
+  <button mat-button type="button" (click)="onAddLine()">
+    <mat-icon>add</mat-icon>
+    {{ 'journalEntries.addLine' | translate }}
+  </button>
+</div>
+
+@let sums = totals();
+<div class="totals" role="status">
+  <span>{{ 'journalEntries.totalDebit' | translate }} <strong>S/ {{ sums.debit | number: '1.2-2' }}</strong></span>
+  <span>{{ 'journalEntries.totalCredit' | translate }} <strong>S/ {{ sums.credit | number: '1.2-2' }}</strong></span>
+  <span class="difference" [class.off]="sums.difference !== 0" [class.ok]="sums.difference === 0 && sums.debit > 0">
+    <mat-icon aria-hidden="true">{{ sums.difference === 0 && sums.debit > 0 ? 'check_circle' : 'warning' }}</mat-icon>
+    {{ 'journalEntries.difference' | translate }}
+    <strong>S/ {{ (sums.difference < 0 ? -sums.difference : sums.difference) | number: '1.2-2' }}</strong>
+  </span>
+</div>
+
+@if (sums.difference !== 0) {
+  <p class="unbalanced-notice" role="alert">
+    <mat-icon>error_outline</mat-icon>
+    <span><strong>{{ 'journalEntries.notBalancedTitle' | translate }}</strong> {{ 'journalEntries.notBalancedHelp' | translate }}</span>
+  </p>
+}

@@ -1,0 +1,129 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.main .form-card,
+.preview {
+  max-width: none;
+}
+
+.form-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-card-title mat-icon {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.read-only {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-surface-container);
+}
+
+.read-only .label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.read-only .value {
+  font-weight: 600;
+}
+
+.muted {
+  font-weight: 400;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+input.amount {
+  text-align: right;
+}
+
+.toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-md);
+}
+
+.toggle-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-row small {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.toggle-row.disabled {
+  opacity: 0.6;
+}
+
+.notes {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.preview {
+  position: sticky;
+  top: calc(var(--brasper-toolbar-height) + 24px);
+  background: var(--mat-sys-surface-container);
+}
+
+.note {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+@media (max-width: 1099px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    position: static;
+    order: -1;
+  }
+}

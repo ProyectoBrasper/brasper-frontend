@@ -1,0 +1,15 @@
+<div class="legend">
+  <span class="key"><i class="swatch" [style.background]="colors.inflow"></i>{{ 'cashFlow.totalInflows' | translate }}</span>
+  <span class="key"><i class="swatch" [style.background]="colors.outflow"></i>{{ 'cashFlow.totalOutflows' | translate }}</span>
+  <span class="key"><i class="dash" [style.border-color]="colors.balance"></i>{{ 'cashFlow.projectedKey' | translate }}</span>
+</div>
+
+<h3>{{ 'cashFlow.flowsPanel' | translate }}</h3>
+<div class="panel flows" role="img" [attr.aria-label]="'cashFlow.flowsPanel' | translate">
+  <canvas baseChart type="bar" [data]="flowsData()" [options]="flowsOptions"></canvas>
+</div>
+
+<h3>{{ 'cashFlow.balancePanel' | translate }}</h3>
+<div class="panel balance" role="img" [attr.aria-label]="'cashFlow.balancePanel' | translate">
+  <canvas baseChart type="line" [data]="balanceData()" [options]="balanceOptions"></canvas>
+</div>

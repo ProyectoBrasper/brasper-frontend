@@ -1,0 +1,124 @@
+<app-page-header
+  [title]="'payables.new' | translate"
+  [subtitle]="'payables.formSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.payables' | translate, link: '/treasury/payables' },
+    { label: 'common.new' | translate }
+  ]"
+/>
+
+<form [formGroup]="payableForm" (ngSubmit)="onSubmit()" novalidate>
+  <section class="form-card">
+    <h2 class="form-card-title"><mat-icon>description</mat-icon>{{ 'payables.data' | translate }}</h2>
+
+    @if (error()) {
+      <div class="page-alert" role="alert">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <p class="notice" role="note">
+      <mat-icon>warning</mat-icon>
+      <span>{{ 'payables.doubleCostNotice' | translate }}</span>
+    </p>
+
+    <div class="form-grid">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'payables.concept' | translate }}</mat-label>
+        <input matInput formControlName="concept" />
+        @if (isInvalidControl(payableForm, 'concept')) {
+          <mat-error>{{ errorMessageForControl(payableForm, 'concept') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.type' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          @for (type of types; track type) {
+            <mat-option [value]="type">{{ 'payableType.' + type | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.totalAmount' | translate }}</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput class="amount" formControlName="totalAmount" type="number" min="0" step="0.01" />
+        @if (isInvalidControl(payableForm, 'totalAmount')) {
+          <mat-error>{{ errorMessageForControl(payableForm, 'totalAmount') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.supplierOptional' | translate }}</mat-label>
+        <mat-select formControlName="supplierId">
+          <mat-option [value]="null">{{ 'payables.noSupplier' | translate }}</mat-option>
+          @for (supplier of suppliers(); track supplier.id) {
+            <mat-option [value]="supplier.id">{{ supplier.businessName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.projectOptional' | translate }}</mat-label>
+        <mat-select formControlName="projectId">
+          <mat-option [value]="null">{{ 'payables.noProject' | translate }}</mat-option>
+          @for (project of projects(); track project.id) {
+            <mat-option [value]="project.id">{{ project.code }} · {{ project.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <h2 class="form-card-title"><mat-icon>calendar_month</mat-icon>{{ 'payables.expectedWeek' | translate }}</h2>
+    <div class="week-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.year' | translate }}</mat-label>
+        <mat-select formControlName="year">
+          @for (year of years; track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.month' | translate }}</mat-label>
+        <mat-select formControlName="month">
+          @for (month of months; track month) {
+            <mat-option [value]="month">{{ monthLabel(month) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'payables.week' | translate }}</mat-label>
+        <mat-select formControlName="week">
+          @for (week of weeks(); track week.number) {
+            <mat-option [value]="week.number">
+              {{ 'payables.weekOption' | translate: { number: week.number, from: (week.startDate() | date: 'dd/MM'), to: (week.endDate() | date: 'dd/MM') } }}
+            </mat-option>
+          }
+        </mat-select>
+        @if (isInvalidControl(payableForm, 'week')) {
+          <mat-error>{{ errorMessageForControl(payableForm, 'week') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <p class="info">
+      <mat-icon>info</mat-icon>
+      {{ 'payables.cashFlowNote' | translate }}
+    </p>
+  </section>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading()">
+      <mat-icon>save</mat-icon>
+      {{ 'common.save' | translate }}
+    </button>
+  </div>
+</form>

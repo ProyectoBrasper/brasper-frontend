@@ -1,0 +1,169 @@
+@let current = loan();
+<app-page-header
+  [title]="current ? current.counterparty : ('nav.loans' | translate)"
+  [subtitle]="
+    current
+      ? ('loans.detailSubtitle' | translate: { date: (current.disbursedOn | date: 'dd/MM/yyyy'), account: accountLabel(current) || '—' })
+      : ''
+  "
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.loans' | translate, link: '/treasury/loans' },
+    { label: current ? current.counterparty : '…' }
+  ]"
+>
+  @if (canWrite() && current && unscheduled() > 0) {
+    <button mat-stroked-button type="button" (click)="onSchedule(current)">
+      <mat-icon>calendar_add_on</mat-icon>
+      {{ 'loans.scheduleInstallment' | translate }}
+    </button>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (current; as shown) {
+  <div class="chips">
+    <span class="type" [class.received]="shown.isReceived()" [class.granted]="!shown.isReceived()">
+      <mat-icon aria-hidden="true">{{ shown.isReceived() ? 'south_west' : 'north_east' }}</mat-icon>
+      {{ 'loanType.' + shown.type | translate }}
+    </span>
+    <app-status-chip [status]="shown.status" labelPrefix="loanStatus." />
+  </div>
+
+  <section class="summary">
+    <article class="summary-card">
+      <span class="summary-label">{{ 'loans.principal' | translate }}</span>
+      <span class="summary-value amount">{{ shown.principal | money: shown.currency }}</span>
+      <span class="summary-note">{{ 'loans.principalNote' | translate }}</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'loans.interestRate' | translate }}</span>
+      <span class="summary-value amount">{{ rateLabel(shown) }}</span>
+      <span class="summary-note">{{ 'loans.rateNote' | translate }}</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'loans.totalInterest' | translate }}</span>
+      <span class="summary-value amount">{{ shown.totalInterest | money: shown.currency }}</span>
+      <span class="summary-note">{{ 'loans.totalInterestNote' | translate }}</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">{{ 'loans.outstanding' | translate }}</span>
+      <span class="summary-value amount" [class.pending]="!shown.isPaid()">
+        {{ shown.outstandingBalance | money: shown.currency }}
+      </span>
+      <mat-progress-bar mode="determinate" [value]="paidShare() * 100" [attr.aria-label]="'loans.paidShare' | translate" />
+      <span class="progress-label">
+        <span>
+          {{
+            installments().length
+              ? ('loans.paidCount' | translate: { paid: paidCount(), total: installments().length })
+              : ('loans.noInstallmentsYet' | translate)
+          }}
+        </span>
+        <strong>{{ paidShare() | percent: '1.0-1' }}</strong>
+      </span>
+    </article>
+  </section>
+
+  @if (unscheduled() > 0) {
+    <p class="info">
+      <mat-icon>info</mat-icon>
+      {{ 'loans.unscheduledNotice' | translate: { amount: (unscheduled() | money: shown.currency) } }}
+    </p>
+  }
+
+  <section class="table-card">
+    <h2 class="table-title">
+      {{ 'loans.installments' | translate }}
+      <span class="count">{{ 'loans.installmentsCount' | translate: { count: installments().length } }}</span>
+    </h2>
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="table-scroll">
+      <table mat-table class="data-table cards-on-mobile" [dataSource]="installments()">
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef class="number">{{ 'loans.number' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.number' | translate" *matCellDef="let installment; let i = index" class="number">{{ i + 1 }}</td>
+          <td mat-footer-cell *matFooterCellDef class="totals-label">{{ 'loans.totals' | translate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueOn">
+          <th mat-header-cell *matHeaderCellDef>{{ 'loans.dueOn' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.dueOn' | translate" *matCellDef="let installment" [class.overdue]="isOverdue(installment)">
+            {{ installment.dueOn | date: 'dd/MM/yyyy' }}
+          </td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+
+        <ng-container matColumnDef="principal">
+          <th mat-header-cell *matHeaderCellDef class="amount">{{ 'loans.principal' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.principal' | translate" *matCellDef="let installment" class="amount">{{ installment.principal | money: shown.currency }}</td>
+          <td mat-footer-cell *matFooterCellDef class="amount">{{ totals().principal | money: shown.currency }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="interest">
+          <th mat-header-cell *matHeaderCellDef class="amount">{{ 'loans.interest' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.interest' | translate" *matCellDef="let installment" class="amount muted">{{ installment.interest | money: shown.currency }}</td>
+          <td mat-footer-cell *matFooterCellDef class="amount">{{ totals().interest | money: shown.currency }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef class="amount">{{ 'loans.total' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.total' | translate" *matCellDef="let installment" class="amount strong">{{ installment.total() | money: shown.currency }}</td>
+          <td mat-footer-cell *matFooterCellDef class="amount primary">{{ totals().total | money: shown.currency }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>{{ 'loans.status' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.status' | translate" *matCellDef="let installment">
+            <app-status-chip [status]="installment.status(today)" labelPrefix="installmentStatus." />
+          </td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+
+        <ng-container matColumnDef="paidOn">
+          <th mat-header-cell *matHeaderCellDef>{{ 'loans.paidOn' | translate }}</th>
+          <td mat-cell [attr.data-label]="'loans.paidOn' | translate" *matCellDef="let installment" class="muted">
+            {{ installment.paidOn ? (installment.paidOn | date: 'dd/MM/yyyy') : '—' }}
+          </td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">{{ 'common.actions' | translate }}</th>
+          <td mat-cell *matCellDef="let installment; let i = index" class="actions-col">
+            @if (!installment.paid) {
+              <button
+                mat-flat-button
+                type="button"
+                (click)="onPay(shown, installment, i + 1)"
+                [attr.aria-label]="'loans.payInstallmentFor' | translate: { number: i + 1 }"
+              >
+                {{ 'loans.payInstallment' | translate }}
+              </button>
+            }
+          </td>
+          <td mat-footer-cell *matFooterCellDef></td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+        <tr mat-row *matRowDef="let installment; columns: columns()" [class.pending-row]="!installment.paid"></tr>
+        <tr mat-footer-row *matFooterRowDef="columns()" class="totals-row"></tr>
+        <tr class="mat-mdc-row empty-row" *matNoDataRow>
+          <td class="mat-mdc-cell" [attr.colspan]="columns().length">
+            {{ (loading() ? 'common.loading' : 'loans.noInstallments') | translate }}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </section>
+} @else if (!loading()) {
+  <p class="empty">{{ 'loans.notFound' | translate }}</p>
+}

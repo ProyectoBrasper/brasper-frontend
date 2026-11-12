@@ -1,0 +1,74 @@
+<app-page-header
+  [title]="'nav.ledgerAccounts' | translate"
+  [subtitle]="'ledgerAccounts.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.ledgerAccounts' | translate }]"
+>
+  @if (canWrite()) {
+    <button mat-flat-button type="button" (click)="onCreate()">
+      <mat-icon>add</mat-icon>
+      {{ 'ledgerAccounts.new' | translate }}
+    </button>
+  }
+</app-page-header>
+
+<mat-chip-listbox
+  class="type-filter"
+  hideSingleSelectionIndicator
+  [attr.aria-label]="'ledgerAccounts.filterByType' | translate"
+  (change)="typeFilter.set($event.value ?? null)"
+>
+  @for (type of types; track type) {
+    <mat-chip-option [value]="type" [selected]="typeFilter() === type">
+      {{ (type ? 'ledgerAccountType.' + type : 'ledgerAccounts.all') | translate }} ({{ count(type) }})
+    </mat-chip-option>
+  }
+</mat-chip-listbox>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort>
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.code' | translate }}</th>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.code' | translate" *matCellDef="let account" class="mono code">{{ account.code }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.name' | translate }}</th>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.name' | translate" *matCellDef="let account" class="name">{{ account.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.type' | translate }}</th>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.type' | translate" *matCellDef="let account">
+          <span [class]="'tag ' + account.type.toLowerCase()">{{ 'ledgerAccountType.' + account.type | translate }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="active">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'ledgerAccounts.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'ledgerAccounts.status' | translate" *matCellDef="let account">
+          <app-status-chip [status]="account.active ? 'ACTIVE' : 'INACTIVE'" labelPrefix="ledgerAccountStatus." />
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let account; columns: displayedColumns" [class.inactive]="!account.active"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          {{ (loading() ? 'common.loading' : 'ledgerAccounts.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[20, 50]" [pageSize]="20" />
+</section>

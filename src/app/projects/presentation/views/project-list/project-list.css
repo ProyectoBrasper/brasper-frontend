@@ -1,0 +1,53 @@
+.status-filter {
+  display: block;
+  margin-bottom: 16px;
+  --mat-chip-elevated-selected-container-color: var(--mat-sys-primary);
+  --mat-chip-selected-label-text-color: var(--mat-sys-on-primary);
+  --mat-chip-elevated-container-color: var(--mat-sys-surface);
+  --mat-chip-outline-color: var(--mat-sys-outline-variant);
+  --mat-chip-label-text-color: var(--mat-sys-on-surface-variant);
+}
+
+table {
+  min-width: 1040px;
+}
+
+.code {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.name {
+  font-weight: 600;
+  white-space: normal;
+  min-width: 220px;
+}
+
+.client {
+  font-weight: 400;
+}
+
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+}
+
+.progress mat-progress-bar {
+  flex: 1;
+  --mat-progress-bar-track-height: 6px;
+  --mat-progress-bar-active-indicator-height: 6px;
+  border-radius: 3px;
+}
+
+.progress .amount {
+  width: 44px;
+  text-align: right;
+  font: var(--mat-sys-label-medium);
+}
+
+.danger {
+  color: var(--mat-sys-error);
+  --mat-menu-item-icon-color: var(--mat-sys-error);
+}

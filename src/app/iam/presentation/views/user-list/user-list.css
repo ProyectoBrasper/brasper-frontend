@@ -1,0 +1,24 @@
+table {
+  min-width: 720px;
+}
+
+tr.inactive td {
+  color: var(--mat-sys-outline);
+}
+
+.role-chip {
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ROLE_ADMIN { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+.ROLE_MANAGEMENT { background: #efe4fb; color: #5b2c91; }
+.ROLE_ACCOUNTING { background: var(--brasper-success-container); color: var(--brasper-success); }
+.ROLE_ENGINEER { background: var(--brasper-warning-container); color: var(--brasper-warning); }
+
+tr.inactive .role-chip {
+  opacity: 0.6;
+}

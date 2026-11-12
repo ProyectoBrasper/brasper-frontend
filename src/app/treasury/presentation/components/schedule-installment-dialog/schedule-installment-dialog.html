@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>{{ 'loans.scheduleInstallment' | translate }}</h2>
+<form [formGroup]="installmentForm" (ngSubmit)="onSave()" novalidate>
+  <mat-dialog-content>
+    <p class="summary">
+      {{ loan.counterparty }}<br />
+      {{ 'loans.unscheduled' | translate }}: <strong>{{ unscheduled | money: loan.currency }}</strong>
+    </p>
+
+    <div class="grid">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'loans.dueOn' | translate }}</mat-label>
+        <input matInput formControlName="dueOn" [matDatepicker]="duePicker" [min]="minDueOn" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="duePicker" />
+        <mat-datepicker #duePicker />
+        @if (isInvalidControl(installmentForm, 'dueOn')) {
+          <mat-error>
+            {{
+              installmentForm.controls.dueOn.hasError('matDatepickerMin')
+                ? ('loans.dueBeforeDisbursement' | translate)
+                : errorMessageForControl(installmentForm, 'dueOn')
+            }}
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'loans.principal' | translate }}</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput class="amount" formControlName="principal" type="number" min="0" [max]="unscheduled" step="0.01" />
+        @if (isInvalidControl(installmentForm, 'principal')) {
+          <mat-error>
+            {{
+              installmentForm.controls.principal.hasError('max')
+                ? ('loans.exceedsUnscheduled' | translate: { amount: (unscheduled | money: loan.currency) })
+                : errorMessageForControl(installmentForm, 'principal')
+            }}
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'loans.interest' | translate }}</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput class="amount" formControlName="interest" type="number" min="0" step="0.01" />
+        <mat-hint>{{ 'loans.interestHint' | translate }}</mat-hint>
+        @if (isInvalidControl(installmentForm, 'interest')) {
+          <mat-error>{{ errorMessageForControl(installmentForm, 'interest') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <p class="total">
+      <span>{{ 'loans.installmentTotal' | translate }}</span>
+      <strong>{{ total() | money: loan.currency }}</strong>
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit">{{ 'loans.scheduleInstallment' | translate }}</button>
+  </mat-dialog-actions>
+</form>

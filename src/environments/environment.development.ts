@@ -1,0 +1,29 @@
+/**
+ * Development configuration: the fake API (json-server, `npm run start:api`) on port 3000.
+ */
+export const environment = {
+  production: false,
+  platformProviderApiBaseUrl: 'http://localhost:3000/api/v1',
+  platformProviderSignInEndpointPath: '/auth/sign-in',
+  platformProviderSignUpEndpointPath: '/auth/sign-up',
+  platformProviderPasswordEndpointPath: '/auth/password',
+  platformProviderUsersEndpointPath: '/users',
+  platformProviderClientsEndpointPath: '/clients',
+  platformProviderProjectsEndpointPath: '/projects',
+  platformProviderInvoicesEndpointPath: '/invoices',
+  platformProviderScheduledCollectionsEndpointPath: '/scheduled-collections',
+  platformProviderTaxParametersEndpointPath: '/tax-parameters',
+  platformProviderLedgerAccountsEndpointPath: '/ledger-accounts',
+  platformProviderJournalEntriesEndpointPath: '/journal-entries',
+  platformProviderTaxReturnsEndpointPath: '/tax-returns',
+  platformProviderFixedAssetsEndpointPath: '/fixed-assets',
+  platformProviderReportsEndpointPath: '/reports',
+  platformProviderBankAccountsEndpointPath: '/bank-accounts',
+  platformProviderPartnersEndpointPath: '/partners',
+  platformProviderPayablesEndpointPath: '/payables',
+  platformProviderLoansEndpointPath: '/loans',
+  platformProviderSuppliersEndpointPath: '/suppliers',
+  platformProviderExpensesEndpointPath: '/expenses',
+  platformProviderEmployeesEndpointPath: '/employees',
+  platformProviderFixedCostsEndpointPath: '/fixed-costs',
+};

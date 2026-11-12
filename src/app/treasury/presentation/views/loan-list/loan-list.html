@@ -1,0 +1,103 @@
+<app-page-header
+  [title]="'nav.loans' | translate"
+  [subtitle]="'loans.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.loans' | translate }]"
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/treasury/loans/new">
+      <mat-icon>add</mat-icon>
+      {{ 'loans.new' | translate }}
+    </a>
+  }
+</app-page-header>
+
+<mat-chip-listbox
+  class="type-filter"
+  hideSingleSelectionIndicator
+  [attr.aria-label]="'loans.filterByType' | translate"
+  (change)="typeFilter.set($event.value ?? null)"
+>
+  @for (type of types; track type) {
+    <mat-chip-option [value]="type" [selected]="typeFilter() === type">
+      {{ (type ? 'loans.filter.' + type : 'loans.all') | translate }} ({{ count(type) }})
+    </mat-chip-option>
+  }
+</mat-chip-listbox>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort>
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'loans.type' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.type' | translate" *matCellDef="let loan">
+          <span class="type" [class.received]="loan.isReceived()" [class.granted]="!loan.isReceived()">
+            <mat-icon aria-hidden="true">{{ loan.isReceived() ? 'south_west' : 'north_east' }}</mat-icon>
+            {{ 'loanType.' + loan.type | translate }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="counterparty">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'loans.counterparty' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.counterparty' | translate" *matCellDef="let loan" class="counterparty" [title]="loan.counterparty">{{ loan.counterparty }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="principal">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'loans.principal' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.principal' | translate" *matCellDef="let loan" class="amount">{{ loan.principal | money: loan.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="interestRate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'loans.interestRate' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.interestRate' | translate" *matCellDef="let loan" class="amount">{{ rateLabel(loan) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="disbursedOn">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'loans.disbursedOn' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.disbursedOn' | translate" *matCellDef="let loan">{{ loan.disbursedOn | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="bankAccountId">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'loans.account' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.account' | translate" *matCellDef="let loan">{{ accountLabel(loan) || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="outstandingBalance">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'loans.outstanding' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.outstanding' | translate" *matCellDef="let loan" class="amount" [class.strong]="!loan.isPaid()" [class.muted]="loan.isPaid()">
+          {{ loan.outstandingBalance | money: loan.currency }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'loans.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'loans.status' | translate" *matCellDef="let loan"><app-status-chip [status]="loan.status" labelPrefix="loanStatus." /></td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        class="clickable"
+        *matRowDef="let loan; columns: displayedColumns"
+        [class.paid]="loan.isPaid()"
+        [routerLink]="['/treasury/loans', loan.id]"
+      ></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          {{ (loading() ? 'common.loading' : 'loans.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" />
+</section>

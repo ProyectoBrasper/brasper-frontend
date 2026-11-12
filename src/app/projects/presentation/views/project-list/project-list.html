@@ -1,0 +1,131 @@
+<app-page-header
+  [title]="'nav.projects' | translate"
+  [subtitle]="'projects.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.projects' | translate }]"
+>
+  @if (canWrite()) {
+    <button mat-flat-button type="button" (click)="onAdd()">
+      <mat-icon>add</mat-icon>
+      {{ 'projects.new' | translate }}
+    </button>
+  }
+</app-page-header>
+
+<mat-chip-listbox
+  class="status-filter"
+  hideSingleSelectionIndicator
+  [attr.aria-label]="'projects.filterByStatus' | translate"
+  (change)="statusFilter.set($event.value ?? null)"
+>
+  @for (status of statuses; track status) {
+    <mat-chip-option [value]="status" [selected]="statusFilter() === status">
+      {{ (status ? 'status.' + status : 'common.all') | translate }} ({{ count(status) }})
+    </mat-chip-option>
+  }
+</mat-chip-listbox>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort matSortActive="code" matSortDirection="asc">
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'projects.code' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.code' | translate" *matCellDef="let project" class="mono code">{{ project.code }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'projects.name' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.name' | translate" *matCellDef="let project" class="name">{{ project.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="client">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'projects.client' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.client' | translate" *matCellDef="let project">
+          @if (getClientName(project.clientId); as clientName) {
+            <span class="entity-name client">
+              <span class="entity-avatar" aria-hidden="true">{{ initials(clientName) }}</span>
+              {{ clientName }}
+            </span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="budget">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'projects.budget' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.budget' | translate" *matCellDef="let project" class="amount">{{ project.budget | money: project.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="accumulatedProgress">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'projects.progress' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.progress' | translate" *matCellDef="let project">
+          <span class="progress">
+            <mat-progress-bar mode="determinate" [value]="project.accumulatedProgress * 100" />
+            <span class="amount">{{ project.accumulatedProgress | percent: '1.0-1' }}</span>
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'projects.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'projects.status' | translate" *matCellDef="let project"><app-status-chip [status]="project.status" /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">
+          <span class="cdk-visually-hidden">{{ 'common.actions' | translate }}</span>
+        </th>
+        <td mat-cell *matCellDef="let project" class="actions-col">
+          <button
+            mat-icon-button
+            type="button"
+            (click)="$event.stopPropagation()"
+            [matMenuTriggerFor]="actionsMenu"
+            [attr.aria-label]="'common.actionsFor' | translate: { name: project.code }"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #actionsMenu="matMenu" xPosition="before">
+            <button mat-menu-item (click)="onView(project.id)">
+              <mat-icon>visibility</mat-icon>
+              <span>{{ 'projects.view' | translate }}</span>
+            </button>
+            @if (canChange(project)) {
+              <button mat-menu-item (click)="onEdit(project.id)">
+                <mat-icon>edit</mat-icon>
+                <span>{{ 'common.edit' | translate }}</span>
+              </button>
+              @if (project.canStart()) {
+                <button mat-menu-item (click)="onStart(project)">
+                  <mat-icon>play_arrow</mat-icon>
+                  <span>{{ 'projects.start' | translate }}</span>
+                </button>
+              }
+              <button mat-menu-item class="danger" (click)="onCancelProject(project)">
+                <mat-icon>block</mat-icon>
+                <span>{{ 'projects.cancel' | translate }}</span>
+              </button>
+            }
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row class="clickable" *matRowDef="let project; columns: displayedColumns" (click)="onView(project.id)"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          {{ (loading() ? 'common.loading' : 'projects.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" />
+</section>

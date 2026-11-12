@@ -61,36 +61,105 @@ package "app" {
         EXPENSE
       }
       LedgerAccount --> LedgerAccountType : has
+      note right of LedgerAccount
+        code: 2 a 10 dígitos, empieza con 1–9 (AccountCode), único (409).
+        El backend no expone desactivar ni editar: active siempre llega en true.
+        Plan sembrado por el backend (V31–V37): 10, 12, 122, 16, 33, 39, 40111,
+        4017, 42, 45, 455, 50, 59, 60, 62, 63, 65, 67, 68, 70, 77.
+      end note
+
+      class CreateLedgerAccountCommand <<Command>> {
+        +code: string
+        +name: string
+        +type: LedgerAccountType
+      }
 
       class JournalEntry <<Entity>> {
         - #id: number
         - #entryDate: string
+        - #year: number
+        - #month: number
         - #description: string
-        - #source: string
+        - #source: EntrySource
         - #sourceId: number | null
         - #reversed: boolean
+        - #reversalOfId: number | null
+        - #totalDebit: number
+        - #totalCredit: number
+        - #currency: string
         - #lines: JournalLine[]
         +id: number
         +entryDate: string
+        +year: number
+        +month: number
         +description: string
-        +source: string
+        +source: EntrySource
         +sourceId: number | null
         +reversed: boolean
+        +reversalOfId: number | null
+        +totalDebit: number
+        +totalCredit: number
+        +currency: string
         +lines: JournalLine[]
-        +totalDebit(): number
-        +totalCredit(): number
+        +isManual(): boolean
+        +isReversal(): boolean
+        +canBeReversed(): boolean
         +isBalanced(): boolean
       }
+      enum EntrySource {
+        MANUAL
+        INVOICE_ISSUED
+        INVOICE_PAYMENT
+        EXPENSE
+        FIXED_COST_PAYMENT
+        PAYABLE_REGISTERED
+        PAYABLE_PAYMENT
+        LOAN_DISBURSEMENT
+        LOAN_INSTALLMENT
+        PARTNER_CONTRIBUTION
+        FUNDS_TRANSFER
+        PROJECT_COMPLETED
+        TAX_RETURN
+        DEPRECIATION
+        FIXED_ASSET_ACQUISITION
+        FIXED_ASSET_DISPOSAL
+        REVERSAL
+      }
+      JournalEntry --> EntrySource : has
+      note right of JournalEntry
+        Los automáticos traen una descripción genérica en inglés ("Invoice issued", "Expense"…):
+        la UI muestra el origen traducido; la reversa, "Reversa del asiento N° X".
+        Revertir crea un asiento nuevo (source REVERSAL, líneas invertidas, reversalOfId) y marca
+        el original reversed; no se revierte una reversa ni un revertido (409).
+      end note
+
+      class ReverseJournalEntryCommand <<Command>> {
+        +reversedOn: string
+      }
+      class RegisterJournalEntryCommand <<Command>> {
+        +entryDate: string
+        +description: string
+        +lines: JournalLineCommand[]
+      }
+      class JournalLineCommand <<Command>> {
+        +accountCode: string
+        +debit: number
+        +credit: number
+        +projectId: number | null
+      }
+      RegisterJournalEntryCommand *-- "2..*" JournalLineCommand : contains
       JournalEntry ..|> app.shared.domain.model.BaseEntity : implements
 
       class JournalLine <<ValueObject>> {
         - #accountCode: string
         - #debit: number
         - #credit: number
+        - #currency: string
         - #projectId: number | null
         +accountCode: string
         +debit: number
         +credit: number
+        +currency: string
         +projectId: number | null
       }
       JournalEntry *-- "2..*" JournalLine : contains
@@ -105,16 +174,24 @@ package "app" {
         +lines: TrialBalanceLine[]
         +totalDebit(): number
         +totalCredit(): number
+        +totalBalance(): number
         +isBalanced(): boolean
+        +isEmpty(): boolean
       }
       class TrialBalanceLine <<ValueObject>> {
         +accountCode: string
         +accountName: string
         +debit: number
         +credit: number
-        +balance: number
+        +currency: string
+        +balance(): number
       }
       TrialBalance *-- "*" TrialBalanceLine : contains
+      note right of TrialBalance
+        Movimientos del mes (backend totalsByPeriod), no saldos acumulados: solo cuentas con
+        movimiento, por código como texto; incluye revertidos y reversas. El backend no manda
+        totales ni saldo: balance() = debe − haber, los totales se suman aquí.
+      end note
 
       class TaxReturn <<Entity>> {
         - #id: number
@@ -137,10 +214,24 @@ package "app" {
         +igvPayable: number
         +incomeTaxPrepayment: number
         +totalPayable: number
+        +currency: string
         +status: TaxReturnStatus
         +paidOn: string | null
+        +bankAccountId: number | null
+        +period(): Period
+        +isPaid(): boolean
+        +nextCarriedCredit(): number
       }
       TaxReturn ..|> app.shared.domain.model.BaseEntity : implements
+      note right of TaxReturn
+        Se prepara con los asientos del mes (IGV ventas = haber 40111, compras = debe 40111,
+        ventas = haber − debe 70) y el crédito que dejó el mes anterior; las cifras quedan fijas
+        (no hay recalcular ni borrar). Pagar la pasa de DRAFT a PAID (FILED en el mismo paso).
+      end note
+      class PayTaxReturnCommand <<Command>> {
+        +paidOn: string
+        +bankAccountId: number
+      }
 
       enum TaxReturnStatus {
         DRAFT
@@ -164,6 +255,17 @@ package "app" {
         +effectiveFrom: string
       }
       TaxParameters ..|> app.shared.domain.model.BaseEntity : implements
+      note right of TaxParameters
+        Filas inmutables por vigencia (sin editar ni borrar); las tasas son fracciones (0.18 = 18 %).
+        Las vigentes a una fecha son la de vigencia más reciente <= esa fecha. Solo ADMIN registra.
+      end note
+      class SetTaxParametersCommand <<Command>> {
+        +effectiveFrom: string
+        +igv: number
+        +detraction: number
+        +retention: number
+        +incomeTaxPrepayment: number
+      }
 
       class FixedAsset <<Entity>> {
         - #id: number
@@ -172,16 +274,25 @@ package "app" {
         - #taxableBase: number
         - #igv: number
         - #total: number
+        - #currency: string
         - #usefulLifeMonths: number
+        - #expenseId: number | null
+        - #disposedOn: string | null
+        - #monthlyDepreciation: number
+        - #accumulatedDepreciation: number
         - #bookValue: number
-        - #disposed: boolean
         +id: number
         +description: string
         +acquiredOn: string
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +usefulLifeMonths: number
+        +expenseId: number | null
+        +disposedOn: string | null
+        +monthlyDepreciation: number
+        +accumulatedDepreciation: number
         +bookValue: number
         +disposed: boolean
       }
@@ -196,21 +307,28 @@ package "app" {
         +type: string
         +active: boolean
       }
+      class MoneyResource <<Resource>> {
+        +amount: number
+        +currency: string
+      }
       class JournalEntryResource <<Resource>> {
         +id: number
         +entryDate: string
+        +year: number
+        +month: number
         +description: string
         +source: string
         +sourceId: number | null
         +reversed: boolean
-        +lines: Array<{accountCode: string, debit: number, credit: number, projectId: number | null}>
+        +reversalOfId: number | null
+        +totalDebit: MoneyResource
+        +totalCredit: MoneyResource
+        +lines: Array<{accountCode: string, debit: MoneyResource, credit: MoneyResource, projectId: number | null}>
       }
       class TrialBalanceResource <<Resource>> {
         +year: number
         +month: number
-        +lines: TrialBalanceLine[]
-        +totalDebit: number
-        +totalCredit: number
+        +lines: Array<{accountCode: string, accountName: string, debit: MoneyResource, credit: MoneyResource}>
       }
       class TaxReturnResource <<Resource>> {
         +id: number
@@ -224,7 +342,11 @@ package "app" {
         +totalPayable: number
         +status: string
         +paidOn: string | null
+        +bankAccountId: number | null
       }
+      note right of TaxReturnResource
+        Los montos llegan como MoneyResource {amount, currency}.
+      end note
       class TaxParametersResource <<Resource>> {
         +id: number
         +igv: number
@@ -240,9 +362,13 @@ package "app" {
         +taxableBase: number
         +igv: number
         +total: number
+        +currency: string
         +usefulLifeMonths: number
+        +expenseId: number | null
+        +disposedOn: string | null
+        +monthlyDepreciation: number
+        +accumulatedDepreciation: number
         +bookValue: number
-        +disposed: boolean
       }
       class LedgerAccountsResponse <<Response>> {
       }
@@ -284,28 +410,41 @@ package "app" {
         +toResourceFromEntity(entity: FixedAsset): FixedAssetResource
       }
 
+      class CreateLedgerAccountRequest <<Request>> {
+        +code: string
+        +name: string
+        +type: string
+      }
       class LedgerAccountsApiEndpoint {
+        +createAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount>
       }
       class JournalEntriesApiEndpoint {
         +getByPeriod(year: number, month: number): Observable<JournalEntry[]>
-        +reverse(id: number): Observable<JournalEntry>
+        +register(command: RegisterJournalEntryCommand): Observable<JournalEntry>
+        +reverse(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry>
       }
       class TrialBalanceApiEndpoint {
         -endpointUrl: string
         -assembler: TrialBalanceAssembler
         +getByPeriod(year: number, month: number): Observable<TrialBalance>
       }
+      note right of TrialBalanceApiEndpoint
+        GET /ledger-accounts/trial-balance?year=&month= (ambos obligatorios).
+      end note
       class TaxReturnsApiEndpoint {
-        +getByPeriod(year: number, month: number): Observable<TaxReturn | null>
+        +getHistory(): Observable<TaxReturn[]>
         +prepare(year: number, month: number): Observable<TaxReturn>
-        +pay(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
+        +pay(id: number, command: PayTaxReturnCommand): Observable<TaxReturn>
       }
       class TaxParametersApiEndpoint {
-        +getCurrent(): Observable<TaxParameters>
+        +getAt(date: string): Observable<TaxParameters | null>
+        +getHistory(): Observable<TaxParameters[]>
+        +set(command: SetTaxParametersCommand): Observable<TaxParameters>
       }
       class FixedAssetsApiEndpoint {
-        +dispose(id: number): Observable<FixedAsset>
-        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+        +register(command: RegisterFixedAssetCommand): Observable<FixedAsset>
+        +dispose(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]>
       }
 
       class AccountingApi {
@@ -316,20 +455,21 @@ package "app" {
         -taxParametersEndpoint: TaxParametersApiEndpoint
         -fixedAssetsEndpoint: FixedAssetsApiEndpoint
         +getLedgerAccounts(): Observable<LedgerAccount[]>
-        +createLedgerAccount(account: LedgerAccount): Observable<LedgerAccount>
+        +createLedgerAccount(command: CreateLedgerAccountCommand): Observable<LedgerAccount>
         +getJournalEntries(year: number, month: number): Observable<JournalEntry[]>
-        +registerJournalEntry(entry: JournalEntry): Observable<JournalEntry>
-        +reverseJournalEntry(id: number): Observable<JournalEntry>
+        +registerJournalEntry(command: RegisterJournalEntryCommand): Observable<JournalEntry>
+        +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): Observable<JournalEntry>
         +getTrialBalance(year: number, month: number): Observable<TrialBalance>
-        +getTaxReturn(year: number, month: number): Observable<TaxReturn | null>
+        +getTaxReturns(): Observable<TaxReturn[]>
         +prepareTaxReturn(year: number, month: number): Observable<TaxReturn>
-        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): Observable<TaxReturn>
-        +getCurrentTaxParameters(): Observable<TaxParameters>
-        +setTaxParameters(parameters: TaxParameters): Observable<TaxParameters>
+        +payTaxReturn(id: number, command: PayTaxReturnCommand): Observable<TaxReturn>
+        +getTaxParametersAt(date: string): Observable<TaxParameters | null>
+        +getTaxParametersHistory(): Observable<TaxParameters[]>
+        +setTaxParameters(command: SetTaxParametersCommand): Observable<TaxParameters>
         +getFixedAssets(): Observable<FixedAsset[]>
-        +registerFixedAsset(asset: FixedAsset): Observable<FixedAsset>
-        +disposeFixedAsset(id: number): Observable<FixedAsset>
-        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry>
+        +registerFixedAsset(command: RegisterFixedAssetCommand): Observable<FixedAsset>
+        +disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): Observable<FixedAsset>
+        +runMonthlyDepreciation(year: number, month: number): Observable<JournalEntry[]>
       }
 
       LedgerAccountResource ..|> app.shared.infrastructure.BaseResource : implements
@@ -350,7 +490,7 @@ package "app" {
       LedgerAccountsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       JournalEntriesApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       TrialBalanceApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
-      TaxReturnsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
+      TaxReturnsApiEndpoint --|> app.shared.infrastructure.ErrorHandlingEnabledBaseType : extends
       TaxParametersApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       FixedAssetsApiEndpoint --|> app.shared.infrastructure.BaseApiEndpoint : extends
       AccountingApi --|> app.shared.infrastructure.BaseApi : extends
@@ -375,34 +515,39 @@ package "app" {
         -ledgerAccountsSignal: WritableSignal<LedgerAccount[]>
         -journalEntriesSignal: WritableSignal<JournalEntry[]>
         -trialBalanceSignal: WritableSignal<TrialBalance | null>
-        -taxReturnSignal: WritableSignal<TaxReturn | null>
+        -taxReturnsSignal: WritableSignal<TaxReturn[]>
         -taxParametersSignal: WritableSignal<TaxParameters | null>
         -fixedAssetsSignal: WritableSignal<FixedAsset[]>
-        -loadingSignal: WritableSignal<boolean>
+        -pendingSignal: WritableSignal<number>
         -errorSignal: WritableSignal<string | null>
         +ledgerAccounts: Signal<LedgerAccount[]>
         +journalEntries: Signal<JournalEntry[]>
         +trialBalance: Signal<TrialBalance | null>
-        +taxReturn: Signal<TaxReturn | null>
+        +taxReturns: Signal<TaxReturn[]>
         +taxParameters: Signal<TaxParameters | null>
         +fixedAssets: Signal<FixedAsset[]>
         +loading: Signal<boolean>
         +error: Signal<string | null>
+        +canWrite: Signal<boolean>
         +loadLedgerAccounts(): void
-        +createLedgerAccount(account: LedgerAccount): void
-        +loadJournalEntries(year: number, month: number): void
-        +registerJournalEntry(entry: JournalEntry): void
-        +reverseJournalEntry(id: number): void
-        +loadTrialBalance(year: number, month: number): void
-        +loadTaxReturn(year: number, month: number): void
-        +prepareTaxReturn(year: number, month: number): void
-        +payTaxReturn(id: number, paidOn: string, bankAccountId: number): void
-        +loadTaxParameters(): void
-        +setTaxParameters(parameters: TaxParameters): void
+        +createLedgerAccount(command: CreateLedgerAccountCommand): void
+        +countLedgerAccountsByType(type: LedgerAccountType | null): number
+        +loadJournalEntries(period: Period): void
+        +registerJournalEntry(command: RegisterJournalEntryCommand): void
+        +reverseJournalEntry(id: number, command: ReverseJournalEntryCommand): void
+        +getLedgerAccountByCode(code: string): LedgerAccount | undefined
+        +loadTrialBalance(period: Period): void
+        +loadTaxReturns(): void
+        +prepareTaxReturn(period: Period): void
+        +payTaxReturn(id: number, command: PayTaxReturnCommand, onPaid?: () => void): void
+        +loadTaxParametersAt(date: string): void
+        +loadTaxParametersHistory(): void
+        +setTaxParameters(command: SetTaxParametersCommand, onSaved?: () => void): void
+        +canSetTaxParameters: Signal<boolean>
         +loadFixedAssets(): void
-        +registerFixedAsset(asset: FixedAsset): void
-        +disposeFixedAsset(id: number): void
-        +runMonthlyDepreciation(year: number, month: number): void
+        +registerFixedAsset(command: RegisterFixedAssetCommand): void
+        +disposeFixedAsset(id: number, command: DisposeFixedAssetCommand): void
+        +runMonthlyDepreciation(period: Period): void
       }
       AccountingStore --> AccountingApi : uses
       AccountingStore --> LedgerAccount : manages
@@ -416,21 +561,44 @@ package "app" {
     package "presentation" {
       package "components" {
         class JournalLinesEditor <<Component>> {
-          +linesArray: InputSignal<FormArray>
-          +ledgerAccounts: InputSignal<LedgerAccount[]>
-          +totalDebit: Signal<number>
-          +totalCredit: Signal<number>
-          +difference: Signal<number>
+          +lines: InputSignal<FormArray<JournalLineForm>>
+          +accounts: InputSignal<LedgerAccount[]>
+          +projects: InputSignal<Project[]>
+          +totals: Signal<{debit: number, credit: number, difference: number}>
           +onAddLine(): void
           +onRemoveLine(index: number): void
+        }
+        note right of JournalLinesEditor
+          oneSideValidator (por línea): debe XOR haber > 0; escribir en un lado borra el otro.
+          doubleEntryValidator (FormArray): mínimo 2 líneas, debe = haber y total > 0.
+          "Agregar línea" propone la diferencia en el lado que falta; nunca menos de 2 líneas.
+        end note
+        class ReverseJournalEntryDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<ReverseJournalEntryDialog>
+          +data: {entry: JournalEntry, description: string}
+          +minDate: Date | null
+          +reversalForm: FormGroup
+          +onSave(): void
+          +onCancel(): void
+        }
+        class CreateLedgerAccountDialog <<Component>> {
+          -formBuilder: FormBuilder
+          -dialogRef: MatDialogRef<CreateLedgerAccountDialog>
+          +data: {codesInUse: string[]}
+          +accountForm: FormGroup
+          +types: LedgerAccountType[]
+          +onSave(): void
+          +onCancel(): void
         }
         class PayTaxReturnDialog <<Component>> {
           -formBuilder: FormBuilder
           -dialogRef: MatDialogRef<PayTaxReturnDialog>
-          -treasuryStore: TreasuryStore
-          +data: {taxReturn: TaxReturn}
+          +data: {taxReturn: TaxReturn, label: string, bankAccounts: BankAccount[]}
+          +accounts: BankAccount[]
+          +nothingToPay: boolean
           +paymentForm: FormGroup
-          +bankAccounts: Signal<BankAccount[]>
+          +negativeBalance: Signal<number | null>
           +onSave(): void
           +onCancel(): void
         }
@@ -443,27 +611,39 @@ package "app" {
           +dataSource: Signal<MatTableDataSource<LedgerAccount>>
           +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
+          +types: (LedgerAccountType | null)[]
           +typeFilter: WritableSignal<LedgerAccountType | null>
-          +onAdd(): void
+          +canWrite: Signal<boolean>
+          +count(type: LedgerAccountType | null): number
+          +onCreate(): void
         }
         class JournalEntryList <<Component>> {
           -accountingStore: AccountingStore
+          -projectsStore: ProjectsStore
           -dialog: MatDialog
-          -router: Router
           +period: WritableSignal<Period>
-          +displayedColumns: string[]
+          +columns: Signal<string[]>
           +dataSource: Signal<MatTableDataSource<JournalEntry>>
           +paginator: Signal<MatPaginator>
-          +expandedEntry: WritableSignal<JournalEntry | null>
-          +onReverse(id: number): void
-          +onAdd(): void
+          +year: InputSignal<string | undefined>
+          +month: InputSignal<string | undefined>
+          +open: InputSignal<string | undefined>
+          +expandedId: WritableSignal<number | null>
+          +description(entry: JournalEntry): string
+          +accountName(code: string): string
+          +projectCode(projectId: number | null): string
+          +toggle(entry: JournalEntry): void
+          +onReverse(entry: JournalEntry): void
         }
         class JournalEntryForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          -projectsStore: ProjectsStore
           -router: Router
           +entryForm: FormGroup
-          +ledgerAccounts: Signal<LedgerAccount[]>
+          +accounts: Signal<LedgerAccount[]>
+          +projects: Signal<Project[]>
+          +canSubmit: Signal<boolean>
           +onSubmit(): void
           +onCancel(): void
         }
@@ -471,44 +651,71 @@ package "app" {
           -accountingStore: AccountingStore
           +period: WritableSignal<Period>
           +trialBalance: Signal<TrialBalance | null>
+          +lines: Signal<TrialBalanceLine[]>
           +displayedColumns: string[]
         }
         class TaxReturnList <<Component>> {
           -accountingStore: AccountingStore
+          -treasuryStore: TreasuryStore
           -dialog: MatDialog
           +period: WritableSignal<Period>
-          +taxReturn: Signal<TaxReturn | null>
+          +taxReturn: Signal<TaxReturn | undefined>
+          +previous: Signal<TaxReturn | undefined>
+          +prepaymentRate: Signal<number | null>
           +onPrepare(): void
-          +onPay(): void
+          +onPay(taxReturn: TaxReturn): void
         }
         class TaxParametersForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          +history: Signal<TaxParameters[]>
+          +current: Signal<TaxParameters | undefined>
+          +canSet: Signal<boolean>
           +parametersForm: FormGroup
-          +current: Signal<TaxParameters | null>
+          +retroactive: Signal<boolean>
+          +status(parameters: TaxParameters): string
           +onSubmit(): void
+          +onReset(): void
+        }
+        class DisposeFixedAssetDialog <<Component>> {
+          +asset: FixedAsset
+          +disposalForm: FormGroup
+          +preview: Signal<DisposalPreview | null>
+          +backdated: Signal<boolean>
+          +onSave(): void
+          +onCancel(): void
         }
         class FixedAssetList <<Component>> {
           -accountingStore: AccountingStore
           -dialog: MatDialog
-          -router: Router
           +displayedColumns: string[]
+          +period: WritableSignal<Period>
+          +filter: WritableSignal<string>
           +dataSource: Signal<MatTableDataSource<FixedAsset>>
-          +onDispose(id: number): void
+          +charge: Signal<MonthlyCharge>
+          +posted: Signal<boolean>
+          +canPost: Signal<boolean>
+          +onDispose(asset: FixedAsset): void
           +onRunDepreciation(): void
-          +onAdd(): void
         }
         class FixedAssetForm <<Component>> {
           -formBuilder: FormBuilder
           -accountingStore: AccountingStore
+          -expensesStore: ExpensesStore
           -router: Router
           +assetForm: FormGroup
+          +expenses: Signal<Expense[]>
+          +fromExpense: Signal<boolean>
+          +parameters: Signal<TaxParameters | undefined>
+          +preview: Signal<FixedAssetPreview>
           +onSubmit(): void
           +onCancel(): void
         }
       }
 
       LedgerAccountList --> AccountingStore : uses
+      LedgerAccountList --> CreateLedgerAccountDialog : opens
+      LedgerAccountList --> app.shared.presentation.components.StatusChip : contains
       JournalEntryList --> AccountingStore : uses
       JournalEntryForm --> AccountingStore : uses
       TrialBalanceView --> AccountingStore : uses
@@ -521,12 +728,14 @@ package "app" {
       FixedAssetForm --|> app.shared.presentation.BaseForm : extends
       JournalEntryForm --> JournalLinesEditor : contains
       TaxReturnList --> PayTaxReturnDialog : opens
-      PayTaxReturnDialog --> app.treasury.application.TreasuryStore : reads bank accounts
+      TaxReturnList --> app.treasury.application.TreasuryStore : reads and refreshes bank accounts
       JournalEntryList --> app.shared.presentation.components.PeriodSelector : contains
       TrialBalanceView --> app.shared.presentation.components.PeriodSelector : contains
       TaxReturnList --> app.shared.presentation.components.PeriodSelector : contains
-      JournalEntryList --> app.shared.presentation.components.ConfirmDialog : opens
+      JournalEntryList --> ReverseJournalEntryDialog : opens
       FixedAssetList --> app.shared.presentation.components.ConfirmDialog : opens
+      FixedAssetList --> DisposeFixedAssetDialog : opens
+      FixedAssetList --> app.shared.presentation.components.PeriodSelector : contains
       TaxReturnList --> app.shared.presentation.components.StatusChip : contains
     }
   }
@@ -537,9 +746,25 @@ note bottom
   cada línea con debe XOR haber; JournalLinesEditor muestra la diferencia en tiempo real.
   Los asientos automáticos (facturas, gastos, pagos) los genera el backend; aquí solo se ven y se
   pueden revertir. AccountingStore.taxParameters lo leen billing y expenses para la vista previa
-  de IGV / detracción / retención. Solo ROLE_ACCOUNTING y ROLE_ADMIN acceden a este módulo.
-  json-server: /ledger-accounts, /journal-entries?entryDate_gte=&entryDate_lte=,
-  /trial-balances?year=&month=, /tax-returns?year=&month=, /tax-parameters, /fixed-assets
-  (con fake API trial-balances y tax-returns se guardan ya calculados).
+  de IGV / detracción / retención. Leen ADMIN, ACCOUNTING y MANAGEMENT; escriben ADMIN y ACCOUNTING
+  (AREA_ROLES.accountingWrite); los parámetros tributarios los registra solo ADMIN.
+  Asientos: GET /journal-entries?year=&month= (por fecha y número), filas expandibles con sus líneas;
+  revertir POST /{id}/reversal {reversedOn} responde con la reversa (puede caer en otro mes): se relee el mes.
+  La fecha de la reversa no puede ser anterior a la del asiento (regla solo de la UI).
+  Parámetros tributarios: vigentes hoy (de GET /tax-parameters/history), formulario solo ADMIN
+  (AREA_ROLES.taxParametersWrite) precargado con las vigentes y vigencia el 1.º del mes siguiente, aviso si la
+  fecha es anterior a hoy, fecha repetida rechazada antes del 409, e historial con Vigente / Programada / Anterior.
+  Declaraciones: GET /tax-returns/history (más reciente primero) da el mes y el anterior; POST /tax-returns
+  {year, month} prepara (409 si ya existe; aviso si el mes anterior no tiene, el crédito saldría 0); POST
+  /{id}/payment {paidOn, bankAccountId}: asiento TAX_RETURN y salida de caja "Tax return payment" si hay total.
+  Balance de comprobación: sumas del mes por cuenta con saldo = debe − haber (negativo en rojo), totales y chip
+  Cuadrado / No cuadra; la API falsa lo calcula desde los asientos guardados, como el backend.
+  Asiento manual (POST /journal-entries, source MANUAL): solo cuentas activas, proyecto opcional (el backend
+  no lo valida), Registrar deshabilitado mientras no cuadre; al registrar se abre la lista en el mes del
+  asiento con él desplegado (?year=&month=&open=).
+  Plan de cuentas: GET /ledger-accounts (por código, como texto) y POST (nueva cuenta en un diálogo; el
+  tipo se propone por el primer dígito: 1–3 activo, 4 pasivo, 5 patrimonio, 6 gasto, 7 ingreso).
+  json-server: /ledger-accounts, /journal-entries?year=&month=, /ledger-accounts/trial-balance?year=&month=
+  (calculado desde los asientos), /tax-returns?year=&month=, /tax-parameters, /fixed-assets.
 end note
 @enduml

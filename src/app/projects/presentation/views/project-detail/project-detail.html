@@ -1,0 +1,136 @@
+@if (project(); as project) {
+  <app-page-header
+    [title]="project.name"
+    [subtitle]="project.code + (client() ? ' · ' + client()!.businessName : '')"
+    [breadcrumbs]="[
+      { label: 'common.home' | translate, link: '/' },
+      { label: 'nav.projects' | translate, link: '/projects' },
+      { label: project.code }
+    ]"
+  >
+    @if (canWrite() && project.isOpen()) {
+      <button mat-button type="button" class="danger" (click)="onCancelProject()">
+        {{ 'projects.cancel' | translate }}
+      </button>
+      <button mat-stroked-button type="button" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        {{ 'common.edit' | translate }}
+      </button>
+      @if (project.canStart()) {
+        <button mat-flat-button type="button" (click)="onStart()">
+          <mat-icon>play_arrow</mat-icon>
+          {{ 'projects.start' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button type="button" (click)="onRegisterProgress()">
+          <mat-icon>add</mat-icon>
+          {{ 'projects.registerProgress' | translate }}
+        </button>
+      }
+    }
+  </app-page-header>
+
+  <div class="status-row">
+    <app-status-chip [status]="project.status" />
+  </div>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <section class="kpis">
+    <article class="kpi">
+      <span class="kpi-label">{{ 'projects.budget' | translate }}</span>
+      <span class="kpi-value amount">{{ project.budget | money: project.currency }}</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi-label">{{ 'projects.estimatedDirectCost' | translate }}</span>
+      <span class="kpi-value amount">{{ project.estimatedDirectCost | money: project.currency }}</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi-label">{{ 'projects.participationAndCommission' | translate }}</span>
+      <span class="kpi-value amount">
+        {{ project.participation | percent: '1.0-2' }} · {{ project.salesCommissionRate | percent: '1.1-2' }}
+      </span>
+    </article>
+    <article class="kpi">
+      <span class="kpi-label">{{ 'projects.accumulatedProgress' | translate }}</span>
+      <span class="kpi-value amount">{{ project.accumulatedProgress | percent: '1.0-2' }}</span>
+      <mat-progress-bar mode="determinate" [value]="project.accumulatedProgress * 100" />
+      <span class="kpi-hint">
+        {{ 'projects.remaining' | translate }} {{ project.remainingProgress() | percent: '1.0-2' }}
+      </span>
+    </article>
+  </section>
+
+  <section class="form-card info-card">
+    <h2 class="form-card-title">{{ 'projects.projectData' | translate }}</h2>
+    <div class="info-grid">
+      <div class="info-main">
+        <div class="field full">
+          <span class="label">{{ 'projects.description' | translate }}</span>
+          <span class="value">{{ project.description || '—' }}</span>
+        </div>
+        <div class="field">
+          <span class="label">{{ 'projects.currency' | translate }}</span>
+          <span class="value strong">{{ project.currency }}</span>
+        </div>
+        <div class="field">
+          <span class="label">{{ 'projects.quotedOn' | translate }}</span>
+          <span class="value strong">{{ project.quotedOn | date: 'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+      @if (client(); as client) {
+        <dl class="client-box">
+          <dt>{{ 'projects.client' | translate }}</dt>
+          <dd class="strong">{{ client.businessName }}</dd>
+          <dt>{{ 'clients.ruc' | translate }}</dt>
+          <dd class="mono">{{ client.ruc }}</dd>
+          <dt>{{ 'clients.contactName' | translate }}</dt>
+          <dd>{{ client.contactName || '—' }}</dd>
+          <dt>{{ 'clients.phone' | translate }}</dt>
+          <dd>{{ client.phone || '—' }}</dd>
+          <dt>{{ 'clients.email' | translate }}</dt>
+          <dd>{{ client.email || '—' }}</dd>
+        </dl>
+      }
+    </div>
+  </section>
+
+  <div class="tables">
+    <section class="form-card">
+      <h2 class="form-card-title">{{ 'projects.progressRecords' | translate }}</h2>
+      <app-progress-record-table [records]="progressRecords()" />
+    </section>
+
+    <section class="form-card">
+      <div class="card-head">
+        <h2 class="form-card-title">{{ 'projects.costEstimates' | translate }}</h2>
+        @if (canAddEstimate()) {
+          <button mat-button type="button" class="tonal" (click)="onSetCostEstimate(null)">
+            <mat-icon>add</mat-icon>
+            {{ 'projects.addEstimate' | translate }}
+          </button>
+        }
+      </div>
+      <app-cost-estimate-table
+        [estimates]="costEstimates()"
+        [currency]="project.currency"
+        [canEdit]="canEditEstimates()"
+        (edit)="onSetCostEstimate($event)"
+      />
+    </section>
+  </div>
+} @else if (loading()) {
+  <p class="placeholder">{{ 'common.loading' | translate }}</p>
+} @else {
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+}

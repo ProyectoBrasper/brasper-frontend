@@ -1,0 +1,178 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: -12px 0 20px;
+}
+
+/* Icon and word, so the direction never relies on color alone. */
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.type mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.received {
+  color: var(--brasper-success);
+}
+
+.granted {
+  color: var(--brasper-info);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.summary-label {
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.summary-value {
+  font: 700 22px/28px var(--brasper-font-brand);
+  white-space: nowrap;
+}
+
+.summary-value.pending {
+  color: var(--brasper-warning);
+}
+
+.summary-note {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.summary-card mat-progress-bar {
+  --mat-progress-bar-track-height: 8px;
+  --mat-progress-bar-active-indicator-height: 8px;
+  margin-top: 4px;
+  border-radius: 4px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.progress-label strong {
+  color: var(--brasper-success);
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+  font: var(--mat-sys-body-medium);
+}
+
+.table-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 18px 20px;
+  font: 600 18px/24px var(--brasper-font-brand);
+}
+
+.count {
+  padding: 1px 10px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 9999px;
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+table {
+  min-width: 900px;
+}
+
+.number {
+  width: 56px;
+  text-align: center;
+}
+
+.overdue {
+  color: var(--brasper-danger);
+  font-weight: 600;
+}
+
+.pending-row td {
+  font-weight: 500;
+}
+
+.totals-row td {
+  background: var(--mat-sys-surface-container);
+  font-weight: 700;
+}
+
+.totals-label {
+  text-align: left;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.primary {
+  color: var(--mat-sys-primary);
+}
+
+.actions-col {
+  width: 140px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.empty {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 1099px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+}

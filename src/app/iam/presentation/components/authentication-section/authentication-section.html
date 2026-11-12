@@ -1,0 +1,41 @@
+@if (isSignedIn()) {
+  @if (mode() === 'toolbar') {
+    <button
+      type="button"
+      class="user-inline"
+      [title]="currentUsername()"
+      [matMenuTriggerFor]="userMenu"
+      [attr.aria-label]="'auth.userMenu' | translate: { name: fullName() }"
+    >
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <span class="name">{{ fullName() }}</span>
+      <mat-icon aria-hidden="true">expand_more</mat-icon>
+    </button>
+    <mat-menu #userMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="onChangePassword()">
+        <mat-icon>lock_reset</mat-icon>
+        <span>{{ 'auth.changePassword' | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="onSignOut()">
+        <mat-icon>logout</mat-icon>
+        <span>{{ 'auth.signOut' | translate }}</span>
+      </button>
+    </mat-menu>
+  } @else {
+    <div class="user-card">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <div class="user-text">
+        <span class="name">{{ fullName() }}</span>
+        @if (role(); as currentRole) {
+          <span class="role-chip">{{ 'role.' + currentRole | translate }}</span>
+        }
+      </div>
+    </div>
+    <button type="button" class="sign-out" (click)="onSignOut()">
+      <mat-icon>logout</mat-icon>
+      <span>{{ 'auth.signOut' | translate }}</span>
+    </button>
+  }
+} @else {
+  <button mat-flat-button type="button" (click)="onSignIn()">{{ 'auth.signIn' | translate }}</button>
+}

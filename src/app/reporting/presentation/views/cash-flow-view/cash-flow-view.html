@@ -1,0 +1,88 @@
+@let current = report();
+<app-page-header
+  [title]="'nav.cashFlow' | translate"
+  [subtitle]="'cashFlow.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.cashFlow' | translate }]"
+/>
+
+<div class="controls">
+  <mat-button-toggle-group
+    hideSingleSelectionIndicator
+    [attr.aria-label]="'cashFlow.modeLabel' | translate"
+    [value]="mode()"
+    (change)="mode.set($event.value)"
+  >
+    @for (option of modes; track option) {
+      <mat-button-toggle [value]="option">{{ 'cashFlow.mode.' + option | translate }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @switch (mode()) {
+    @case ('WEEKLY') {
+      <app-period-selector [(period)]="period" />
+    }
+    @case ('MONTHLY') {
+      <div class="range">
+        <span>{{ 'cashFlow.from' | translate }}</span>
+        <app-period-selector [period]="from()" (periodChange)="onFromChange($event)" />
+        <span>{{ 'cashFlow.to' | translate }}</span>
+        <app-period-selector [period]="to()" (periodChange)="onToChange($event)" />
+      </div>
+    }
+    @default {
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        [attr.aria-label]="'cashFlow.weeksLabel' | translate"
+        [value]="weeks()"
+        (change)="weeks.set($event.value)"
+      >
+        @for (option of weekOptions; track option) {
+          <mat-button-toggle [value]="option">{{ 'cashFlow.weeks' | translate: { number: option } }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    }
+  }
+</div>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (current?.hasNegativeBalance) {
+  <div class="page-alert" role="alert">
+    <mat-icon>warning</mat-icon>
+    <span>{{ 'cashFlow.negativeAlert' | translate }}</span>
+  </div>
+}
+
+@if (current) {
+  <section class="chart-card">
+    <app-cash-flow-chart [lines]="current.lines" [granularity]="granularity()" />
+  </section>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (current) {
+    <app-cash-flow-table [lines]="current.lines" [granularity]="granularity()" />
+  }
+</section>
+
+@if (current) {
+  <p class="final">
+    {{ 'cashFlow.finalBalance' | translate }}
+    <strong class="amount" [class.negative]="current.finalBalance < 0">{{ current.finalBalance | money }}</strong>
+  </p>
+}
+
+<ul class="notes">
+  <li><mat-icon>info</mat-icon>{{ 'cashFlow.overdueNote' | translate }}</li>
+  @if (startsInFuture()) {
+    <li><mat-icon>info</mat-icon>{{ 'cashFlow.futureNote' | translate }}</li>
+  }
+</ul>

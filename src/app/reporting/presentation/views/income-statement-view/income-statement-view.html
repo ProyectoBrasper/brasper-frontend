@@ -1,0 +1,44 @@
+<app-page-header
+  [title]="'nav.incomeStatement' | translate"
+  [subtitle]="'incomeStatement.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.incomeStatement' | translate }]"
+>
+  <div class="range">
+    <span>{{ 'incomeStatement.from' | translate }}</span>
+    <app-period-selector [period]="from()" (periodChange)="onFromChange($event)" />
+    <span>{{ 'incomeStatement.to' | translate }}</span>
+    <app-period-selector [period]="to()" (periodChange)="onToChange($event)" />
+  </div>
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="statement">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  @if (statement()) {
+    <table>
+      <tbody>
+        @for (row of rows(); track row.label) {
+          <tr [class]="row.kind">
+            <th scope="row">{{ 'incomeStatement.' + row.label | translate }}</th>
+            <td [class.negative]="row.kind !== 'item' && row.amount < 0">{{ row.amount | money }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
+
+@if (statement()) {
+  <p class="note">
+    <mat-icon>info</mat-icon>
+    <span>{{ 'incomeStatement.incomeTaxNote' | translate }}</span>
+  </p>
+}

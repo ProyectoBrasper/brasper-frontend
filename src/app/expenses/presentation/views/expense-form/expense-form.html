@@ -1,0 +1,248 @@
+<app-page-header
+  [title]="(isEdit() ? 'expenses.edit' : 'expenses.new') | translate"
+  [subtitle]="(isEdit() ? 'expenses.editSubtitle' : 'expenses.newSubtitle') | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.expenses' | translate, link: '/expenses' },
+    { label: (isEdit() ? 'common.edit' : 'common.new') | translate }
+  ]"
+/>
+
+<form class="layout" [formGroup]="expenseForm" (ngSubmit)="onSubmit()" novalidate>
+  <div class="main">
+    @if (error()) {
+      <div class="page-alert" role="alert">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+    @if (blocked()) {
+      <div class="page-notice" role="status">
+        <mat-icon>lock</mat-icon>
+        <span>{{ 'expenses.noPaymentAccess' | translate }}</span>
+      </div>
+    }
+
+    <section class="form-card">
+      <h2 class="form-card-title"><mat-icon>payments</mat-icon>{{ 'expenses.expenseData' | translate }}</h2>
+      <div class="form-grid">
+        @if (isEdit()) {
+          <div class="read-only full">
+            <span class="label">{{ 'expenses.spentOn' | translate }}</span>
+            <span class="value">{{ expense()?.spentOn | date: 'dd/MM/yyyy' }}</span>
+          </div>
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'expenses.spentOn' | translate }}</mat-label>
+            <input matInput formControlName="spentOn" [matDatepicker]="spentOnPicker" placeholder="dd/mm/aaaa" />
+            <mat-datepicker-toggle matIconSuffix [for]="spentOnPicker" />
+            <mat-datepicker #spentOnPicker />
+            @if (isInvalidControl(expenseForm, 'spentOn')) {
+              <mat-error>{{ errorMessageForControl(expenseForm, 'spentOn') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'expenses.supplier' | translate }}</mat-label>
+            <mat-select formControlName="supplierId">
+              <mat-option [value]="null">{{ 'expenses.noSupplier' | translate }}</mat-option>
+              @for (supplier of suppliers(); track supplier.id) {
+                <mat-option [value]="supplier.id">{{ supplier.businessName }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'expenses.project' | translate }}</mat-label>
+          <mat-select formControlName="projectId">
+            <mat-option [value]="null">{{ 'expenses.generalExpense' | translate }}</mat-option>
+            @for (project of projects(); track project.id) {
+              <mat-option [value]="project.id">{{ project.code }} · {{ project.name }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'expenses.projectHint' | translate }}</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'expenses.category' | translate }}</mat-label>
+          <mat-select formControlName="category">
+            @for (category of categories; track category) {
+              <mat-option [value]="category">{{ 'costCategory.' + category | translate }}</mat-option>
+            }
+          </mat-select>
+          @if (isInvalidControl(expenseForm, 'category')) {
+            <mat-error>{{ errorMessageForControl(expenseForm, 'category') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'expenses.description' | translate }}</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+          @if (isInvalidControl(expenseForm, 'description')) {
+            <mat-error>{{ errorMessageForControl(expenseForm, 'description') }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </section>
+
+    @if (isEdit()) {
+      <section class="form-card">
+        <h2 class="form-card-title"><mat-icon>lock</mat-icon>{{ 'expenses.fixedData' | translate }}</h2>
+        @if (expense(); as expense) {
+          <dl class="facts">
+            <dt>{{ 'expenses.supplier' | translate }}</dt>
+            <dd>{{ supplierName() || '—' }}</dd>
+            <dt>{{ 'expenses.voucher' | translate }}</dt>
+            <dd>
+              {{ 'voucherType.' + expense.voucherType | translate }}
+              @if (expense.voucherNumber) {
+                <span class="mono">{{ expense.voucherNumber }}</span>
+              }
+            </dd>
+            <dt>{{ 'expenses.paymentMethod' | translate }}</dt>
+            <dd>
+              {{ 'paymentMethod.' + expense.paymentMethod | translate }}
+              @if (accountOfExpense(); as account) {
+                · {{ accountLabel(account) }}
+              }
+              @if (partnerOfExpense(); as partner) {
+                · {{ partner.fullName }}
+              }
+            </dd>
+            <dt>{{ 'expenses.paymentStatus' | translate }}</dt>
+            <dd>{{ 'status.' + expense.paymentStatus | translate }}</dd>
+          </dl>
+          <p class="note">
+            <mat-icon>info</mat-icon>
+            {{ 'expenses.fixedNote' | translate }}
+          </p>
+        }
+      </section>
+    } @else {
+      <section class="form-card">
+        <h2 class="form-card-title"><mat-icon>receipt_long</mat-icon>{{ 'expenses.voucherAndAmount' | translate }}</h2>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'expenses.voucherType' | translate }}</mat-label>
+            <mat-select formControlName="voucherType">
+              @for (type of voucherTypes; track type) {
+                <mat-option [value]="type">{{ 'voucherType.' + type | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'expenses.voucherNumber' | translate }}</mat-label>
+            <input matInput class="mono" formControlName="voucherNumber" maxlength="30" />
+            @if (isInvalidControl(expenseForm, 'voucherNumber')) {
+              <mat-error>{{ errorMessageForControl(expenseForm, 'voucherNumber') }}</mat-error>
+            } @else if (expenseForm.controls.voucherNumber.disabled) {
+              <mat-hint>{{ 'expenses.noVoucherHint' | translate }}</mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ (isInvoice() && expenseForm.controls.amountIncludesIgv.value ? 'expenses.amountWithIgv' : 'expenses.amount') | translate }}</mat-label>
+            <span matTextPrefix>S/&nbsp;</span>
+            <input matInput class="amount" formControlName="amount" type="number" min="0" step="0.01" />
+            @if (isInvalidControl(expenseForm, 'amount')) {
+              <mat-error>{{ errorMessageForControl(expenseForm, 'amount') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="toggle-row" [class.disabled]="expenseForm.controls.amountIncludesIgv.disabled">
+          <span>
+            <strong id="includesIgv-label">{{ 'expenses.amountIncludesIgv' | translate }}</strong>
+            <small id="includesIgv-hint">{{ (isInvoice() ? 'expenses.amountIncludesIgvHint' : 'expenses.onlyInvoiceHint') | translate }}</small>
+          </span>
+          <mat-slide-toggle
+            formControlName="amountIncludesIgv"
+            aria-labelledby="includesIgv-label"
+            aria-describedby="includesIgv-hint"
+          />
+        </div>
+      </section>
+
+      <section class="form-card">
+        <h2 class="form-card-title"><mat-icon>account_balance_wallet</mat-icon>{{ 'expenses.payment' | translate }}</h2>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'expenses.paymentMethod' | translate }}</mat-label>
+            <mat-select formControlName="paymentMethod">
+              @for (method of paymentMethods; track method) {
+                <mat-option [value]="method">{{ 'paymentMethod.' + method | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (withAccount()) {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'expenses.account' | translate }}</mat-label>
+              <mat-select formControlName="bankAccountId">
+                @for (account of accounts(); track account.id) {
+                  <mat-option [value]="account.id">{{ accountLabel(account) }}</mat-option>
+                }
+              </mat-select>
+              @if (isInvalidControl(expenseForm, 'bankAccountId')) {
+                <mat-error>{{ errorMessageForControl(expenseForm, 'bankAccountId') }}</mat-error>
+              }
+            </mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'expenses.partner' | translate }}</mat-label>
+              <mat-select formControlName="partnerId">
+                @for (partner of partners(); track partner.id) {
+                  <mat-option [value]="partner.id">{{ partner.fullName }}</mat-option>
+                }
+              </mat-select>
+              @if (isInvalidControl(expenseForm, 'partnerId')) {
+                <mat-error>{{ errorMessageForControl(expenseForm, 'partnerId') }}</mat-error>
+              }
+            </mat-form-field>
+          }
+        </div>
+
+        <div class="toggle-row">
+          <span>
+            <strong id="paid-label">{{ 'expenses.paid' | translate }}</strong>
+            <small id="paid-hint">{{ 'expenses.paidHint' | translate }}</small>
+          </span>
+          <mat-slide-toggle formControlName="paid" aria-labelledby="paid-label" aria-describedby="paid-hint" />
+        </div>
+      </section>
+    }
+
+    <div class="actions">
+      <button mat-stroked-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+      <button mat-flat-button type="submit" [disabled]="loading() || blocked()">
+        {{ (isEdit() ? 'common.saveChanges' : 'expenses.register') | translate }}
+      </button>
+    </div>
+  </div>
+
+  <aside class="preview form-card">
+    <h2 class="form-card-title"><mat-icon>calculate</mat-icon>{{ 'expenses.amountsPreview' | translate }}</h2>
+    <dl class="amounts">
+      <dt>{{ 'expenses.taxableBase' | translate }}</dt>
+      <dd class="amount">{{ preview().taxableBase | money: currency() }}</dd>
+      <dt>{{ 'expenses.igv' | translate }}</dt>
+      <dd class="amount">{{ preview().igv | money: currency() }}</dd>
+      <dt class="strong total">{{ 'expenses.total' | translate }}</dt>
+      <dd class="amount strong total">{{ preview().total | money: currency() }}</dd>
+    </dl>
+    <p class="note">
+      <mat-icon>info</mat-icon>
+      @if (isEdit()) {
+        {{ 'expenses.previewNoteEdit' | translate }}
+      } @else if (!isInvoice()) {
+        {{ 'expenses.previewNoteNoIgv' | translate }}
+      } @else if (taxParameters(); as parameters) {
+        {{ 'expenses.previewNote' | translate: { date: (parameters.effectiveFrom | date: 'dd/MM/yyyy') } }}
+      } @else {
+        {{ 'expenses.previewNoteStandard' | translate }}
+      }
+    </p>
+  </aside>
+</form>

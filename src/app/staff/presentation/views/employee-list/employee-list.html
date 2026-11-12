@@ -1,0 +1,102 @@
+<app-page-header
+  [title]="'nav.employees' | translate"
+  [subtitle]="'employees.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.employees' | translate }]"
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/staff/employees/new">
+      <mat-icon>add</mat-icon>
+      {{ 'employees.new' | translate }}
+    </a>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort matSortActive="fullName" matSortDirection="asc">
+      <ng-container matColumnDef="fullName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'employees.fullName' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.fullName' | translate" *matCellDef="let employee">
+          <span class="entity-name">
+            <span class="entity-avatar" aria-hidden="true">{{ initials(employee.fullName) }}</span>
+            {{ employee.fullName }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="dni">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'employees.dni' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.dni' | translate" *matCellDef="let employee" class="mono">{{ employee.dni }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="position">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'employees.position' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.position' | translate" *matCellDef="let employee">{{ employee.position || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monthlySalary">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'employees.monthlySalary' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.monthlySalary' | translate" *matCellDef="let employee" class="amount">{{ employee.monthlySalary | money: employee.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="hiredOn">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'employees.hiredOn' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.hiredOn' | translate" *matCellDef="let employee">{{ employee.hiredOn | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'employees.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'employees.status' | translate" *matCellDef="let employee">
+          <app-status-chip [status]="employee.active ? 'ACTIVE' : 'TERMINATED'" />
+          @if (employee.terminatedOn) {
+            <span class="terminated-on">{{ employee.terminatedOn | date: 'dd/MM/yyyy' }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">{{ 'common.actions' | translate }}</th>
+        <td mat-cell *matCellDef="let employee" class="actions-col">
+          @if (employee.active) {
+            <a
+              mat-icon-button
+              [routerLink]="['/staff/employees', employee.id, 'edit']"
+              [matTooltip]="'common.edit' | translate"
+              [attr.aria-label]="'common.editItem' | translate: { name: employee.fullName }"
+            >
+              <mat-icon>edit</mat-icon>
+            </a>
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onTerminate(employee)"
+              [matTooltip]="'employees.terminate' | translate"
+              [attr.aria-label]="'employees.terminateItem' | translate: { name: employee.fullName }"
+            >
+              <mat-icon>person_off</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let employee; columns: displayedColumns()" [class.inactive]="!employee.active"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns().length">
+          {{ (loading() ? 'common.loading' : 'employees.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" />
+</section>

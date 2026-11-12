@@ -1,0 +1,54 @@
+<app-page-header
+  [title]="'journalEntries.new' | translate"
+  [subtitle]="'journalEntries.formSubtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.journalEntries' | translate, link: '/accounting/journal-entries' },
+    { label: 'common.new' | translate }
+  ]"
+/>
+
+<form [formGroup]="entryForm" (ngSubmit)="onSubmit()" novalidate>
+  <section class="form-card">
+    <h2 class="form-card-title"><mat-icon>description</mat-icon>{{ 'journalEntries.data' | translate }}</h2>
+
+    @if (error()) {
+      <div class="page-alert" role="alert">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <div class="head-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'journalEntries.date' | translate }}</mat-label>
+        <input matInput formControlName="entryDate" [matDatepicker]="datePicker" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+        <mat-datepicker #datePicker />
+        @if (isInvalidControl(entryForm, 'entryDate')) {
+          <mat-error>{{ errorMessageForControl(entryForm, 'entryDate') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'journalEntries.description' | translate }}</mat-label>
+        <input matInput formControlName="description" maxlength="300" />
+        @if (isInvalidControl(entryForm, 'description')) {
+          <mat-error>{{ errorMessageForControl(entryForm, 'description') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="form-card">
+    <app-journal-lines-editor [lines]="entryForm.controls.lines" [accounts]="accounts()" [projects]="projects()" />
+  </section>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="!canSubmit()">
+      <mat-icon>save</mat-icon>
+      {{ 'journalEntries.register' | translate }}
+    </button>
+  </div>
+</form>

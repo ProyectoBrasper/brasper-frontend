@@ -1,0 +1,127 @@
+<app-page-header
+  [title]="'nav.scheduledCollections' | translate"
+  [subtitle]="'collections.subtitle' | translate"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.invoices' | translate, link: '/billing/invoices' },
+    { label: 'nav.scheduledCollections' | translate }
+  ]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (canWrite()) {
+    <button mat-flat-button type="button" (click)="onSchedule()">
+      <mat-icon>add</mat-icon>
+      {{ 'collections.schedule' | translate }}
+    </button>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="collections()">
+      <ng-container matColumnDef="week">
+        <th mat-header-cell *matHeaderCellDef>{{ 'collections.week' | translate }}</th>
+        <td mat-cell [attr.data-label]="'collections.week' | translate" *matCellDef="let collection">
+          <span class="strong">{{ 'collections.weekNumber' | translate: { number: collection.week } }}</span>
+          <small class="sub">
+            {{ collection.cashFlowWeek.startDate() | date: 'dd' }}–{{ collection.cashFlowWeek.endDate() | date: 'dd MMM' }}
+          </small>
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="strong">{{ 'collections.totalExpected' | translate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="project">
+        <th mat-header-cell *matHeaderCellDef>{{ 'invoices.project' | translate }}</th>
+        <td mat-cell [attr.data-label]="'invoices.project' | translate" *matCellDef="let collection" class="project">
+          @if (project(collection.projectId); as project) {
+            <span class="mono strong">{{ project.code }}</span>
+            <small class="sub">{{ project.name }}</small>
+          }
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="invoice">
+        <th mat-header-cell *matHeaderCellDef>{{ 'collections.invoice' | translate }}</th>
+        <td mat-cell [attr.data-label]="'collections.invoice' | translate" *matCellDef="let collection" class="mono">
+          @if (invoiceNumber(collection.invoiceId); as number) {
+            <a [routerLink]="['/billing/invoices', collection.invoiceId]">{{ number }}</a>
+          } @else {
+            —
+          }
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="expectedAmount">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'collections.expectedAmount' | translate }}</th>
+        <td mat-cell [attr.data-label]="'collections.expectedAmount' | translate" *matCellDef="let collection" class="amount" [class.muted]="collection.status === 'CANCELLED'">
+          {{ collection.expectedAmount | money: collection.currency }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="amount strong">{{ total() | money }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>{{ 'invoices.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'invoices.status' | translate" *matCellDef="let collection">
+          <app-status-chip [status]="collection.status" labelPrefix="scheduleStatus." />
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="notes">
+        <th mat-header-cell *matHeaderCellDef>{{ 'invoices.notes' | translate }}</th>
+        <td mat-cell [attr.data-label]="'invoices.notes' | translate" *matCellDef="let collection" class="notes">{{ collection.notes || '—' }}</td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">
+          <span class="cdk-visually-hidden">{{ 'common.actions' | translate }}</span>
+        </th>
+        <td mat-cell *matCellDef="let collection" class="actions-col">
+          @if (collection.isOpen()) {
+            <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="actionsMenu"
+              [attr.aria-label]="'common.actionsFor' | translate: { name: ('collections.weekNumber' | translate: { number: collection.week }) }"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #actionsMenu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="onReschedule(collection)">
+                <mat-icon>event_repeat</mat-icon>
+                <span>{{ 'collections.reschedule' | translate }}</span>
+              </button>
+              <button mat-menu-item class="danger" (click)="onCancelCollection(collection)">
+                <mat-icon>block</mat-icon>
+                <span>{{ 'collections.cancel' | translate }}</span>
+              </button>
+            </mat-menu>
+          }
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+      <tr mat-row *matRowDef="let collection; columns: columns()"></tr>
+      <tr mat-footer-row *matFooterRowDef="columns()" [class.hidden]="collections().length === 0"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="columns().length">
+          {{ (loading() ? 'common.loading' : 'collections.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>

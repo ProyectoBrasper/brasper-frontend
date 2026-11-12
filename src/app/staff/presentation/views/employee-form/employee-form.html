@@ -1,0 +1,87 @@
+<app-page-header
+  [title]="(isEdit() ? 'employees.edit' : 'employees.new') | translate"
+  [subtitle]="isEdit() ? employee()?.fullName ?? '' : ('employees.formSubtitle' | translate)"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.employees' | translate, link: '/staff/employees' },
+    { label: (isEdit() ? 'common.edit' : 'common.new') | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="employeeForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'employees.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+  @if (terminated()) {
+    <div class="page-notice" role="status">
+      <mat-icon>lock</mat-icon>
+      <span>{{ 'employees.terminatedNotice' | translate }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'employees.fullName' | translate }}</mat-label>
+      <input matInput formControlName="fullName" autocomplete="name" />
+      @if (isEdit()) {
+        <mat-hint>{{ 'employees.locked' | translate }}</mat-hint>
+      }
+      @if (isInvalidControl(employeeForm, 'fullName')) {
+        <mat-error>{{ errorMessageForControl(employeeForm, 'fullName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'employees.dni' | translate }}</mat-label>
+      <input matInput class="mono" formControlName="dni" inputmode="numeric" maxlength="8" />
+      <mat-hint>{{ (isEdit() ? 'employees.locked' : 'employees.dniHint') | translate }}</mat-hint>
+      @if (isInvalidControl(employeeForm, 'dni')) {
+        <mat-error>
+          {{ employeeForm.controls.dni.hasError('pattern') ? ('employees.dniFormat' | translate) : errorMessageForControl(employeeForm, 'dni') }}
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'employees.hiredOn' | translate }}</mat-label>
+      <input matInput formControlName="hiredOn" [matDatepicker]="hiredOnPicker" placeholder="dd/mm/aaaa" />
+      <mat-datepicker-toggle matIconSuffix [for]="hiredOnPicker" />
+      <mat-datepicker #hiredOnPicker />
+      @if (isEdit()) {
+        <mat-hint>{{ 'employees.locked' | translate }}</mat-hint>
+      }
+      @if (isInvalidControl(employeeForm, 'hiredOn')) {
+        <mat-error>{{ errorMessageForControl(employeeForm, 'hiredOn') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'employees.position' | translate }}</mat-label>
+      <input matInput formControlName="position" autocomplete="organization-title" />
+      @if (isInvalidControl(employeeForm, 'position')) {
+        <mat-error>{{ errorMessageForControl(employeeForm, 'position') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'employees.monthlySalary' | translate }}</mat-label>
+      <span matTextPrefix>S/&nbsp;</span>
+      <input matInput class="amount" formControlName="monthlySalary" type="number" min="0" step="0.01" />
+      @if (isInvalidControl(employeeForm, 'monthlySalary')) {
+        <mat-error>{{ errorMessageForControl(employeeForm, 'monthlySalary') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading() || terminated()">
+      {{ (isEdit() ? 'common.saveChanges' : 'employees.hire') | translate }}
+    </button>
+  </div>
+</form>

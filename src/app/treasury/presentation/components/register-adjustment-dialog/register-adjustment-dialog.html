@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>{{ 'bankAccounts.adjustment' | translate }}</h2>
+<form [formGroup]="adjustmentForm" (ngSubmit)="onSave()" novalidate>
+  <mat-dialog-content>
+    <p class="summary">
+      {{ 'bank.' + account.bank | translate }} · <span class="mono">{{ account.accountNumber }}</span> ·
+      {{ 'bankAccounts.currentBalance' | translate }}: <strong>{{ account.currentBalance | money: account.currency }}</strong>
+    </p>
+
+    <div class="direction">
+      <span class="direction-label" id="direction-label">{{ 'bankAccounts.direction' | translate }}</span>
+      <mat-button-toggle-group formControlName="direction" hideSingleSelectionIndicator aria-labelledby="direction-label">
+        @for (direction of directions; track direction) {
+          <mat-button-toggle [value]="direction">{{ 'movementDirection.' + direction | translate }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      @if (isInvalidControl(adjustmentForm, 'direction')) {
+        <span class="direction-error">{{ 'bankAccounts.directionRequired' | translate }}</span>
+      }
+    </div>
+
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bankAccounts.date' | translate }}</mat-label>
+        <input matInput formControlName="occurredOn" [matDatepicker]="datePicker" placeholder="dd/mm/aaaa" />
+        <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+        <mat-datepicker #datePicker />
+        @if (isInvalidControl(adjustmentForm, 'occurredOn')) {
+          <mat-error>{{ errorMessageForControl(adjustmentForm, 'occurredOn') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bankAccounts.amount' | translate }}</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput class="amount" formControlName="amount" type="number" min="0" step="0.01" />
+        @if (isInvalidControl(adjustmentForm, 'amount')) {
+          <mat-error>{{ errorMessageForControl(adjustmentForm, 'amount') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'bankAccounts.concept' | translate }}</mat-label>
+        <input matInput formControlName="concept" />
+        <mat-hint>{{ 'bankAccounts.adjustmentConceptHint' | translate }}</mat-hint>
+        @if (isInvalidControl(adjustmentForm, 'concept')) {
+          <mat-error>{{ errorMessageForControl(adjustmentForm, 'concept') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit">{{ 'bankAccounts.registerAdjustment' | translate }}</button>
+  </mat-dialog-actions>
+</form>

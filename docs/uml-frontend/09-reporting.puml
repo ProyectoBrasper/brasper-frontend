@@ -21,7 +21,6 @@ package "app" {
 
   package "projects" {
     package "application" {
-      class ProjectsStore <<Store>>
     }
   }
 
@@ -37,11 +36,10 @@ package "app" {
         +from: string
         +to: string
         +lines: CashFlowLine[]
-        +finalBalance(): number
-        +hasNegativeBalance(): boolean
+        +finalBalance: number
+        +hasNegativeBalance: boolean
       }
       class CashFlowLine <<ValueObject>> {
-        +label: string
         +startDate: string
         +endDate: string
         +projected: boolean
@@ -56,10 +54,6 @@ package "app" {
       CashFlowReport *-- "1..*" CashFlowLine : contains
 
       class IncomeStatement <<ReadModel>> {
-        - #fromYear: number
-        - #fromMonth: number
-        - #toYear: number
-        - #toMonth: number
         - #revenue: number
         - #directCosts: number
         - #grossProfit: number
@@ -69,10 +63,6 @@ package "app" {
         - #profitBeforeTax: number
         - #incomeTax: number
         - #netProfit: number
-        +fromYear: number
-        +fromMonth: number
-        +toYear: number
-        +toMonth: number
         +revenue: number
         +directCosts: number
         +grossProfit: number
@@ -93,6 +83,7 @@ package "app" {
         - #totalLiabilities: number
         - #totalEquity: number
         - #difference: number
+        - #balanced: boolean
         +asOf: string
         +assets: Record<string, number>
         +liabilities: Record<string, number>
@@ -101,7 +92,8 @@ package "app" {
         +totalLiabilities: number
         +totalEquity: number
         +difference: number
-        +isBalanced(): boolean
+        +balanced: boolean
+        +totalLiabilitiesAndEquity(): number
       }
 
       class ProjectProfitability <<ReadModel>> {
@@ -139,7 +131,9 @@ package "app" {
         +recognizedProfitInPeriod: number
         +invoiced: number
         +collected: number
-        +isOverBudget(): boolean
+        +outstanding(): number
+        +isOverEstimate(): boolean
+        +isActive(): boolean
       }
 
       class Dashboard <<ReadModel>> {
@@ -231,7 +225,6 @@ package "app" {
         +toEntityFromResource(resource: BalanceSheetResource): BalanceSheet
       }
       class ProjectProfitabilityAssembler <<Assembler>> {
-        +toEntitiesFromResources(resources: ProjectProfitabilityResource[]): ProjectProfitability[]
         +toEntityFromResource(resource: ProjectProfitabilityResource): ProjectProfitability
       }
       class DashboardAssembler <<Assembler>> {
@@ -255,7 +248,6 @@ package "app" {
       class ProjectProfitabilityApiEndpoint {
         -endpointUrl: string
         -assembler: ProjectProfitabilityAssembler
-        +getByProjectId(projectId: number): Observable<ProjectProfitability>
         +getPortfolio(year: number, month: number): Observable<ProjectProfitability[]>
       }
       class DashboardApiEndpoint {
@@ -274,7 +266,6 @@ package "app" {
         +getCashFlowProjection(from: string, weeks: number): Observable<CashFlowReport>
         +getIncomeStatement(fromYear: number, fromMonth: number, toYear: number, toMonth: number): Observable<IncomeStatement>
         +getBalanceSheet(year: number, month: number): Observable<BalanceSheet>
-        +getProjectProfitability(projectId: number): Observable<ProjectProfitability>
         +getPortfolioProfitability(year: number, month: number): Observable<ProjectProfitability[]>
         +getDashboard(year: number, month: number): Observable<Dashboard>
       }
@@ -316,19 +307,17 @@ package "app" {
         +incomeStatement: Signal<IncomeStatement | null>
         +balanceSheet: Signal<BalanceSheet | null>
         +profitability: Signal<ProjectProfitability[]>
-        +overBudgetProjects: Signal<ProjectProfitability[]>
         +dashboard: Signal<Dashboard | null>
         +loading: Signal<boolean>
         +error: Signal<string | null>
         +setPeriod(period: Period): void
-        +loadDashboard(): void
-        +loadWeeklyCashFlow(): void
+        +loadDashboard(period: Period): void
+        +loadWeeklyCashFlow(period: Period): void
         +loadMonthlyCashFlow(from: Period, to: Period): void
         +loadCashFlowProjection(from: string, weeks: number): void
         +loadIncomeStatement(from: Period, to: Period): void
-        +loadBalanceSheet(): void
-        +loadPortfolioProfitability(): void
-        +loadProjectProfitability(projectId: number): void
+        +loadBalanceSheet(period: Period): void
+        +loadPortfolioProfitability(period: Period): void
       }
       ReportingStore --> ReportingApi : uses
       ReportingStore --> CashFlowReport : manages
@@ -342,64 +331,85 @@ package "app" {
       package "components" {
         class KpiCard <<Component>> {
           +label: InputSignal<string>
-          +value: InputSignal<number>
-          +currency: InputSignal<string>
-          +trend: InputSignal<'up' | 'down' | 'flat'>
+          +value: InputSignal<string>
+          +hint: InputSignal<string>
+          +icon: InputSignal<string>
+          +negative: InputSignal<boolean>
         }
         class CashFlowChart <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
-          +chartData: Signal<ChartData>
-          +chartOptions: ChartOptions
+          +granularity: InputSignal<CashFlowGranularity>
+          +flowsData: Signal<ChartData>
+          +balanceData: Signal<ChartData>
+          +flowsOptions: ChartOptions
+          +balanceOptions: ChartOptions
         }
         class CashFlowTable <<Component>> {
           +lines: InputSignal<CashFlowLine[]>
-          +concepts: Signal<string[]>
+          +granularity: InputSignal<CashFlowGranularity>
+          +inflowConcepts: Signal<string[]>
+          +outflowConcepts: Signal<string[]>
+          +columns: Signal<CashFlowColumn[]>
         }
         class StatementSection <<Component>> {
           +title: InputSignal<string>
-          +items: InputSignal<Record<string, number>>
+          +rows: InputSignal<StatementRow[]>
           +total: InputSignal<number>
+          +totalLabel: InputSignal<string>
         }
         class AlertsPanel <<Component>> {
           +alerts: InputSignal<string[]>
+          +items: Signal<DashboardAlert[]>
         }
       }
 
       package "views" {
         class DashboardView <<Component>> {
           -reportingStore: ReportingStore
+          +period: WritableSignal<Period>
           +dashboard: Signal<Dashboard | null>
           +cashFlow: Signal<CashFlowReport | null>
-          +ngOnInit(): void
+          +balancesOn: Signal<Date | null>
         }
         class CashFlowView <<Component>> {
           -reportingStore: ReportingStore
-          +mode: WritableSignal<'weekly' | 'monthly' | 'projection'>
-          +cashFlow: Signal<CashFlowReport | null>
-          +onModeChange(mode: string): void
-          +onPeriodChange(period: Period): void
+          +mode: WritableSignal<'WEEKLY' | 'MONTHLY' | 'PROJECTION'>
+          +report: Signal<CashFlowReport | null>
+          +period: WritableSignal<Period>
+          +from: WritableSignal<Period>
+          +to: WritableSignal<Period>
+          +weeks: WritableSignal<number>
+          +startsInFuture: Signal<boolean>
+          +onFromChange(from: Period): void
+          +onToChange(to: Period): void
         }
         class IncomeStatementView <<Component>> {
           -reportingStore: ReportingStore
           +from: WritableSignal<Period>
           +to: WritableSignal<Period>
-          +incomeStatement: Signal<IncomeStatement | null>
-          +onRangeChange(): void
+          +statement: Signal<IncomeStatement | null>
+          +rows: Signal<IncomeStatementRow[]>
+          +onFromChange(from: Period): void
+          +onToChange(to: Period): void
         }
         class BalanceSheetView <<Component>> {
           -reportingStore: ReportingStore
-          +balanceSheet: Signal<BalanceSheet | null>
-          +onPeriodChange(period: Period): void
+          -accountingStore: AccountingStore
+          +period: WritableSignal<Period>
+          +sheet: Signal<BalanceSheet | null>
+          +assets: Signal<StatementRow[]>
+          +liabilities: Signal<StatementRow[]>
+          +equity: Signal<StatementRow[]>
         }
         class ProjectProfitabilityView <<Component>> {
           -reportingStore: ReportingStore
-          -projectsStore: ProjectsStore
+          +period: WritableSignal<Period>
+          +filter: WritableSignal<ProfitabilityFilter>
+          +expandedId: WritableSignal<number | null>
           +displayedColumns: string[]
           +dataSource: Signal<MatTableDataSource<ProjectProfitability>>
-          +paginator: Signal<MatPaginator>
           +sort: Signal<MatSort>
-          +selected: WritableSignal<ProjectProfitability | null>
-          +onSelect(row: ProjectProfitability): void
+          +toggle(project: ProjectProfitability): void
         }
       }
 
@@ -413,13 +423,11 @@ package "app" {
       DashboardView --> AlertsPanel : contains
       CashFlowView --> CashFlowChart : contains
       CashFlowView --> CashFlowTable : contains
-      IncomeStatementView --> StatementSection : contains
       BalanceSheetView --> StatementSection : contains
       DashboardView --> app.shared.presentation.components.PeriodSelector : contains
       CashFlowView --> app.shared.presentation.components.PeriodSelector : contains
       BalanceSheetView --> app.shared.presentation.components.PeriodSelector : contains
       ProjectProfitabilityView --> app.shared.presentation.components.StatusChip : contains
-      ProjectProfitabilityView --> app.projects.application.ProjectsStore : reads projects
     }
   }
 }
@@ -427,12 +435,18 @@ package "app" {
 note bottom
   Contexto de solo lectura: no hay create/update/delete, por eso los endpoints extienden
   ErrorHandlingEnabledBaseType (no BaseApiEndpoint) y los assemblers solo convierten Resource -> modelo.
-  DashboardView es la pantalla de inicio ('/dashboard'): KPIs (caja, por cobrar, por pagar,
-  utilidad acumulada, saldo proyectado), gráfico del flujo semanal y alertas (saldo proyectado
-  negativo, facturas vencidas, proyectos sobre presupuesto).
-  CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos.
+  DashboardView es la pantalla de inicio de quienes leen reportes (el backend da 403 a ENGINEER, que entra a
+  proyectos), sin flechas de tendencia porque el backend no da comparación. KPIs (caja, por cobrar, por pagar,
+  utilidad acumulada, saldo proyectado, proyectos en ejecución), gráfico del flujo semanal y alertas
+  (códigos del backend: saldo proyectado negativo y proyectos sobre lo estimado).
+  CashFlowChart usa ng2-charts (Chart.js), ya que Angular Material no trae gráficos. Son dos paneles alineados
+  (ingresos y egresos; saldo final), cada uno con su eje: un doble eje sugeriría relaciones que no existen.
   Semanas proyectadas (projected = true) se pintan distinto a las reales.
-  json-server: /reports/cash-flow?year=&month=, /reports/income-statement, /reports/balance-sheet,
-  /reports/project-profitability, /reports/dashboard -> datos YA calculados en db.json.
+  El balance llega por código de cuenta: los nombres salen del plan de cuentas (AccountingStore).
+  API falsa: /reports/income-statement y /reports/balance-sheet se calculan desde los asientos;
+  /reports/projects/profitability, desde proyectos, gastos y facturas;
+  /reports/cash-flow/weekly, /monthly y /projection se calculan desde lo guardado en db.json, igual que el backend
+  (CashFlowCalculator). La etiqueta de cada semana la arma el front: el backend la envía en inglés.
+  El estado de la columna (Real, En curso, Proyectada) sale de las fechas.
 end note
 @enduml

@@ -1,0 +1,59 @@
+.type-filter {
+  --mat-chip-elevated-selected-container-color: var(--mat-sys-primary);
+  --mat-chip-selected-label-text-color: var(--mat-sys-on-primary);
+  --mat-chip-elevated-container-color: var(--mat-sys-surface);
+  --mat-chip-outline-color: var(--mat-sys-outline-variant);
+  --mat-chip-label-text-color: var(--mat-sys-on-surface-variant);
+  display: block;
+  margin-bottom: 20px;
+}
+
+table {
+  min-width: 720px;
+}
+
+.code {
+  width: 160px;
+  font-weight: 600;
+}
+
+.name {
+  font-weight: 500;
+}
+
+/* One tonal tag per account type; the word carries the meaning, the color only helps. */
+.tag {
+  padding: 2px 8px;
+  border-radius: var(--brasper-radius-sm);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+}
+
+.tag.asset {
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+}
+
+.tag.liability {
+  background: var(--brasper-warning-container);
+  color: var(--brasper-warning);
+}
+
+.tag.equity {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-primary);
+}
+
+.tag.revenue {
+  background: var(--brasper-success-container);
+  color: var(--brasper-success);
+}
+
+.tag.expense {
+  background: var(--brasper-danger-container);
+  color: var(--brasper-danger);
+}
+
+.inactive td {
+  color: var(--mat-sys-outline);
+}

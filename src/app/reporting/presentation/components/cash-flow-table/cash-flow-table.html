@@ -1,0 +1,81 @@
+<div class="table-scroll">
+  <table class="flow">
+    <thead>
+      <tr>
+        <th scope="col" class="concept">{{ 'cashFlow.concept' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <th scope="col" [class]="column.state.toLowerCase()">
+            @if (granularity() === 'month') {
+              <span class="week month">{{ month(column.line) }}</span>
+            } @else {
+              <span class="week">{{ 'cashFlow.week' | translate: { number: column.number } }}</span>
+              <span class="dates">{{ column.dates }}</span>
+            }
+            <app-status-chip [status]="column.state" labelPrefix="cashFlowState." />
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="balance">
+        <th scope="row" class="concept">{{ 'cashFlow.openingBalance' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <td [class]="column.state.toLowerCase()" [class.negative]="column.line.openingBalance < 0">
+            {{ column.line.openingBalance | money }}
+          </td>
+        }
+      </tr>
+
+      <tr class="section">
+        <th scope="rowgroup" class="concept" [attr.colspan]="columns().length + 1">{{ 'cashFlow.inflows' | translate }}</th>
+      </tr>
+      @for (concept of inflowConcepts(); track concept) {
+        <tr>
+          <th scope="row" class="concept">{{ 'cashFlowConcept.' + concept | translate }}</th>
+          @for (column of columns(); track column.line.startDate) {
+            <td [class]="column.state.toLowerCase()">{{ column.line.inflows[concept] ? (column.line.inflows[concept] | money) : '—' }}</td>
+          }
+        </tr>
+      }
+      <tr class="total">
+        <th scope="row" class="concept">{{ 'cashFlow.totalInflows' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <td [class]="column.state.toLowerCase()">{{ column.line.totalInflows | money }}</td>
+        }
+      </tr>
+
+      <tr class="section">
+        <th scope="rowgroup" class="concept" [attr.colspan]="columns().length + 1">{{ 'cashFlow.outflows' | translate }}</th>
+      </tr>
+      @for (concept of outflowConcepts(); track concept) {
+        <tr>
+          <th scope="row" class="concept">{{ 'cashFlowConcept.' + concept | translate }}</th>
+          @for (column of columns(); track column.line.startDate) {
+            <td [class]="column.state.toLowerCase()">{{ column.line.outflows[concept] ? (column.line.outflows[concept] | money) : '—' }}</td>
+          }
+        </tr>
+      }
+      <tr class="total">
+        <th scope="row" class="concept">{{ 'cashFlow.totalOutflows' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <td [class]="column.state.toLowerCase()">{{ column.line.totalOutflows | money }}</td>
+        }
+      </tr>
+
+      <tr class="total">
+        <th scope="row" class="concept">{{ 'cashFlow.netFlow' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <td [class]="column.state.toLowerCase()" [class.negative]="column.line.netFlow < 0">{{ column.line.netFlow | money }}</td>
+        }
+      </tr>
+      <tr class="balance closing">
+        <th scope="row" class="concept">{{ 'cashFlow.closingBalance' | translate }}</th>
+        @for (column of columns(); track column.line.startDate) {
+          <td [class]="column.state.toLowerCase()" [class.negative]="column.line.closingBalance < 0">
+            {{ column.line.closingBalance | money }}
+          </td>
+        }
+      </tr>
+    </tbody>
+  </table>
+</div>

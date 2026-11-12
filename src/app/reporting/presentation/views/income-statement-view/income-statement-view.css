@@ -1,0 +1,73 @@
+.range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.statement {
+  max-width: 720px;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--mat-sys-body-medium);
+}
+
+th,
+td {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+th {
+  font-weight: 400;
+  text-align: left;
+}
+
+td {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.subtotal th,
+.subtotal td {
+  background: var(--mat-sys-surface-container);
+  font-weight: 600;
+}
+
+.total th,
+.total td {
+  border-bottom: none;
+  border-top: 2px solid var(--mat-sys-outline);
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+}
+
+td.negative {
+  color: var(--brasper-danger);
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 720px;
+  margin: 16px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}

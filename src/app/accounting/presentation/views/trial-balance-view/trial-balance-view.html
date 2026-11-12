@@ -1,0 +1,78 @@
+@let balance = trialBalance();
+<app-page-header
+  [title]="'nav.trialBalance' | translate"
+  [subtitle]="'trialBalance.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.trialBalance' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (balance && !balance.isEmpty()) {
+    <span class="balance-chip" [class.ok]="balance.isBalanced()" [class.off]="!balance.isBalanced()" role="status">
+      <mat-icon aria-hidden="true">{{ balance.isBalanced() ? 'check_circle' : 'error' }}</mat-icon>
+      {{ (balance.isBalanced() ? 'trialBalance.balanced' : 'trialBalance.unbalanced') | translate }}
+    </span>
+  }
+</app-page-header>
+
+<p class="info">
+  <mat-icon>info</mat-icon>
+  <span>{{ 'trialBalance.note' | translate }}</span>
+</p>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="lines()">
+      <ng-container matColumnDef="accountCode">
+        <th mat-header-cell *matHeaderCellDef>{{ 'trialBalance.code' | translate }}</th>
+        <td mat-cell [attr.data-label]="'trialBalance.code' | translate" *matCellDef="let line" class="mono code">{{ line.accountCode }}</td>
+        <td mat-footer-cell *matFooterCellDef class="totals-label" colspan="2">{{ 'trialBalance.totals' | translate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="accountName">
+        <th mat-header-cell *matHeaderCellDef>{{ 'trialBalance.account' | translate }}</th>
+        <td mat-cell [attr.data-label]="'trialBalance.account' | translate" *matCellDef="let line" class="name">{{ line.accountName }}</td>
+        <td mat-footer-cell *matFooterCellDef class="hidden-cell"></td>
+      </ng-container>
+
+      <ng-container matColumnDef="debit">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'trialBalance.debit' | translate }}</th>
+        <td mat-cell [attr.data-label]="'trialBalance.debit' | translate" *matCellDef="let line" class="amount">{{ line.debit | number: '1.2-2' }}</td>
+        <td mat-footer-cell *matFooterCellDef class="amount">{{ (balance?.totalDebit() ?? 0) | number: '1.2-2' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="credit">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'trialBalance.credit' | translate }}</th>
+        <td mat-cell [attr.data-label]="'trialBalance.credit' | translate" *matCellDef="let line" class="amount">{{ line.credit | number: '1.2-2' }}</td>
+        <td mat-footer-cell *matFooterCellDef class="amount">{{ (balance?.totalCredit() ?? 0) | number: '1.2-2' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="balance">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'trialBalance.balance' | translate }}</th>
+        <td mat-cell [attr.data-label]="'trialBalance.balance' | translate" *matCellDef="let line" class="amount strong" [class.negative]="line.balance() < 0">
+          {{ line.balance() | number: '1.2-2' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef class="amount" [class.negative]="(balance?.totalBalance() ?? 0) !== 0">
+          {{ (balance?.totalBalance() ?? 0) | number: '1.2-2' }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let line; columns: displayedColumns"></tr>
+      <tr mat-footer-row *matFooterRowDef="displayedColumns" class="totals-row" [class.hidden-row]="!lines().length"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
+          {{ (loading() ? 'common.loading' : 'trialBalance.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,117 @@
+<app-page-header
+  [title]="'nav.partners' | translate"
+  [subtitle]="'partners.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.partners' | translate }]"
+>
+  <app-period-selector [(period)]="period" />
+  @if (canWrite()) {
+    <button mat-flat-button type="button" (click)="onRegisterPartner()">
+      <mat-icon>add</mat-icon>
+      {{ 'partners.new' | translate }}
+    </button>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="cards" [attr.aria-label]="'nav.partners' | translate">
+  @for (partner of partners(); track partner.id) {
+    <article class="partner-card">
+      <div class="partner-head">
+        <span class="avatar" aria-hidden="true">{{ initials(partner) }}</span>
+        <div class="partner-name">
+          <h2>{{ partner.fullName }}</h2>
+          @if (partner.role) {
+            <p>{{ partner.role }}</p>
+          }
+        </div>
+      </div>
+      <div class="partner-total">
+        <span class="summary-label">{{ 'partners.totalContributed' | translate }}</span>
+        <span class="summary-value amount">{{ partner.totalContributed | money }}</span>
+      </div>
+      @if (canWrite()) {
+        <div class="partner-actions">
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="onRegisterContribution(partner)"
+            [attr.aria-label]="'partners.registerContributionFor' | translate: { name: partner.fullName }"
+          >
+            <mat-icon>add_circle</mat-icon>
+            {{ 'partners.registerContribution' | translate }}
+          </button>
+        </div>
+      }
+    </article>
+  } @empty {
+    <p class="empty">{{ (loading() ? 'common.loading' : 'partners.empty') | translate }}</p>
+  }
+</section>
+
+<section class="table-card">
+  <h2 class="table-title">{{ 'partners.periodContributions' | translate }}</h2>
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="rows()">
+      <ng-container matColumnDef="contributedOn">
+        <th mat-header-cell *matHeaderCellDef>{{ 'partners.date' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.date' | translate" *matCellDef="let row">{{ row.contribution.contributedOn | date: 'dd/MM/yyyy' }}</td>
+        <td mat-footer-cell *matFooterCellDef class="totals-label">{{ 'partners.periodTotal' | translate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="partner">
+        <th mat-header-cell *matHeaderCellDef>{{ 'partners.partner' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.partner' | translate" *matCellDef="let row" class="strong">{{ row.partner.fullName }}</td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="concept">
+        <th mat-header-cell *matHeaderCellDef>{{ 'partners.concept' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.concept' | translate" *matCellDef="let row" class="concept" [title]="row.contribution.concept ?? ''">
+          {{ row.contribution.concept || '—' }}
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef class="amount">{{ 'partners.amount' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.amount' | translate" *matCellDef="let row" class="amount">{{ row.contribution.amount | money: row.contribution.currency }}</td>
+        <td mat-footer-cell *matFooterCellDef class="amount">{{ periodTotal() | money }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="reimbursable">
+        <th mat-header-cell *matHeaderCellDef class="center">{{ 'partners.reimbursable' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.reimbursable' | translate" *matCellDef="let row" class="center">
+          <span class="flag" [class.yes]="row.contribution.reimbursable">
+            <mat-icon aria-hidden="true">{{ row.contribution.reimbursable ? 'check' : 'remove' }}</mat-icon>
+            {{ (row.contribution.reimbursable ? 'common.yes' : 'common.no') | translate }}
+          </span>
+        </td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <ng-container matColumnDef="destination">
+        <th mat-header-cell *matHeaderCellDef>{{ 'partners.destination' | translate }}</th>
+        <td mat-cell [attr.data-label]="'partners.destination' | translate" *matCellDef="let row" class="muted">{{ destination(row.contribution) }}</td>
+        <td mat-footer-cell *matFooterCellDef></td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr mat-footer-row *matFooterRowDef="columns" class="totals-row"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="columns.length">
+          {{ (loading() ? 'common.loading' : 'partners.noContributions') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>

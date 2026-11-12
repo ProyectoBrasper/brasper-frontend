@@ -1,0 +1,226 @@
+.info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+  font: var(--mat-sys-body-medium);
+}
+
+table.data-table {
+  min-width: 1000px;
+}
+
+.icon-col {
+  width: 48px;
+  text-align: center;
+}
+
+.entry-row {
+  cursor: pointer;
+}
+
+.entry-row.expanded td {
+  background: var(--mat-sys-surface-container-low);
+  font-weight: 600;
+}
+
+/* A reversed entry stays in the journal, dimmed and struck through, so its reversal still makes sense. */
+.entry-row.reversed td {
+  color: var(--mat-sys-outline);
+}
+
+.entry-row.reversed .description {
+  text-decoration: line-through;
+}
+
+.description {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.center {
+  text-align: center;
+}
+
+.muted {
+  color: var(--mat-sys-outline);
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: var(--brasper-radius-sm);
+  background: var(--brasper-info-container);
+  color: var(--brasper-info);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag.manual {
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.reversed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px 2px 6px;
+  border-radius: 9999px;
+  background: var(--brasper-neutral-container);
+  color: var(--brasper-neutral);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.reversed-chip mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+/* The detail row only takes space when it is open. */
+.detail-row {
+  height: 0;
+}
+
+.detail-row:not(.open) .detail-cell {
+  padding: 0;
+  border-bottom-width: 0;
+}
+
+.detail {
+  padding: 16px 40px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font: var(--mat-sys-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail-title mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-md);
+  background: var(--mat-sys-surface);
+  font: var(--mat-sys-body-medium);
+}
+
+.lines th,
+.lines td {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  text-align: left;
+}
+
+.lines th {
+  font: var(--mat-sys-label-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.lines .amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lines .code {
+  margin-right: 6px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.lines tfoot td {
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.balanced td {
+  background: var(--brasper-success-container);
+  color: var(--brasper-success);
+}
+
+.unbalanced td {
+  background: var(--brasper-danger-container);
+  color: var(--brasper-danger);
+}
+
+.balance-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.balance-label mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+/* On a phone the lines of an open entry stack: the account across, then project, debit and credit with their labels. */
+@media (max-width: 599px) {
+  .detail {
+    padding: 12px 16px;
+  }
+
+  .lines thead {
+    display: none;
+  }
+
+  .lines,
+  .lines tbody,
+  .lines tfoot {
+    display: block;
+  }
+
+  .lines tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  .lines td {
+    padding: 0;
+    overflow-wrap: normal;
+  }
+
+  .lines tbody td:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+  }
+
+  .lines td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font: var(--mat-sys-label-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

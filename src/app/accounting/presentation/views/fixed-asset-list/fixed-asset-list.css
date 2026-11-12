@@ -1,0 +1,110 @@
+.depreciation {
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--brasper-radius-lg);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--brasper-shadow-card);
+}
+
+.depreciation-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.depreciation-head h2 {
+  margin: 0;
+  font: 700 18px/24px var(--brasper-font-brand);
+}
+
+.depreciation-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 16px;
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0;
+}
+
+.figures dt {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.figures dd {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.hint {
+  margin: 12px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--brasper-radius-md);
+  background: var(--brasper-warning-container);
+  color: var(--brasper-warning);
+  font: var(--mat-sys-body-medium);
+}
+
+.filter {
+  margin-bottom: 20px;
+}
+
+table {
+  min-width: 1040px;
+}
+
+.name {
+  display: block;
+  font-weight: 500;
+}
+
+.origin {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.inactive td {
+  color: var(--mat-sys-outline);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}

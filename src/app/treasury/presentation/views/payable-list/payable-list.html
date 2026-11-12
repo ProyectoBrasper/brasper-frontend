@@ -1,0 +1,142 @@
+<app-page-header
+  [title]="'nav.payables' | translate"
+  [subtitle]="'payables.subtitle' | translate"
+  [breadcrumbs]="[{ label: 'common.home' | translate, link: '/' }, { label: 'nav.payables' | translate }]"
+>
+  @if (canWrite()) {
+    <a mat-flat-button routerLink="/treasury/payables/new">
+      <mat-icon>add</mat-icon>
+      {{ 'payables.new' | translate }}
+    </a>
+  }
+</app-page-header>
+
+<section class="top">
+  <article class="summary-card">
+    <div>
+      <span class="summary-label">{{ 'payables.outstanding' | translate }}</span>
+      <span class="summary-value amount">{{ outstanding() | money }}</span>
+    </div>
+    <span class="summary-icon" aria-hidden="true"><mat-icon>payments</mat-icon></span>
+  </article>
+
+  <mat-chip-listbox
+    class="status-filter"
+    hideSingleSelectionIndicator
+    [attr.aria-label]="'payables.filterByStatus' | translate"
+    (change)="statusFilter.set($event.value ?? null)"
+  >
+    @for (status of statuses; track status) {
+      <mat-chip-option [value]="status" [selected]="statusFilter() === status">
+        {{ (status ? 'payableStatus.' + status : 'payables.all') | translate }} ({{ count(status) }})
+      </mat-chip-option>
+    }
+  </mat-chip-listbox>
+</section>
+
+@if (error()) {
+  <div class="page-alert" role="alert">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<section class="table-card">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+  <div class="table-scroll">
+    <table mat-table class="data-table cards-on-mobile" [dataSource]="dataSource()" matSort>
+      <ng-container matColumnDef="concept">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'payables.concept' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.concept' | translate" *matCellDef="let payable" class="concept" [title]="payable.concept">{{ payable.concept }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'payables.type' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.type' | translate" *matCellDef="let payable"><span class="tag">{{ 'payableType.' + payable.type | translate }}</span></td>
+      </ng-container>
+
+      <ng-container matColumnDef="counterpart">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'payables.counterpart' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.counterpart' | translate" *matCellDef="let payable" class="counterpart">
+          <span>{{ supplierName(payable) || '—' }}</span>
+          @if (projectCode(payable)) {
+            <span class="mono project">{{ projectCode(payable) }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="week">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'payables.week' | translate }}</th>
+        <td
+          mat-cell
+          [attr.data-label]="'payables.week' | translate"
+          *matCellDef="let payable"
+          [title]="(week(payable).startDate() | date: 'dd/MM/yyyy') + ' – ' + (week(payable).endDate() | date: 'dd/MM/yyyy')"
+        >
+          {{ weekLabel(payable) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="totalAmount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'payables.total' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.total' | translate" *matCellDef="let payable" class="amount">{{ payable.totalAmount | money: payable.currency }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="paidAmount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'payables.paid' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.paid' | translate" *matCellDef="let payable" class="amount" [class.muted]="payable.paidAmount === 0">
+          {{ payable.paidAmount | money: payable.currency }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="balance">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="amount">{{ 'payables.balance' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.balance' | translate" *matCellDef="let payable" class="amount" [class.strong]="!payable.isPaid()" [class.muted]="payable.isPaid()">
+          {{ payable.balance | money: payable.currency }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'payables.status' | translate }}</th>
+        <td mat-cell [attr.data-label]="'payables.status' | translate" *matCellDef="let payable"><app-status-chip [status]="payable.status" labelPrefix="payableStatus." /></td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-col">{{ 'common.actions' | translate }}</th>
+        <td mat-cell *matCellDef="let payable" class="actions-col">
+          @if (!payable.isPaid()) {
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onRegisterPayment(payable)"
+              [matTooltip]="'payables.registerPayment' | translate"
+              [attr.aria-label]="'payables.registerPaymentFor' | translate: { concept: payable.concept }"
+            >
+              <mat-icon>payments</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              (click)="onReschedule(payable)"
+              [matTooltip]="'payables.reschedule' | translate"
+              [attr.aria-label]="'payables.rescheduleFor' | translate: { concept: payable.concept }"
+            >
+              <mat-icon>event_repeat</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let payable; columns: displayedColumns()" [class.paid]="payable.isPaid()"></tr>
+      <tr class="mat-mdc-row empty-row" *matNoDataRow>
+        <td class="mat-mdc-cell" [attr.colspan]="displayedColumns().length">
+          {{ (loading() ? 'common.loading' : 'payables.empty') | translate }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" />
+</section>

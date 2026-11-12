@@ -1,0 +1,71 @@
+<app-page-header
+  [title]="(isEdit() ? 'clients.edit' : 'clients.new') | translate"
+  [subtitle]="isEdit() ? client()?.businessName ?? '' : ('clients.formSubtitle' | translate)"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.projects' | translate, link: '/projects' },
+    { label: 'nav.clients' | translate, link: '/projects/clients' },
+    { label: (isEdit() ? 'common.edit' : 'common.new') | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="clientForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'clients.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'clients.businessName' | translate }}</mat-label>
+      <input matInput formControlName="businessName" autocomplete="organization" />
+      @if (isInvalidControl(clientForm, 'businessName')) {
+        <mat-error>{{ errorMessageForControl(clientForm, 'businessName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'clients.ruc' | translate }}</mat-label>
+      <input matInput class="mono" formControlName="ruc" inputmode="numeric" maxlength="11" />
+      <mat-hint>{{ (isEdit() ? 'clients.rucLocked' : 'clients.rucHint') | translate }}</mat-hint>
+      @if (isInvalidControl(clientForm, 'ruc')) {
+        <mat-error>{{ errorMessageForControl(clientForm, 'ruc') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'clients.contactName' | translate }}</mat-label>
+      <input matInput formControlName="contactName" autocomplete="name" />
+      @if (isInvalidControl(clientForm, 'contactName')) {
+        <mat-error>{{ errorMessageForControl(clientForm, 'contactName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'clients.phone' | translate }}</mat-label>
+      <input matInput formControlName="phone" type="tel" autocomplete="tel" />
+      @if (isInvalidControl(clientForm, 'phone')) {
+        <mat-error>{{ errorMessageForControl(clientForm, 'phone') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'clients.email' | translate }}</mat-label>
+      <input matInput formControlName="email" type="email" autocomplete="email" />
+      @if (isInvalidControl(clientForm, 'email')) {
+        <mat-error>{{ errorMessageForControl(clientForm, 'email') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading()">
+      {{ (isEdit() ? 'common.saveChanges' : 'clients.create') | translate }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,67 @@
+<app-page-header
+  [title]="(isEdit() ? 'suppliers.edit' : 'suppliers.new') | translate"
+  [subtitle]="isEdit() ? supplier()?.businessName ?? '' : ('suppliers.formSubtitle' | translate)"
+  [breadcrumbs]="[
+    { label: 'common.home' | translate, link: '/' },
+    { label: 'nav.expenses' | translate, link: '/expenses' },
+    { label: 'nav.suppliers' | translate, link: '/expenses/suppliers' },
+    { label: (isEdit() ? 'common.edit' : 'common.new') | translate }
+  ]"
+/>
+
+<form class="form-card" [formGroup]="supplierForm" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form-card-title">{{ 'suppliers.data' | translate }}</h2>
+
+  @if (error()) {
+    <div class="page-alert" role="alert">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="form-grid">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'suppliers.businessName' | translate }}</mat-label>
+      <input matInput formControlName="businessName" autocomplete="organization" />
+      @if (isInvalidControl(supplierForm, 'businessName')) {
+        <mat-error>{{ errorMessageForControl(supplierForm, 'businessName') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.type' | translate }}</mat-label>
+      <mat-select formControlName="type">
+        @for (type of types; track type) {
+          <mat-option [value]="type">{{ 'supplierType.' + type | translate }}</mat-option>
+        }
+      </mat-select>
+      @if (isEdit()) {
+        <mat-hint>{{ 'suppliers.fixedLocked' | translate }}</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.ruc' | translate }}</mat-label>
+      <input matInput class="mono" formControlName="ruc" inputmode="numeric" maxlength="11" />
+      <mat-hint>{{ (isEdit() ? 'suppliers.fixedLocked' : supplierForm.controls.type.value === 'COMPANY' ? 'suppliers.rucRequired' : 'suppliers.rucOptional') | translate }}</mat-hint>
+      @if (isInvalidControl(supplierForm, 'ruc')) {
+        <mat-error>{{ errorMessageForControl(supplierForm, 'ruc') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.phone' | translate }}</mat-label>
+      <input matInput formControlName="phone" type="tel" autocomplete="tel" />
+      @if (isInvalidControl(supplierForm, 'phone')) {
+        <mat-error>{{ errorMessageForControl(supplierForm, 'phone') }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="form-actions">
+    <button mat-button type="button" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button type="submit" [disabled]="loading()">
+      {{ (isEdit() ? 'common.saveChanges' : 'suppliers.create') | translate }}
+    </button>
+  </div>
+</form>
